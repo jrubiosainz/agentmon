@@ -167,6 +167,21 @@ Scene identity comes from `constructor.name`, so `vite.config.ts` sets
 `esbuild.keepNames` to keep the harness (and production stack traces) working
 against minified builds.
 
+`client/tools/glyphcheck.mjs` is the second half of the harness. The 5×7 bitmap
+font renders a character by looking it up in a table, and a character that is not
+in that table **draws nothing at all** — no box, no warning. A missing symbol can
+therefore ship unnoticed, which is exactly what happened to `¥` across seven call
+sites. `glyphcheck` collects every character reachable from the dex, item and move
+data plus the UI copy, renders each one through the real font onto an offscreen
+canvas, and fails if any produces zero pixels.
+
+```powershell
+cd client
+node tools\glyphcheck.mjs      # -> "all 92 glyphs render"
+```
+
+Run it after adding any new symbol to on-screen text.
+
 ## Controls
 
 | Key | Action |

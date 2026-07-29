@@ -177,8 +177,13 @@ export class TitleScene extends Scene {
       if (Math.floor(this.phase / 30) % 2 === 0) {
         font.drawCentered(g, 'PRESS  START', SCREEN_W / 2, 116, 'white');
       }
-      font.drawCentered(g, saves.online ? 'NETWORK ONLINE' : 'OFFLINE MODE', SCREEN_W / 2, 143, 'dim');
-      font.drawCentered(g, '\u00a9 AG\u00c9NTMON PROJECT', SCREEN_W / 2, 152, 'dim');
+      const net = saves.online ? 'NETWORK ONLINE' : 'OFFLINE MODE';
+      const copy = '\u00a9 AG\u00c9NTMON PROJECT';
+      const fw = Math.max(font.measure(net), font.measure(copy));
+      g.fillStyle = 'rgba(16,18,32,0.72)';
+      g.fillRect((SCREEN_W - fw) / 2 - 5, 141, fw + 10, 20);
+      font.drawCentered(g, net, SCREEN_W / 2, 143, 'white');
+      font.drawCentered(g, copy, SCREEN_W / 2, 152, 'white');
       return;
     }
 
@@ -210,13 +215,15 @@ export class TitleScene extends Scene {
       font.draw(g, 'BACK', 50, backY, 'normal', false);
     }
 
-    if (this.noticeTimer > 0) {
-      font.drawCentered(g, this.notice, SCREEN_W / 2, 152, 'gold');
-    } else if (saves.user) {
-      font.drawCentered(g, `CLOUD: ${saves.user.email}`, SCREEN_W / 2, 152, 'dim');
-    } else {
-      font.drawCentered(g, 'SAVES STORED ON THIS DEVICE', SCREEN_W / 2, 152, 'dim');
-    }
+    // The key art runs edge to edge, so the status line needs its own dark
+    // strip or it dissolves into the sunset.
+    const status = this.noticeTimer > 0
+      ? this.notice
+      : saves.user ? `CLOUD: ${saves.user.email}` : 'SAVES STORED ON THIS DEVICE';
+    const sw = font.measure(status);
+    g.fillStyle = 'rgba(16,18,32,0.72)';
+    g.fillRect((SCREEN_W - sw) / 2 - 4, 150, sw + 8, 11);
+    font.drawCentered(g, status, SCREEN_W / 2, 152, this.noticeTimer > 0 ? 'gold' : 'white');
   }
 
   private proceduralSky(g: CanvasRenderingContext2D): void {
