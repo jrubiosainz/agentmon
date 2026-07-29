@@ -191,5 +191,5 @@ export const CATEGORY_NAME: Record<ItemCategory, string> = {
   medicine: 'REPAIR',
   battle: 'BOOST',
   misc: 'ITEMS',
-  key: 'KEY ITEMS',
+  key: 'KEY',
 };

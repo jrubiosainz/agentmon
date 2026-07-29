@@ -41,15 +41,21 @@ export class StartMenuScene extends Scene {
   }
 
   private rebuild(): void {
-    const items: MenuItem[] = [
-      { label: 'AGÉNTDEX', value: 'dex' },
-      { label: 'AGÉNTMON', value: 'party' },
+    const save = this.game.save;
+    // FRLG only lists what you actually own: the dex and party entries appear
+    // as the story hands them to you, so an empty party can never be opened.
+    const items: MenuItem[] = [];
+    if (save.dex.seen.length > 0 || save.party.length > 0) {
+      items.push({ label: 'AGÉNTDEX', value: 'dex' });
+    }
+    if (save.party.length > 0) items.push({ label: 'AGÉNTMON', value: 'party' });
+    items.push(
       { label: 'BAG', value: 'bag' },
-      { label: this.game.save.playerName.slice(0, 8), value: 'card' },
+      { label: save.playerName.slice(0, 8), value: 'card' },
       { label: 'SAVE', value: 'save' },
       { label: 'OPTION', value: 'options' },
       { label: 'EXIT', value: 'exit' },
-    ];
+    );
     const keep = this.menu.index;
     this.menu.setItems(items);
     this.menu.index = Math.min(keep, items.length - 1);
@@ -508,7 +514,7 @@ export class BagScene extends Scene {
       const x = 6 + i * 46;
       const active = i === this.catIndex;
       drawPanel(g, x, 4, 44, 14, active ? '#f8f0d0' : '#b0b8c8', '#404868');
-      font.drawCentered(g, CATEGORY_NAME[cat].toUpperCase().slice(0, 7), x + 22, 7, 'normal', false);
+      font.drawCentered(g, CATEGORY_NAME[cat].toUpperCase(), x + 22, 7, 'normal', false);
     }
 
     drawWindow(g, 4, 22, 152, 84);
@@ -683,13 +689,13 @@ export class TrainerCardScene extends Scene {
     const sheet = this.game.sheet(save.gender === 'm' ? 'ch:player_m' : 'ch:player_f');
     if (sheet) sheet.drawFrame(g, 'walk_down', 0, 198, 92, { scale: 2 });
 
-    font.draw(g, 'BADGES', 24, 108, 'normal', false);
+    font.draw(g, 'BADGES', 24, 100, 'normal', false);
     const step = Math.floor((SCREEN_W - 60) / Math.max(1, BADGE_ORDER.length));
     for (let i = 0; i < BADGE_ORDER.length; i++) {
       const flagKey = BADGE_ORDER[i]!;
       const owned = save.badges.includes(flagKey);
       const x = 30 + step * i + Math.floor(step / 2);
-      const y = 125;
+      const y = 120;
       const info = BADGE_INFO[flagKey];
       g.fillStyle = owned ? '#f0d040' : '#b8b0a0';
       g.beginPath();
@@ -709,7 +715,7 @@ export class TrainerCardScene extends Scene {
       }
       // First word only - full badge names do not fit under the hexagons.
       const label = (info?.name ?? '').split(' ')[0] ?? '';
-      font.drawCentered(g, label, x, 138, owned ? 'normal' : 'dim', false);
+      font.drawCentered(g, label, x, 132, owned ? 'normal' : 'dim', false);
     }
   }
 }
@@ -797,7 +803,7 @@ export class SaveScene extends Scene {
 // =========================================================================== //
 export class OptionsScene extends Scene {
   private index = 0;
-  private rows = ['TEXT SPEED', 'BATTLE STYLE', 'MUSIC', 'SOUND', 'SOUND OFF', 'FRAME', 'CANCEL'];
+  private rows = ['TEXT SPEED', 'BATTLE STYLE', 'MUSIC', 'SOUND', 'MUTE', 'FRAME', 'CANCEL'];
 
   update(): void {
     const inp = this.game.input;
@@ -838,12 +844,12 @@ export class OptionsScene extends Scene {
       '',
     ];
     for (let i = 0; i < this.rows.length; i++) {
-      const y = 16 + i * 19;
+      const y = 14 + i * 18;
       if (i === this.index) font.draw(g, '\u25b6', 14, y, 'normal', false);
       font.draw(g, this.rows[i]!, 26, y, 'normal', false);
       font.drawRight(g, values[i] ?? '', SCREEN_W - 18, y, i === this.index ? 'gold' : 'normal', false);
     }
-    font.drawCentered(g, 'Adjust with \u25c0 \u25b6   B to close', SCREEN_W / 2, SCREEN_H - 20, 'dim');
+    font.drawCentered(g, 'Adjust with \u25c0 \u25b6   B to close', SCREEN_W / 2, SCREEN_H - 26, 'dim');
   }
 }
 
