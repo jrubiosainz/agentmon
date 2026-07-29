@@ -9,9 +9,9 @@ import { drawWindow, fillScreen, PALETTE, Typewriter } from '../../engine/ui.ts'
 import { OverworldScene } from './overworld.ts';
 
 const SPEECH = [
-  'Hello there! Welcome to the world of AGENTMON!',
-  'My name is ADA. People call me the AGENTMON PROFESSOR.',
-  'This world is shared by machines we call AGENTMON.',
+  'Hello there! Welcome to the world of AGÉNTMON!',
+  'My name is ADA. People call me the AGÉNTMON PROFESSOR.',
+  'This world is shared by machines we call AGÉNTMON.',
   'Some help us build. Some help us think. And some... simply want to battle.',
   'Studying them is my life\'s work. But research needs field data.',
   'That is where you come in.',
@@ -19,7 +19,7 @@ const SPEECH = [
 ];
 
 const OUTRO = [
-  'Your very own AGENTMON story is about to unfold.',
+  'Your very own AGÉNTMON story is about to unfold.',
   'A world of dreams and datacenters awaits!',
   'Let\'s go!',
 ];
@@ -171,7 +171,7 @@ export class IntroScene extends Scene {
     this.phase = 'outro';
     this.line = 0;
     this.tw.setText(
-      `${this.game.save.playerName}! Your very own AGENTMON story is about to unfold.`,
+      `${this.game.save.playerName}! Your very own AGÉNTMON story is about to unfold.`,
     );
   }
 

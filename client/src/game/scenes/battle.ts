@@ -300,7 +300,7 @@ export class BattleScene extends Scene {
     if (isFainted(this.battle.playerC.agent)) {
       const alive = this.game.save.party.some((a) => !isFainted(a));
       if (!alive) { yield* this.finish(); return; }
-      yield* this.say('Choose your next AGENTMON!', false);
+      yield* this.say('Choose your next AGÉNTMON!', false);
       let index = -1;
       yield () => {
         if (this.pendingChild) return false;
@@ -338,7 +338,7 @@ export class BattleScene extends Scene {
         audio.playMusic('victory', true);
         yield* this.say(`Gotcha! ${displayName(caught)} was captured!`);
         const sp = species(caught.speciesKey);
-        yield* this.say(`${sp.name}'s data was added to the AGENTDEX.`);
+        yield* this.say(`${sp.name}'s data was added to the AGÉNTDEX.`);
         if (where === 'box') yield* this.say(`${displayName(caught)} was transferred to STORAGE.`);
         else if (where === 'full') yield* this.say('Your storage is full! It had to be released...');
       }

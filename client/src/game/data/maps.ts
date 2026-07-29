@@ -43,7 +43,7 @@ export const HOME_BEDROOM: MapDef = {
     { x: 1, y: 2, text: ['Your bed.', 'You slept well. Time to get moving!'] },
     { x: 2, y: 2, text: ['Your bed.', 'You slept well. Time to get moving!'] },
     { x: 7, y: 4, text: ['A shelf of robotics manuals and a dusty trophy.'] },
-    { x: 1, y: 5, text: ['The wall screen is paused on an AGENTMON LEAGUE final.'] },
+    { x: 1, y: 5, text: ['The wall screen is paused on an AGÉNTMON LEAGUE final.'] },
   ],
 };
 
@@ -74,7 +74,7 @@ export const HOME_GROUND: MapDef = {
       movement: 'look', script: 'mom',
       text: [
         'MOM: There you are! PROF. ADA called - she has something for you.',
-        'MOM: Every engineer needs a partner AGENTMON. Go and pick yours!',
+        'MOM: Every engineer needs a partner AGÉNTMON. Go and pick yours!',
       ],
     },
   ],
@@ -143,21 +143,21 @@ export const NULLBYTE_TOWN: MapDef = {
     {
       id: 'nb_kid', x: 15, y: 10, facing: 'down', sprite: 'npc_kid', movement: 'wander',
       text: [
-        'KID: Wild AGENTMON hide in the tall grass!',
+        'KID: Wild AGÉNTMON hide in the tall grass!',
         'KID: If you walk in there without a partner you will get scrapped!',
       ],
     },
     {
       id: 'nb_eng', x: 20, y: 14, facing: 'left', sprite: 'npc_engineer', movement: 'look',
       text: [
-        'ENGINEER: PROF. ADA studies how AGENTMON learn.',
+        'ENGINEER: PROF. ADA studies how AGÉNTMON learn.',
         'ENGINEER: They say she trained the very first one herself.',
       ],
     },
     {
       id: 'nb_guard', x: 12, y: 3, facing: 'down', sprite: 'npc_technician', movement: 'static',
       script: 'route1_block', hideIfFlag: 'gotStarter',
-      text: ['TECHNICIAN: Hold up! You cannot head north without an AGENTMON.'],
+      text: ['TECHNICIAN: Hold up! You cannot head north without an AGÉNTMON.'],
     },
   ],
 };
@@ -294,7 +294,7 @@ export const ROUTE1: MapDef = {
   ],
   signs: [
     { x: 12, y: 43, text: ['ROUTE 1', 'NULLBYTE TOWN - VOLTSPIRE CITY'] },
-    { x: 9, y: 23, text: ['CAUTION: Wild AGENTMON in the tall grass.', 'Keep your party charged.'] },
+    { x: 9, y: 23, text: ['CAUTION: Wild AGÉNTMON in the tall grass.', 'Keep your party charged.'] },
   ],
   items: [
     { id: 'r1_patch', x: 17, y: 40, item: 'patch', count: 1 },
@@ -449,7 +449,7 @@ export const VOLT_HOUSE1 = makeHouse({
   npcs: [{
     id: 'vh1', x: 5, y: 4, facing: 'down', sprite: 'npc_medic', movement: 'look',
     text: [
-      'MEDIC: An AGENTMON that is SHORTED moves at half speed.',
+      'MEDIC: An AGÉNTMON that is SHORTED moves at half speed.',
       'MEDIC: A SURGE FILTER clears it right up.',
     ],
   }],

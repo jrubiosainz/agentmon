@@ -390,7 +390,7 @@ export class OverworldScene extends Scene {
   private async blackout(): Promise<void> {
     this.busy = true;
     await this.say(
-      `${this.game.save.playerName} is out of usable AGENTMON!`,
+      `${this.game.save.playerName} is out of usable AGÉNTMON!`,
       `${this.game.save.playerName} scrambled back to the nearest REPAIR BAY...`,
     );
     for (const a of this.game.save.party) healFully(a);
@@ -575,12 +575,12 @@ export class OverworldScene extends Scene {
     }
     switch (id) {
       case 'heal': {
-        await this.say('Welcome to the REPAIR BAY!', 'Shall I restore your AGENTMON to full charge?');
+        await this.say('Welcome to the REPAIR BAY!', 'Shall I restore your AGÉNTMON to full charge?');
         const yes = await this.ask('Restore your team?');
         if (!yes) { await this.say('We hope to see you again!'); return; }
         audio.sfx('heal');
         for (const a of save.party) healFully(a);
-        await this.say('Recalibrating...', 'Your AGENTMON are fully charged!', 'We hope to see you again!');
+        await this.say('Recalibrating...', 'Your AGÉNTMON are fully charged!', 'We hope to see you again!');
         save.respawn = { map: this.def.id, x: this.player.x, y: this.player.y + 1, facing: 'down' };
         return;
       }
@@ -593,7 +593,7 @@ export class OverworldScene extends Scene {
           setFlag(save, 'labRivalWaiting');
         } else {
           await this.say(
-            'MOM: Look at you, out there with a real AGENTMON.',
+            'MOM: Look at you, out there with a real AGÉNTMON.',
             'MOM: Let me top your team up before you go.',
           );
           audio.sfx('heal');
@@ -608,7 +608,7 @@ export class OverworldScene extends Scene {
           return;
         }
         await this.say(
-          'TECHNICIAN: Hold up! Wild AGENTMON roam past this point.',
+          'TECHNICIAN: Hold up! Wild AGÉNTMON roam past this point.',
           'TECHNICIAN: Go see PROF. ADA and get a partner first.',
         );
         return;
@@ -674,7 +674,7 @@ export class OverworldScene extends Scene {
     }
     await this.say(
       `PROF. ADA: ${save.playerName}! Perfect timing.`,
-      'PROF. ADA: I have three prototype cores here. Each holds a partially trained AGENTMON.',
+      'PROF. ADA: I have three prototype cores here. Each holds a partially trained AGÉNTMON.',
       'PROF. ADA: Choose the one you feel drawn to. It will be your partner.',
     );
     const starters = ['stackbit', 'reachlet', 'boltkin'];
@@ -811,7 +811,7 @@ export class OverworldScene extends Scene {
       audio.playMusic('victory', true);
       await this.say(
         `NEXUS: ...Remarkable. You did not just out-compute me. You out-grew me.`,
-        `${save.playerName} is the new AGENTMON CHAMPION!`,
+        `${save.playerName} is the new AGÉNTMON CHAMPION!`,
         'Your name has been written into the HALL OF FAME.',
         'THE END... for now.',
       );

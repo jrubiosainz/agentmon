@@ -33,7 +33,7 @@ export class BootScene extends Scene {
   }
 
   private async run(): Promise<void> {
-    this.status = 'LOADING AGENTDEX';
+    this.status = 'LOADING AGÉNTDEX';
     const res = await fetch(`${assets.base}agentdex.json`);
     if (!res.ok) throw new Error(`agentdex.json ${res.status}`);
     setDex(await res.json());

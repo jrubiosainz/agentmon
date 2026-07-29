@@ -27,6 +27,9 @@ function syncDex(): Plugin {
 export default defineConfig({
   base: './',
   plugins: [syncDex()],
+  // Scene identity is read from `constructor.name` by the debug harness and by
+  // production stack traces, so class names must survive minification.
+  esbuild: { keepNames: true },
   build: {
     outDir: 'dist',
     emptyOutDir: true,

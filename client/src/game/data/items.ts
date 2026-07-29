@@ -34,7 +34,7 @@ export const ITEMS: Record<string, ItemDef> = {
   // --- Capture devices -----------------------------------------------------
   nanocore: {
     key: 'nanocore', name: 'NANO CORE', category: 'ball', price: 200, ballRate: 1,
-    battle: true, desc: 'A standard containment core for capturing wild AGENTMON.',
+    battle: true, desc: 'A standard containment core for capturing wild AGÉNTMON.',
   },
   hypercore: {
     key: 'hypercore', name: 'HYPER CORE', category: 'ball', price: 600, ballRate: 1.5,
@@ -46,61 +46,61 @@ export const ITEMS: Record<string, ItemDef> = {
   },
   masterkey: {
     key: 'masterkey', name: 'ROOT CORE', category: 'ball', price: 0, ballRate: 255,
-    battle: true, desc: 'The ultimate core. Captures any AGENTMON without fail.',
+    battle: true, desc: 'The ultimate core. Captures any AGÉNTMON without fail.',
   },
   netcore: {
     key: 'netcore', name: 'NET CORE', category: 'ball', price: 1000, ballRate: 1,
-    battle: true, desc: 'Works best on AGENTMON that have been battling a long time.',
+    battle: true, desc: 'Works best on AGÉNTMON that have been battling a long time.',
   },
 
   // --- Repair / medicine ---------------------------------------------------
   patch: {
     key: 'patch', name: 'PATCH', category: 'medicine', price: 300, heal: 20,
-    field: true, battle: true, desc: 'Restores 20 HP to one AGENTMON.',
+    field: true, battle: true, desc: 'Restores 20 HP to one AGÉNTMON.',
   },
   superpatch: {
     key: 'superpatch', name: 'SUPER PATCH', category: 'medicine', price: 700, heal: 50,
-    field: true, battle: true, desc: 'Restores 50 HP to one AGENTMON.',
+    field: true, battle: true, desc: 'Restores 50 HP to one AGÉNTMON.',
   },
   hyperpatch: {
     key: 'hyperpatch', name: 'HYPER PATCH', category: 'medicine', price: 1200, heal: 200,
-    field: true, battle: true, desc: 'Restores 200 HP to one AGENTMON.',
+    field: true, battle: true, desc: 'Restores 200 HP to one AGÉNTMON.',
   },
   fullpatch: {
     key: 'fullpatch', name: 'FULL PATCH', category: 'medicine', price: 2500, heal: -1,
-    field: true, battle: true, desc: 'Fully restores the HP of one AGENTMON.',
+    field: true, battle: true, desc: 'Fully restores the HP of one AGÉNTMON.',
   },
   antivirus: {
     key: 'antivirus', name: 'ANTIVIRUS', category: 'medicine', price: 250, cures: ['poison'],
-    field: true, battle: true, desc: 'Cures an AGENTMON of CORRUPTION.',
+    field: true, battle: true, desc: 'Cures an AGÉNTMON of CORRUPTION.',
   },
   coolant: {
     key: 'coolant', name: 'COOLANT', category: 'medicine', price: 250, cures: ['burn'],
-    field: true, battle: true, desc: 'Cools an OVERHEATED AGENTMON.',
+    field: true, battle: true, desc: 'Cools an OVERHEATED AGÉNTMON.',
   },
   deicer: {
     key: 'deicer', name: 'DE-ICER', category: 'medicine', price: 250, cures: ['freeze'],
-    field: true, battle: true, desc: 'Thaws a FROZEN AGENTMON.',
+    field: true, battle: true, desc: 'Thaws a FROZEN AGÉNTMON.',
   },
   reboot: {
     key: 'reboot', name: 'REBOOT CHIP', category: 'medicine', price: 200, cures: ['sleep'],
-    field: true, battle: true, desc: 'Wakes a SLEEPING AGENTMON.',
+    field: true, battle: true, desc: 'Wakes a SLEEPING AGÉNTMON.',
   },
   surgekill: {
     key: 'surgekill', name: 'SURGE FILTER', category: 'medicine', price: 200, cures: ['paralysis'],
-    field: true, battle: true, desc: 'Clears a SHORTED AGENTMON.',
+    field: true, battle: true, desc: 'Clears a SHORTED AGÉNTMON.',
   },
   fullreset: {
     key: 'fullreset', name: 'FULL RESET', category: 'medicine', price: 600, cures: ['any'],
-    field: true, battle: true, desc: 'Cures all status problems of one AGENTMON.',
+    field: true, battle: true, desc: 'Cures all status problems of one AGÉNTMON.',
   },
   reflash: {
     key: 'reflash', name: 'REFLASH', category: 'medicine', price: 1500, revive: 0.5,
-    field: true, battle: true, desc: 'Revives a fainted AGENTMON with half HP.',
+    field: true, battle: true, desc: 'Revives a fainted AGÉNTMON with half HP.',
   },
   reflashmax: {
     key: 'reflashmax', name: 'MAX REFLASH', category: 'medicine', price: 4000, revive: 1,
-    field: true, battle: true, desc: 'Revives a fainted AGENTMON with full HP.',
+    field: true, battle: true, desc: 'Revives a fainted AGÉNTMON with full HP.',
   },
   ppcell: {
     key: 'ppcell', name: 'PP CELL', category: 'medicine', price: 900, pp: 10,
@@ -115,32 +115,32 @@ export const ITEMS: Record<string, ItemDef> = {
   overclock: {
     key: 'overclock', name: 'OVERCLOCK', category: 'battle', price: 500,
     boost: { stat: 'atk', stages: 1 }, battle: true,
-    desc: 'Raises ATTACK of an AGENTMON in battle.',
+    desc: 'Raises ATTACK of an AGÉNTMON in battle.',
   },
   hardening: {
     key: 'hardening', name: 'HARD SHELL', category: 'battle', price: 550,
     boost: { stat: 'def', stages: 1 }, battle: true,
-    desc: 'Raises DEFENSE of an AGENTMON in battle.',
+    desc: 'Raises DEFENSE of an AGÉNTMON in battle.',
   },
   turbofan: {
     key: 'turbofan', name: 'TURBO FAN', category: 'battle', price: 350,
     boost: { stat: 'spe', stages: 1 }, battle: true,
-    desc: 'Raises SPEED of an AGENTMON in battle.',
+    desc: 'Raises SPEED of an AGÉNTMON in battle.',
   },
   lens: {
     key: 'lens', name: 'FOCUS LENS', category: 'battle', price: 950,
     boost: { stat: 'acc', stages: 1 }, battle: true,
-    desc: 'Raises ACCURACY of an AGENTMON in battle.',
+    desc: 'Raises ACCURACY of an AGÉNTMON in battle.',
   },
 
   // --- Field utilities -----------------------------------------------------
   jammer: {
     key: 'jammer', name: 'SIGNAL JAMMER', category: 'misc', price: 350, repel: 100,
-    field: true, desc: 'Keeps weak wild AGENTMON away for 100 steps.',
+    field: true, desc: 'Keeps weak wild AGÉNTMON away for 100 steps.',
   },
   superjammer: {
     key: 'superjammer', name: 'SUPER JAMMER', category: 'misc', price: 500, repel: 200,
-    field: true, desc: 'Keeps weak wild AGENTMON away for 200 steps.',
+    field: true, desc: 'Keeps weak wild AGÉNTMON away for 200 steps.',
   },
   smokebomb: {
     key: 'smokebomb', name: 'EMP SMOKE', category: 'misc', price: 350, escape: true,
@@ -152,13 +152,13 @@ export const ITEMS: Record<string, ItemDef> = {
   },
   rarechip: {
     key: 'rarechip', name: 'RARE CHIP', category: 'misc', price: 0,
-    field: true, desc: 'Raises the level of an AGENTMON by one.',
+    field: true, desc: 'Raises the level of an AGÉNTMON by one.',
   },
 
   // --- Key items -----------------------------------------------------------
   agentdex: {
-    key: 'agentdex', name: 'AGENTDEX', category: 'key', price: 0,
-    desc: 'A digital encyclopedia that auto-records every AGENTMON you meet.',
+    key: 'agentdex', name: 'AGÉNTDEX', category: 'key', price: 0,
+    desc: 'A digital encyclopedia that auto-records every AGÉNTMON you meet.',
   },
   towncomms: {
     key: 'towncomms', name: 'TOWN COMMS', category: 'key', price: 0,

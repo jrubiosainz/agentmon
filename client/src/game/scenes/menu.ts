@@ -42,8 +42,8 @@ export class StartMenuScene extends Scene {
 
   private rebuild(): void {
     const items: MenuItem[] = [
-      { label: 'AGENTDEX', value: 'dex' },
-      { label: 'AGENTMON', value: 'party' },
+      { label: 'AGÉNTDEX', value: 'dex' },
+      { label: 'AGÉNTMON', value: 'party' },
       { label: 'BAG', value: 'bag' },
       { label: this.game.save.playerName.slice(0, 8), value: 'card' },
       { label: 'SAVE', value: 'save' },
@@ -163,7 +163,7 @@ export class PartyScene extends Scene {
 
     if (this.mode === 'battle' || this.mode === 'switchIn') {
       const agent = this.party[this.index]!;
-      if (isFainted(agent)) { this.flash('That AGENTMON has no charge left!'); return; }
+      if (isFainted(agent)) { this.flash('That AGÉNTMON has no charge left!'); return; }
       this.game.pop({ index: this.index });
       return;
     }
@@ -254,8 +254,8 @@ export class PartyScene extends Scene {
         : this.mode === 'useItem'
           ? `Use the ${itemDef(this.itemKey ?? 'patch').name} on which one?`
           : this.mode === 'overworld'
-            ? 'Choose an AGENTMON.'
-            : 'Send out which AGENTMON?';
+            ? 'Choose an AGÉNTMON.'
+            : 'Send out which AGÉNTMON?';
     font.draw(g, prompt, 12, TEXTBOX_Y + 14, 'normal', false);
 
     if (this.subMenu) {
@@ -551,7 +551,7 @@ export class BagScene extends Scene {
 }
 
 // =========================================================================== //
-// Agentdex
+// AGÉNTDEX
 // =========================================================================== //
 export class DexScene extends Scene {
   private menu = new Menu([], 1, 8);
@@ -662,7 +662,7 @@ export class TrainerCardScene extends Scene {
     font.draw(g, `NAME   ${save.playerName}`, 24, 42, 'shadow', false);
     font.draw(g, `IDNo.  ${String(save.trainerId).padStart(5, '0')}`, 24, 56, 'shadow', false);
     font.draw(g, `MONEY  \u00a5${formatMoney(save.money)}`, 24, 70, 'shadow', false);
-    font.draw(g, `AGENTDEX  ${save.dex.caught.length}`, 24, 84, 'shadow', false);
+    font.draw(g, `AGÉNTDEX  ${save.dex.caught.length}`, 24, 84, 'shadow', false);
     font.draw(g, `TIME   ${formatPlaytime(save.playtimeFrames)}`, 24, 98, 'shadow', false);
 
     const sheet = this.game.sheet(save.gender === 'm' ? 'ch:player_m' : 'ch:player_f');
@@ -754,7 +754,7 @@ export class SaveScene extends Scene {
     font.drawRight(g, save.playerName, 116, 12, 'normal', false);
     font.draw(g, 'BADGES', 14, 26, 'normal', false);
     font.drawRight(g, String(summary.badges), 116, 26, 'normal', false);
-    font.draw(g, 'AGENTDEX', 14, 40, 'normal', false);
+    font.draw(g, 'AGÉNTDEX', 14, 40, 'normal', false);
     font.drawRight(g, String(summary.dexCaught), 116, 40, 'normal', false);
     font.draw(g, 'TIME', 14, 54, 'normal', false);
     font.drawRight(g, formatPlaytime(save.playtimeFrames), 116, 54, 'normal', false);

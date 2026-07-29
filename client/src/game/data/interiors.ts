@@ -55,7 +55,7 @@ export function makeRepairBay(o: RepairBayOpts): MapDef {
       {
         id: 'medic', x: 7, y: 2, facing: 'down', sprite: 'npc_medic', name: 'TECH',
         movement: 'static', script: 'heal',
-        text: o.medicLine ?? ['Welcome to the REPAIR BAY!', 'Shall I restore your AGENTMON to full working order?'],
+        text: o.medicLine ?? ['Welcome to the REPAIR BAY!', 'Shall I restore your AGÉNTMON to full working order?'],
       },
       ...(o.extraNpcs ?? []),
     ],

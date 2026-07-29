@@ -1,4 +1,4 @@
-/** A single owned/wild AGENTMON instance and the maths that governs it. */
+/** A single owned/wild Agéntmon instance and the maths that governs it. */
 
 import { rng } from '../../engine/rng.ts';
 import {

@@ -669,7 +669,7 @@ export class Battle {
 
   private throwBall(ev: BattleEvent[], def: ItemDef): void {
     if (this.config.kind === 'trainer') {
-      ev.push({ t: 'text', text: "You can't capture another engineer's AGENTMON!", wait: true });
+      ev.push({ t: 'text', text: "You can't capture another engineer's AGÉNTMON!", wait: true });
       return;
     }
     const target = this.foeC.agent;

@@ -315,7 +315,7 @@ export const TRAINERS: Record<string, TrainerDef> = {
     ],
     defeat: ['PROF. ADA: ...Extraordinary. Truly.'],
     after: [
-      'PROF. ADA: You did not just collect AGENTMON. You understood them.',
+      'PROF. ADA: You did not just collect AGÉNTMON. You understood them.',
       'PROF. ADA: The CORE CITADEL recognises a new CHAMPION.',
       'PROF. ADA: Congratulations. The whole network is watching.',
     ],

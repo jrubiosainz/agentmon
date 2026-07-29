@@ -6,6 +6,11 @@
 //   - A Linux App Service Plan (B1) + Web App running Node 22 LTS, hosting
 //     the built Express server (which also serves the built client SPA)
 //   - Application Insights wired into the Web App via a connection string
+//   - A VNet, a private endpoint + private DNS zone for Cosmos, and regional
+//     VNet integration for the Web App, so the database is never exposed to
+//     the public internet
+//   - A system-assigned managed identity on the Web App holding the Cosmos DB
+//     Built-in Data Contributor role, so no shared keys are stored anywhere
 //
 // Deploy with infra/deploy.ps1, which creates the resource group and runs
 // `az deployment group create` with this template.
@@ -32,12 +37,62 @@ param appServicePlanSku string = 'B1'
 @description('Node.js runtime version for the Web App.')
 param nodeVersion string = '22-lts'
 
+@description('Address space for the application VNet.')
+param vnetAddressPrefix string = '10.20.0.0/16'
+
 var uniqueSuffix = uniqueString(resourceGroup().id)
 // Cosmos account names must be lowercase, alphanumeric + hyphens, <= 44 chars.
 var cosmosAccountName = toLower('${namePrefix}-cosmos-${uniqueSuffix}')
 var appServicePlanName = '${namePrefix}-plan-${uniqueSuffix}'
 var webAppName = '${namePrefix}-web-${uniqueSuffix}'
 var appInsightsName = '${namePrefix}-ai-${uniqueSuffix}'
+var vnetName = '${namePrefix}-vnet'
+var cosmosDnsZoneName = 'privatelink.documents.azure.com'
+// Built-in "Cosmos DB Built-in Data Contributor" data-plane role.
+var cosmosDataContributorRoleId = '00000000-0000-0000-0000-000000000002'
+
+resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
+  name: vnetName
+  location: location
+  properties: {
+    addressSpace: {
+      addressPrefixes: [vnetAddressPrefix]
+    }
+    subnets: [
+      {
+        name: 'snet-app'
+        properties: {
+          addressPrefix: cidrSubnet(vnetAddressPrefix, 24, 1)
+          delegations: [
+            {
+              name: 'appservice'
+              properties: {
+                serviceName: 'Microsoft.Web/serverFarms'
+              }
+            }
+          ]
+        }
+      }
+      {
+        name: 'snet-pe'
+        properties: {
+          addressPrefix: cidrSubnet(vnetAddressPrefix, 24, 2)
+          privateEndpointNetworkPolicies: 'Disabled'
+        }
+      }
+    ]
+  }
+}
+
+resource appSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' existing = {
+  parent: vnet
+  name: 'snet-app'
+}
+
+resource peSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' existing = {
+  parent: vnet
+  name: 'snet-pe'
+}
 
 resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-08-15' = {
   name: cosmosAccountName
@@ -60,7 +115,9 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-08-15' = {
         name: 'EnableServerless'
       }
     ]
-    publicNetworkAccess: 'Enabled'
+    // Reached exclusively through the private endpoint below, using Entra ID.
+    publicNetworkAccess: 'Disabled'
+    disableLocalAuth: true
   }
 }
 
@@ -109,6 +166,58 @@ resource savesContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/cont
   }
 }
 
+resource cosmosPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
+  name: 'pe-${cosmosAccountName}'
+  location: location
+  properties: {
+    subnet: {
+      id: peSubnet.id
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'cosmos-conn'
+        properties: {
+          privateLinkServiceId: cosmosAccount.id
+          groupIds: ['Sql']
+        }
+      }
+    ]
+  }
+}
+
+resource cosmosDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  name: cosmosDnsZoneName
+  location: 'global'
+}
+
+resource cosmosDnsLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  parent: cosmosDnsZone
+  name: 'link-${vnetName}'
+  location: 'global'
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: vnet.id
+    }
+  }
+}
+
+resource cosmosDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = {
+  parent: cosmosPrivateEndpoint
+  name: 'zg'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'cosmos'
+        properties: {
+          privateDnsZoneId: cosmosDnsZone.id
+        }
+      }
+    ]
+  }
+  dependsOn: [cosmosDnsLink]
+}
+
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: appInsightsName
   location: location
@@ -136,23 +245,24 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
   name: webAppName
   location: location
   kind: 'app,linux'
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     serverFarmId: appServicePlan.id
     httpsOnly: true
+    virtualNetworkSubnetId: appSubnet.id
     siteConfig: {
       linuxFxVersion: 'NODE|${nodeVersion}'
       alwaysOn: true
       appCommandLine: 'node server/dist/index.js'
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
+      vnetRouteAllEnabled: true
       appSettings: [
         {
           name: 'COSMOS_ENDPOINT'
           value: cosmosAccount.properties.documentEndpoint
-        }
-        {
-          name: 'COSMOS_KEY'
-          value: cosmosAccount.listKeys().primaryMasterKey
         }
         {
           name: 'COSMOS_DATABASE'
@@ -161,6 +271,10 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
         {
           name: 'JWT_SECRET'
           value: jwtSecret
+        }
+        {
+          name: 'ALLOWED_ORIGINS'
+          value: 'https://${webAppName}.azurewebsites.net'
         }
         {
           name: 'NODE_ENV'
@@ -184,6 +298,19 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
         }
       ]
     }
+  }
+}
+
+// Data-plane RBAC: let the Web App's managed identity read/write documents.
+// Note this grants no control-plane rights, which is why CosmosStore falls back
+// to binding to the containers created above instead of creating them.
+resource cosmosDataRole 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-08-15' = {
+  parent: cosmosAccount
+  name: guid(cosmosAccount.id, webApp.id, cosmosDataContributorRoleId)
+  properties: {
+    principalId: webApp.identity.principalId
+    roleDefinitionId: '${cosmosAccount.id}/sqlRoleDefinitions/${cosmosDataContributorRoleId}'
+    scope: cosmosAccount.id
   }
 }
 

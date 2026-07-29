@@ -30,7 +30,7 @@ export function openAuthOverlay(mode: 'login' | 'register' = 'login'): Promise<b
     overlay = root;
 
     const card = el('div', 'am-card');
-    const title = el('h2', 'am-title', 'AGENTMON NETWORK');
+    const title = el('h2', 'am-title', 'AGÉNTMON NETWORK');
     const sub = el('p', 'am-sub', 'Sign in to sync your journey to the cloud.');
 
     const tabs = el('div', 'am-tabs');
