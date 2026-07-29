@@ -234,15 +234,19 @@ export class PartyScene extends Scene {
 
       const tx = x + (first ? 4 : 30);
       const ty = y + (first ? 2 : 3);
-      font.draw(g, displayName(a).slice(0, 10), tx, ty, 'shadow', false);
-      font.draw(g, `:L${a.level}`, tx, ty + 10, 'shadow', false);
+      font.draw(g, displayName(a).slice(0, 10), tx, ty, 'normal', false);
+      font.draw(g, `:L${a.level}`, tx, ty + 10, 'normal', false);
       const ratio = a.hp / maxHp(a);
       drawHpBar(g, tx + 34, ty + 11, 44, ratio);
-      font.drawRight(g, `${a.hp}/${maxHp(a)}`, x + w - 4, ty + (first ? 22 : 10), 'shadow', false);
+      font.drawRight(g, `${a.hp}/${maxHp(a)}`, x + w - 4, ty + (first ? 22 : 10), 'normal', false);
       if (a.status !== 'none') {
+        // Compact rows have no spare line, so the chip rides the right end of
+        // the name row; the big panel has room underneath.
+        const sx = first ? tx : x + w - 26;
+        const sy = ty + (first ? 32 : 0);
         g.fillStyle = STATUS_COLOR[a.status];
-        g.fillRect(tx, ty + (first ? 32 : 12), 20, 8);
-        font.draw(g, STATUS_SHORT[a.status], tx + 2, ty + (first ? 33 : 13), 'shadow', false);
+        g.fillRect(sx, sy, 22, 9);
+        font.drawCentered(g, STATUS_SHORT[a.status], sx + 11, sy + 1, 'white', false);
       }
     }
 
@@ -297,10 +301,10 @@ export class SummaryScene extends Scene {
     drawPanel(g, 2, 2, 92, 156, '#e8ecf4', '#404868');
     const sheet = this.game.creatureSheet(a.speciesKey);
     if (sheet) sheet.drawFrame(g, 'idle', 0, 48, 84, { scale: 0.9 });
-    font.draw(g, displayName(a).slice(0, 11), 8, 8, 'shadow', false);
-    font.draw(g, `:L${a.level}`, 8, 20, 'shadow', false);
-    font.draw(g, `No.${String(sp.id).padStart(3, '0')}`, 8, 92, 'shadow', false);
-    font.draw(g, sp.name, 8, 104, 'shadow', false);
+    font.draw(g, displayName(a).slice(0, 11), 8, 8, 'normal', false);
+    font.draw(g, `:L${a.level}`, 8, 20, 'normal', false);
+    font.draw(g, `No.${String(sp.id).padStart(3, '0')}`, 8, 92, 'normal', false);
+    font.draw(g, sp.name, 8, 104, 'normal', false);
     let tx = 8;
     for (const t of sp.types) {
       const td = typeDef(t);
@@ -308,24 +312,24 @@ export class SummaryScene extends Scene {
       g.fillRect(tx, 118, 38, 11);
       g.fillStyle = td.dark;
       g.fillRect(tx, 127, 38, 2);
-      font.drawCentered(g, td.name.toUpperCase().slice(0, 6), tx + 19, 120, 'shadow');
+      font.drawCentered(g, td.name.toUpperCase().slice(0, 6), tx + 19, 120, 'white');
       tx += 42;
     }
 
     drawPanel(g, 98, 2, 140, 156, '#f4f4f8', '#404868');
     const titles = ['INFO', 'STATS', 'MOVES'];
-    font.draw(g, titles[this.page]!, 106, 8, 'shadow', false);
+    font.draw(g, titles[this.page]!, 106, 8, 'normal', false);
     font.drawRight(g, '\u25c0 \u25b6', 232, 8, 'dim', false);
 
     if (this.page === 0) {
       const lines = font.wrap(sp.dexEntry, 124);
-      for (const [i, l] of lines.slice(0, 5).entries()) font.draw(g, l, 104, 24 + i * 11, 'shadow', false);
-      font.draw(g, `OT  ${a.otName}`, 104, 88, 'shadow', false);
-      font.draw(g, `ID  ${String(a.otId).padStart(5, '0')}`, 104, 100, 'shadow', false);
-      font.draw(g, `MET ${a.metMap}`, 104, 112, 'shadow', false);
-      font.draw(g, `at Lv. ${a.metLevel}`, 104, 124, 'shadow', false);
+      for (const [i, l] of lines.slice(0, 5).entries()) font.draw(g, l, 104, 24 + i * 11, 'normal', false);
+      font.draw(g, `OT  ${a.otName}`, 104, 88, 'normal', false);
+      font.draw(g, `ID  ${String(a.otId).padStart(5, '0')}`, 104, 100, 'normal', false);
+      font.draw(g, `MET ${a.metMap}`, 104, 112, 'normal', false);
+      font.draw(g, `at Lv. ${a.metLevel}`, 104, 124, 'normal', false);
       const { have, need } = expToNextLevel(a);
-      font.draw(g, `NEXT ${Math.max(0, need - have)}`, 104, 136, 'shadow', false);
+      font.draw(g, `NEXT ${Math.max(0, need - have)}`, 104, 136, 'normal', false);
       drawExpBar(g, 104, 148, 126, need > 0 ? have / need : 1);
     } else if (this.page === 1) {
       const s = stats(a);
@@ -335,8 +339,8 @@ export class SummaryScene extends Scene {
       ];
       rows.forEach(([label, value], i) => {
         const y = 26 + i * 20;
-        font.draw(g, label, 104, y, 'shadow', false);
-        font.drawRight(g, String(value), 232, y, 'shadow', false);
+        font.draw(g, label, 104, y, 'normal', false);
+        font.drawRight(g, String(value), 232, y, 'normal', false);
         const ratio = Math.min(1, value / 200);
         const [light, dark] = hpColors(0.6);
         drawPanel(g, 104, y + 10, 128, 5, '#c8ccd8', '#606880');
@@ -352,10 +356,10 @@ export class SummaryScene extends Scene {
         const td = typeDef(md.type);
         g.fillStyle = td.color;
         g.fillRect(104, y, 40, 11);
-        font.drawCentered(g, td.name.toUpperCase().slice(0, 6), 124, y + 2, 'shadow');
-        font.draw(g, md.name, 148, y, 'shadow', false);
-        font.draw(g, `PP ${slot.pp}/${slot.maxPp}`, 104, y + 14, 'shadow', false);
-        font.drawRight(g, md.power > 0 ? `PWR ${md.power}` : 'STATUS', 232, y + 14, 'shadow', false);
+        font.drawCentered(g, td.name.toUpperCase().slice(0, 6), 124, y + 2, 'white');
+        font.draw(g, md.name, 148, y, 'normal', false);
+        font.draw(g, `PP ${slot.pp}/${slot.maxPp}`, 104, y + 14, 'normal', false);
+        font.drawRight(g, md.power > 0 ? `PWR ${md.power}` : 'STATUS', 232, y + 14, 'normal', false);
       });
     }
   }
@@ -504,7 +508,7 @@ export class BagScene extends Scene {
       const x = 6 + i * 46;
       const active = i === this.catIndex;
       drawPanel(g, x, 4, 44, 14, active ? '#f8f0d0' : '#b0b8c8', '#404868');
-      font.drawCentered(g, CATEGORY_NAME[cat].toUpperCase().slice(0, 7), x + 22, 7, 'shadow');
+      font.drawCentered(g, CATEGORY_NAME[cat].toUpperCase().slice(0, 7), x + 22, 7, 'normal', false);
     }
 
     drawWindow(g, 4, 22, 152, 84);
@@ -616,13 +620,13 @@ export class DexScene extends Scene {
     if (key && seen) {
       const sheet = this.game.creatureSheet(key);
       if (sheet) sheet.drawFrame(g, 'idle', 0, 196, 96, { scale: 0.85 });
-      font.drawCentered(g, species(key).name, 196, 104, 'shadow');
-      font.drawCentered(g, species(key).genus, 196, 116, 'dim');
+      font.drawCentered(g, species(key).name, 196, 104, 'normal', false);
+      font.drawCentered(g, species(key).genus, 196, 116, 'dim', false);
     } else {
-      font.drawCentered(g, '???', 196, 80, 'dim');
+      font.drawCentered(g, '???', 196, 80, 'dim', false);
     }
-    font.drawCentered(g, `SEEN ${this.game.save.dex.seen.length}`, 196, 130, 'shadow');
-    font.drawCentered(g, `OWN  ${this.game.save.dex.caught.length}/${dexSize()}`, 196, 142, 'shadow');
+    font.drawCentered(g, `SEEN ${this.game.save.dex.seen.length}`, 196, 130, 'normal', false);
+    font.drawCentered(g, `OWN  ${this.game.save.dex.caught.length}/${dexSize()}`, 196, 142, 'normal', false);
   }
 
   private renderDetail(g: CanvasRenderingContext2D): void {
@@ -631,20 +635,20 @@ export class DexScene extends Scene {
     drawWindow(g, 4, 4, SCREEN_W - 8, SCREEN_H - 8);
     const sheet = this.game.creatureSheet(key);
     if (sheet) sheet.drawFrame(g, 'idle', 0, 56, 96, { scale: 0.95 });
-    font.draw(g, `No.${String(sp.id).padStart(3, '0')}  ${sp.name}`, 100, 14, 'shadow', false);
+    font.draw(g, `No.${String(sp.id).padStart(3, '0')}  ${sp.name}`, 100, 14, 'normal', false);
     font.draw(g, sp.genus, 100, 26, 'dim', false);
     let tx = 100;
     for (const t of sp.types) {
       const td = typeDef(t);
       g.fillStyle = td.color;
       g.fillRect(tx, 38, 40, 11);
-      font.drawCentered(g, td.name.toUpperCase().slice(0, 6), tx + 20, 40, 'shadow');
+      font.drawCentered(g, td.name.toUpperCase().slice(0, 6), tx + 20, 40, 'white');
       tx += 44;
     }
-    font.draw(g, `HT ${sp.height.toFixed(1)} m`, 100, 56, 'shadow', false);
-    font.draw(g, `WT ${sp.weight.toFixed(1)} kg`, 100, 68, 'shadow', false);
+    font.draw(g, `HT ${sp.height.toFixed(1)} m`, 100, 56, 'normal', false);
+    font.draw(g, `WT ${sp.weight.toFixed(1)} kg`, 100, 68, 'normal', false);
     const lines = font.wrap(sp.dexEntry, 216);
-    for (const [i, l] of lines.slice(0, 4).entries()) font.draw(g, l, 14, 110 + i * 11, 'shadow', false);
+    for (const [i, l] of lines.slice(0, 4).entries()) font.draw(g, l, 14, 110 + i * 11, 'normal', false);
   }
 }
 

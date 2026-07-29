@@ -264,7 +264,7 @@ export class IntroScene extends Scene {
           g.fillStyle = 'rgba(240,200,64,0.85)';
           g.fillRect(x - 4, y - 3, 15, 13);
         }
-        font.draw(g, row[c]!, x, y, selected ? 'shadow' : 'normal', false);
+        font.draw(g, row[c]!, x, y, 'normal', false);
       }
     }
 

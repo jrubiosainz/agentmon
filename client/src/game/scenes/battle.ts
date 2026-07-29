@@ -657,7 +657,7 @@ export class BattleScene extends Scene {
       g.fillStyle = typeDef(sp.types[0]!).color ?? '#586074';
       g.fillRect(x - w / 2, y - w, w, w);
       g.globalAlpha = 1;
-      font.drawCentered(g, sp.name, x, y - w - 10, 'shadow');
+      font.drawCentered(g, sp.name, x, y - w - 10, 'white');
       return;
     }
 
@@ -708,7 +708,7 @@ export class BattleScene extends Scene {
     if (a.status !== 'none') {
       g.fillStyle = STATUS_COLOR[a.status];
       g.fillRect(x + 6, y + 24, 22, 8);
-      font.draw(g, STATUS_SHORT[a.status], x + 8, y + 25, 'shadow', false);
+      font.draw(g, STATUS_SHORT[a.status], x + 8, y + 25, 'white', false);
     }
     if (this.game.save.dex.caught.includes(a.speciesKey)) {
       g.fillStyle = PALETTE.gold;
@@ -732,7 +732,7 @@ export class BattleScene extends Scene {
     if (a.status !== 'none') {
       g.fillStyle = STATUS_COLOR[a.status];
       g.fillRect(x + 6, y + 24, 22, 8);
-      font.draw(g, STATUS_SHORT[a.status], x + 8, y + 25, 'shadow', false);
+      font.draw(g, STATUS_SHORT[a.status], x + 8, y + 25, 'white', false);
     }
   }
 
@@ -785,7 +785,7 @@ export class BattleScene extends Scene {
     g.fillRect(166, y + 22, 66, 12);
     g.fillStyle = 'rgba(0,0,0,0.25)';
     g.fillRect(166, y + 32, 66, 2);
-    font.drawCentered(g, td.name.toUpperCase(), 199, y + 24, 'shadow');
+    font.drawCentered(g, td.name.toUpperCase(), 199, y + 24, 'white');
   }
 }
 
