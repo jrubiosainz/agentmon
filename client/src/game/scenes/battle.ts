@@ -11,10 +11,10 @@ import {
   TEXTBOX_H, TEXTBOX_Y, Typewriter, type MenuItem,
 } from '../../engine/ui.ts';
 import {
-  displayName, expToNextLevel, isFainted, learnMove, maxHp, STATUS_COLOR, STATUS_SHORT,
+  displayName, expToNextLevel, isFainted, learnMove, maxHp, statAt, STATUS_COLOR, STATUS_SHORT,
   type AgentInstance,
 } from '../data/agent.ts';
-import { move as moveDef, species, typeDef } from '../data/dex.ts';
+import { move as moveDef, species, typeDef, type Stats } from '../data/dex.ts';
 import { item as itemDef, ITEMS } from '../data/items.ts';
 import { trainer as trainerDef } from '../data/trainers.ts';
 import {
@@ -598,8 +598,11 @@ export class BattleScene extends Scene {
     this.drawCreature(g, 'player');
     if (this.ballAnim) this.drawBall(g);
 
-    if (this.fSprite.visible || this.battle.foeC.agent.hp > 0) this.drawFoeBox(g);
-    if (this.pSprite.visible) this.drawPlayerBox(g);
+    // While the challenger portrait is on screen their agent has not been sent
+    // out yet, so its status panel must not be showing.
+    const foeBoxHidden = this.trainerSlide > 0;
+    if (!foeBoxHidden && (this.fSprite.visible || this.battle.foeC.agent.hp > 0)) this.drawFoeBox(g);
+    if (this.pSprite.visible && !this.levelPanel) this.drawPlayerBox(g);
 
     if (this.levelPanel) this.drawLevelPanel(g);
 
@@ -738,13 +741,26 @@ export class BattleScene extends Scene {
 
   private drawLevelPanel(g: CanvasRenderingContext2D): void {
     const a = this.levelPanel!.agent;
-    const x = SCREEN_W - 96;
-    const y = 34;
-    drawWindow(g, x, y, 92, 62);
-    font.draw(g, 'LEVEL UP!', x + 8, y + 4, 'gold', false);
-    font.draw(g, `Lv. ${a.level}`, x + 8, y + 16, 'normal', false);
-    font.draw(g, `HP  ${maxHp(a)}`, x + 8, y + 28, 'normal', false);
-    font.draw(g, displayName(a).slice(0, 10), x + 8, y + 44, 'dim', false);
+    const sp = species(a.speciesKey);
+    const prev = Math.max(1, a.level - 1);
+    const rows: [string, keyof Stats][] = [
+      ['HP', 'hp'], ['ATTACK', 'atk'], ['DEFENSE', 'def'],
+      ['SP.ATK', 'spa'], ['SP.DEF', 'spd'], ['SPEED', 'spe'],
+    ];
+    const x = SCREEN_W - 106;
+    const y = 18;
+    const h = 26 + rows.length * 11;
+    drawWindow(g, x, y, 102, h);
+    font.draw(g, 'LEVEL UP!', x + 8, y + 5, 'gold', false);
+    font.drawRight(g, `Lv${a.level}`, x + 94, y + 5, 'normal', false);
+    for (const [i, [label, key]] of rows.entries()) {
+      const ry = y + 20 + i * 11;
+      const now = statAt(sp, key, a.level, a.ivs[key], a.evs[key]);
+      const gain = now - statAt(sp, key, prev, a.ivs[key], a.evs[key]);
+      font.draw(g, label, x + 8, ry, 'normal', false);
+      font.drawRight(g, String(now), x + 70, ry, 'normal', false);
+      if (gain > 0) font.draw(g, `+${gain}`, x + 78, ry, 'green', false);
+    }
   }
 
   private drawTextbox(g: CanvasRenderingContext2D): void {
