@@ -11,7 +11,7 @@ export async function createStore(): Promise<Store> {
   }
   // eslint-disable-next-line no-console
   console.warn(
-    '*** Cosmos DB is not configured (COSMOS_ENDPOINT/COSMOS_KEY missing). ' +
+    '*** Cosmos DB is not configured (COSMOS_ENDPOINT missing). ' +
       'Falling back to an in-memory store. Data will NOT persist across restarts. ***',
   );
   return new MemoryStore();

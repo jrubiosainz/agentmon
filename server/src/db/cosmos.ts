@@ -1,4 +1,5 @@
 import { Container, CosmosClient, Database } from '@azure/cosmos';
+import { DefaultAzureCredential } from '@azure/identity';
 import { config } from '../config.js';
 import type { SaveRecord, Store, UserRecord } from './store.js';
 import { saveRecordId } from './store.js';
@@ -15,10 +16,19 @@ function isConflict(err: unknown): boolean {
   return e?.code === 409;
 }
 
+function isForbidden(err: unknown): boolean {
+  const e = err as CosmosError;
+  return e?.code === 403 || e?.code === '403';
+}
+
 /**
- * Cosmos DB backed Store implementation. Requires COSMOS_ENDPOINT and
- * COSMOS_KEY to be configured. Creates the database and containers on
- * first use if they do not already exist.
+ * Cosmos DB backed Store implementation.
+ *
+ * Authentication is either a shared key (COSMOS_KEY) or, when the account has
+ * local auth disabled, Entra ID via the host's managed identity. Data-plane
+ * RBAC does not grant control-plane rights, so if the database/containers
+ * cannot be created we assume infrastructure already provisioned them and just
+ * bind to them by name.
  */
 export class CosmosStore implements Store {
   private client: CosmosClient;
@@ -28,36 +38,50 @@ export class CosmosStore implements Store {
   private ready: Promise<void>;
 
   constructor() {
-    if (!config.cosmosEndpoint || !config.cosmosKey) {
-      throw new Error('Cosmos DB is not configured: COSMOS_ENDPOINT/COSMOS_KEY missing');
+    if (!config.cosmosEndpoint) {
+      throw new Error('Cosmos DB is not configured: COSMOS_ENDPOINT missing');
     }
-    this.client = new CosmosClient({
-      endpoint: config.cosmosEndpoint,
-      key: config.cosmosKey,
-    });
+    this.client = config.cosmosKey
+      ? new CosmosClient({ endpoint: config.cosmosEndpoint, key: config.cosmosKey })
+      : new CosmosClient({
+          endpoint: config.cosmosEndpoint,
+          aadCredentials: new DefaultAzureCredential(),
+        });
     this.ready = this.init();
   }
 
   private async init(): Promise<void> {
-    const { database } = await this.client.databases.createIfNotExists({
-      id: config.cosmosDatabase,
-    });
-    this.database = database;
+    const dbId = config.cosmosDatabase;
+    try {
+      const { database } = await this.client.databases.createIfNotExists({ id: dbId });
+      this.database = database;
 
-    const { container: usersContainer } = await database.containers.createIfNotExists({
-      id: 'users',
-      partitionKey: { paths: ['/id'] },
-      uniqueKeyPolicy: {
-        uniqueKeys: [{ paths: ['/emailLower'] }],
-      },
-    });
-    this.usersContainer = usersContainer;
+      const { container: usersContainer } = await database.containers.createIfNotExists({
+        id: 'users',
+        partitionKey: { paths: ['/id'] },
+        uniqueKeyPolicy: {
+          uniqueKeys: [{ paths: ['/emailLower'] }],
+        },
+      });
+      this.usersContainer = usersContainer;
 
-    const { container: savesContainer } = await database.containers.createIfNotExists({
-      id: 'saves',
-      partitionKey: { paths: ['/userId'] },
-    });
-    this.savesContainer = savesContainer;
+      const { container: savesContainer } = await database.containers.createIfNotExists({
+        id: 'saves',
+        partitionKey: { paths: ['/userId'] },
+      });
+      this.savesContainer = savesContainer;
+      return;
+    } catch (err) {
+      if (!isForbidden(err)) throw err;
+    }
+
+    // Entra-only account: the identity holds data-plane rights only, so bind to
+    // the resources provisioned by the infrastructure template.
+    // eslint-disable-next-line no-console
+    console.log('Cosmos: binding to pre-provisioned database/containers (data-plane RBAC).');
+    this.database = this.client.database(dbId);
+    this.usersContainer = this.database.container('users');
+    this.savesContainer = this.database.container('saves');
   }
 
   private async users(): Promise<Container> {

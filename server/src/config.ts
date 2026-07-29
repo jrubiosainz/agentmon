@@ -41,6 +41,4 @@ export const config: Config = {
   allowedOrigins: parseOrigins(process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173'),
 };
 
-export const isCosmosConfigured: boolean = Boolean(
-  config.cosmosEndpoint && config.cosmosKey,
-);
+export const isCosmosConfigured: boolean = Boolean(config.cosmosEndpoint);

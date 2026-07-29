@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@azure/cosmos": "^4.2.0",
+    "@azure/identity": "^4.13.1",
     "compression": "^1.7.5",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
