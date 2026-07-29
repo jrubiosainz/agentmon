@@ -20,6 +20,7 @@ import { DEX, setDex, move as moveDef, species as speciesDef } from '../src/game
 import { ITEMS } from '../src/game/data/items.ts';
 import { ALL_MAPS, mapExists } from '../src/game/data/maps.ts';
 import { TRAINERS } from '../src/game/data/trainers.ts';
+import { addAgent, newSave } from '../src/game/state.ts';
 import { TileMap, type MapDef } from '../src/game/world/tilemap.ts';
 
 // --------------------------------------------------------------------------
@@ -229,6 +230,29 @@ describe('battle items', () => {
     b.takeTurn({ kind: 'item', key: 'masterkey' });
     expect(b.outcome).toBe('caught');
     expect(b.caught?.otName).toBe('AAA');
+  });
+});
+
+describe('storage', () => {
+  it('every repair bay exposes a reachable storage terminal', () => {
+    const bays = ALL_MAPS.filter((m) => m.id.startsWith('repairbay_'));
+    expect(bays.length).toBeGreaterThan(0);
+    for (const def of bays) {
+      const term = def.signs?.find((s) => s.script === 'storage');
+      expect(term, `${def.id} has no storage terminal`).toBeTruthy();
+      // The tile itself must be solid furniture, and the tile below must be walkable
+      // or the player can never face it.
+      expect(def.ground[term!.y]![term!.x]).toBe('P');
+      expect(def.ground[term!.y + 1]![term!.x]).toBe('l');
+    }
+  });
+
+  it('boxes hold every overflow capture', () => {
+    const save = newSave('TESTER');
+    for (let i = 0; i < 6; i++) save.party.push(createAgent('stackbit', { level: 5 }));
+    const where = addAgent(save, createAgent('reachlet', { level: 5 }));
+    expect(where).toBe('box');
+    expect(save.boxes.flat()).toHaveLength(1);
   });
 });
 

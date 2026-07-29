@@ -69,6 +69,8 @@ export const DEFAULT_OPTIONS: GameOptions = {
 
 export const BOX_COUNT = 8;
 export const BOX_SIZE = 30;
+/** Storage banks open on demand; the cap keeps a cloud save comfortably small. */
+export const MAX_BOXES = 8;
 
 export function newSave(playerName: string, gender: 'm' | 'f', rivalName: string): SaveData {
   return {
@@ -163,6 +165,11 @@ export function addAgent(save: SaveData, agent: AgentInstance): 'party' | 'box' 
       box.push(agent);
       return 'box';
     }
+  }
+  // Open a fresh bank rather than releasing the capture, up to the cap.
+  if (save.boxes.length < MAX_BOXES) {
+    save.boxes.push([agent]);
+    return 'box';
   }
   return 'full';
 }

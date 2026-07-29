@@ -22,6 +22,8 @@ export interface SignDef {
   x: number;
   y: number;
   text: string[];
+  /** Script id run instead of (or after) the text; resolved by the overworld scene. */
+  script?: string;
 }
 
 export interface NpcDef {

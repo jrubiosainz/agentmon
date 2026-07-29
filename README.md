@@ -240,6 +240,23 @@ node tools\glyphcheck.mjs      # -> "all 96 glyphs render (17 discovered in sour
 | `Tab` | SELECT |
 | `Q` `E` | L / R |
 
+## Team storage
+
+Every REPAIR BAY has a **storage terminal** beside the supply shelving. It is this
+world's PC: `WITHDRAW` pulls a stored agent back into the team, `DEPOSIT` sends one
+to a storage bank.
+
+Two rules keep the player from soft-locking themselves, and both are enforced in
+`StorageScene` rather than left to the caller:
+
+- You can never deposit your way down to zero *working* agents — the check is
+  "is anything else still standing", not simply "is the party bigger than one",
+  so a party of one healthy and one fainted agent still refuses the healthy one.
+- Storage banks open on demand (`addAgent` in `client/src/game/state.ts` appends a
+  new bank rather than releasing an overflow capture) up to `MAX_BOXES × BOX_SIZE`
+  = 240 slots. Before this existed, a full party meant every capture was announced
+  as "transferred to STORAGE" and then unreachable forever.
+
 ## Accounts and cloud saves
 
 Register or log in from the title screen and the game keeps three save slots in

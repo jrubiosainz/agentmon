@@ -33,6 +33,7 @@ export function makeRepairBay(o: RepairBayOpts): MapDef {
   g.rect(1, 2, w - 2, 2, 'C');          // reception counter
   g.set(2, 1, 'y').set(12, 1, 'y');     // windows either side
   g.rect(1, 5, 3, 1, 'k');              // supply shelving
+  g.set(4, 4, 'P');                     // storage terminal
   g.set(1, 4, 'q');
   g.set(13, 4, 'q');
   g.rect(10, 6, 4, 3, 'u');             // waiting rug
@@ -60,7 +61,11 @@ export function makeRepairBay(o: RepairBayOpts): MapDef {
       ...(o.extraNpcs ?? []),
     ],
     signs: [
-      { x: 12, y: 4, text: ['A notice board.', 'REPAIR BAYS are free. Please recycle your empty cores.'] },
+      { x: 12, y: 4, text: ['A notice board.', 'REPAIR BAYS are free. Use the STORAGE TERMINAL to swap your team.'] },
+      {
+        x: 4, y: 4, script: 'storage',
+        text: [`${o.name} STORAGE TERMINAL`, 'Booting AGÉNTMON storage link...'],
+      },
     ],
   };
 }

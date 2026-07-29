@@ -20,7 +20,7 @@ import { TileMap, type EncounterEntry, type MapDef, type NpcDef, type WarpDef } 
 import type { BattlePayload, BattleResult } from './battle.ts';
 import { BattleScene } from './battle.ts';
 import { EvolutionScene } from './evolution.ts';
-import { StartMenuScene } from './menu.ts';
+import { StartMenuScene, StorageScene } from './menu.ts';
 import { ShopScene } from './shop.ts';
 
 const WALK_FRAMES = 15;
@@ -428,7 +428,11 @@ export class OverworldScene extends Scene {
     }
 
     const sign = this.map.signAt(tx, ty);
-    if (sign) { void this.say(...sign.text); return; }
+    if (sign) {
+      if (sign.script) { void this.runSignScript(sign); return; }
+      void this.say(...sign.text);
+      return;
+    }
 
     // Reading a facing-away NPC standing on the same tile row (counters).
     const counterNpc = this.npcAt(tx + dx, ty + dy);
@@ -464,6 +468,13 @@ export class OverworldScene extends Scene {
       return;
     }
     await this.say(...(def.text ?? ['...']));
+    this.busy = false;
+  }
+
+  private async runSignScript(sign: { text: string[]; script?: string }): Promise<void> {
+    this.busy = true;
+    if (sign.text.length > 0) await this.say(...sign.text);
+    await this.runScript(sign.script!);
     this.busy = false;
   }
 
@@ -564,7 +575,7 @@ export class OverworldScene extends Scene {
   }
 
   // ---------------------------------------------------------------- scripts
-  private async runScript(id: string, npc: Actor): Promise<void> {
+  private async runScript(id: string, npc?: Actor): Promise<void> {
     const save = this.game.save;
     // Parameterised scripts: `shop:key1,key2,...`
     if (id.startsWith('shop:')) {
@@ -630,7 +641,8 @@ export class OverworldScene extends Scene {
         return;
       }
       case 'ada': return this.scriptAda();
-      case 'rival_lab': return this.scriptRivalLab(npc);
+      case 'rival_lab': return npc ? this.scriptRivalLab(npc) : undefined;
+      case 'storage': return this.scriptStorage();
       case 'rival_r3': return this.scriptRivalFight('rival_r3', 'rivalR3Done');
       case 'rival_final': return this.scriptRivalFight('rival_final', 'rivalFinalDone');
       case 'gym1_leader': return this.scriptLeader('gym1_leader');
@@ -641,7 +653,7 @@ export class OverworldScene extends Scene {
       case 'gift_rarechip': return this.scriptGift('rarechip', 'RESEARCHER', 'rare_chip', 1);
       case 'gift_fullreset': return this.scriptGift('fullreset', 'MEDIC', 'full_reset', 1);
       default: {
-        await this.say(...(npc.def?.text ?? ['...']));
+        await this.say(...(npc?.def?.text ?? ['...']));
       }
     }
   }
@@ -839,6 +851,11 @@ export class OverworldScene extends Scene {
     this.busy = true;
     await this.pushAndWait(new ShopScene(), { stock });
     this.busy = false;
+  }
+
+  private async scriptStorage(): Promise<void> {
+    audio.sfx('select');
+    await this.pushAndWait(new StorageScene());
   }
 
   private waitFor(cond: () => boolean): Promise<void> {

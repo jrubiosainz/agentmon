@@ -17,7 +17,7 @@ import { CATEGORY_NAME, CATEGORY_ORDER, item as itemDef, type ItemCategory } fro
 import { BADGE_INFO, BADGE_ORDER } from '../data/trainers.ts';
 import { saves, summarise } from '../save.ts';
 import {
-  bagAdd, bagRemove, formatMoney, formatPlaytime, type SaveData,
+  bagAdd, bagRemove, BOX_SIZE, MAX_BOXES, formatMoney, formatPlaytime, type SaveData,
 } from '../state.ts';
 
 // =========================================================================== //
@@ -806,6 +806,180 @@ export class SaveScene extends Scene {
       font.draw(g, 'NO', x + 18, y + 19, 'normal', false);
       font.draw(g, '\u25b6', x + 8, y + 7 + this.pick * 12, 'normal', false);
     }
+  }
+}
+
+// =========================================================================== //
+// Agent storage terminal
+//
+// The datacenter equivalent of the PC. Without it a full party means every
+// capture is locked away forever, since `addAgent` silently boxes the overflow.
+// =========================================================================== //
+type StorageMode = 'root' | 'withdraw' | 'deposit';
+
+export class StorageScene extends Scene {
+  private mode: StorageMode = 'root';
+  private root = new Menu([
+    { label: 'WITHDRAW', value: 'withdraw' },
+    { label: 'DEPOSIT', value: 'deposit' },
+    { label: 'LOG OFF', value: 'exit' },
+  ]);
+  private list = new Menu([], 1, 6);
+  private tw = new Typewriter();
+  private tick = 0;
+
+  override enter(): void {
+    this.tw.setText('Which service do you need?');
+    this.tw.skipAll();
+  }
+
+  private get box(): AgentInstance[] {
+    const boxes = this.game.save.boxes;
+    if (boxes.length === 0) boxes.push([]);
+    return boxes.flat();
+  }
+
+  private rebuildList(): void {
+    const source = this.mode === 'withdraw' ? this.box : this.game.save.party;
+    this.list.setItems(source.map<MenuItem>((a) => ({
+      label: displayName(a).slice(0, 10),
+      value: a.uid,
+      detail: `:L${a.level}`,
+      variant: isFainted(a) ? 'dim' : 'normal',
+    })));
+    this.list.index = 0;
+    this.list.scroll = 0;
+  }
+
+  update(): void {
+    this.tick++;
+    this.tw.update();
+    const inp = this.game.input;
+
+    if (this.mode === 'root') {
+      if (inp.repeat('up') && this.root.move(0, -1)) audio.sfx('cursor');
+      if (inp.repeat('down') && this.root.move(0, 1)) audio.sfx('cursor');
+      if (inp.pressed('b')) { audio.sfx('cancel'); this.game.pop(); return; }
+      if (!inp.pressed('a')) return;
+      const pick = this.root.current?.value;
+      if (pick === 'exit') { audio.sfx('cancel'); this.game.pop(); return; }
+      if (pick === 'withdraw' && this.box.length === 0) {
+        audio.sfx('error');
+        this.tw.setText('There is nothing in storage.');
+        return;
+      }
+      if (pick === 'deposit' && this.game.save.party.length <= 1) {
+        audio.sfx('error');
+        this.tw.setText('You need at least one AGÉNTMON with you!');
+        return;
+      }
+      audio.sfx('select');
+      this.mode = pick === 'withdraw' ? 'withdraw' : 'deposit';
+      this.rebuildList();
+      this.tw.setText(this.mode === 'withdraw' ? 'Withdraw which one?' : 'Store which one?');
+      return;
+    }
+
+    if (inp.pressed('b')) {
+      audio.sfx('cancel');
+      this.mode = 'root';
+      this.tw.setText('Which service do you need?');
+      return;
+    }
+    if (inp.repeat('up') && this.list.move(0, -1)) audio.sfx('cursor');
+    if (inp.repeat('down') && this.list.move(0, 1)) audio.sfx('cursor');
+    if (inp.pressed('a')) this.transfer();
+  }
+
+  private transfer(): void {
+    const uid = this.list.current?.value;
+    if (!uid) { audio.sfx('error'); return; }
+    const save = this.game.save;
+
+    if (this.mode === 'withdraw') {
+      if (save.party.length >= 6) {
+        audio.sfx('error');
+        this.tw.setText('Your team is already full!');
+        return;
+      }
+      for (const box of save.boxes) {
+        const i = box.findIndex((a) => a.uid === uid);
+        if (i < 0) continue;
+        const [agent] = box.splice(i, 1);
+        save.party.push(agent!);
+        audio.sfx('heal');
+        this.tw.setText(`${displayName(agent!)} rejoined the team!`);
+        break;
+      }
+    } else {
+      if (save.party.length <= 1) {
+        audio.sfx('error');
+        this.tw.setText('You need at least one AGÉNTMON with you!');
+        return;
+      }
+      const i = save.party.findIndex((a) => a.uid === uid);
+      if (i < 0) { audio.sfx('error'); return; }
+      const target = save.party[i]!;
+      const healthyLeft = save.party.some((a) => a !== target && !isFainted(a));
+      if (!healthyLeft) {
+        audio.sfx('error');
+        this.tw.setText('You need one working AGÉNTMON with you!');
+        return;
+      }
+      if (save.boxes.length === 0) save.boxes.push([]);
+      let open = save.boxes.find((b) => b.length < BOX_SIZE);
+      if (!open && save.boxes.length < MAX_BOXES) {
+        open = [];
+        save.boxes.push(open);
+      }
+      if (!open) {
+        audio.sfx('error');
+        this.tw.setText('Every storage bank is full!');
+        return;
+      }
+      const [agent] = save.party.splice(i, 1);
+      open.push(agent!);
+      audio.sfx('select');
+      this.tw.setText(`${displayName(agent!)} was moved into storage.`);
+    }
+    this.rebuildList();
+    if (this.list.items.length === 0) this.mode = 'root';
+  }
+
+  render(g: CanvasRenderingContext2D): void {
+    g.fillStyle = '#18203c';
+    g.fillRect(0, 0, SCREEN_W, SCREEN_H);
+    g.fillStyle = '#212a4c';
+    for (let y = 0; y < SCREEN_H; y += 4) g.fillRect(0, y, SCREEN_W, 2);
+
+    const save = this.game.save;
+    const stored = this.box.length;
+
+    drawWindow(g, 4, 4, 88, 56);
+    font.draw(g, 'STORAGE', 12, 10, 'normal', false);
+    font.draw(g, 'STORED', 12, 26, 'dim', false);
+    font.drawRight(g, `${stored}/${MAX_BOXES * BOX_SIZE}`, 84, 26, 'normal', false);
+    font.draw(g, 'TEAM', 12, 40, 'dim', false);
+    font.drawRight(g, `${save.party.length}/6`, 84, 40, 'normal', false);
+
+    if (this.mode === 'root') {
+      drawWindow(g, 96, 4, 140, 56);
+      this.root.draw(g, 112, 12, 14);
+    } else {
+      drawWindow(g, 96, 4, 140, 104);
+      this.list.draw(g, 112, 12, 15, 116);
+      const uid = this.list.current?.value;
+      const source = this.mode === 'withdraw' ? this.box : save.party;
+      const agent = source.find((a) => a.uid === uid);
+      if (agent) {
+        drawWindow(g, 4, 62, 88, 48);
+        const icon = this.game.atlas('icons');
+        if (icon?.has(agent.speciesKey)) icon.draw(g, agent.speciesKey, 32, 64, 1);
+        font.drawCentered(g, species(agent.speciesKey).name, 48, 97, 'normal', false);
+      }
+    }
+
+    this.tw.draw(g, Math.floor(this.tick / 18) % 2 === 0);
   }
 }
 
