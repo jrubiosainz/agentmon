@@ -189,27 +189,41 @@ def _draw_torso(cv: Canvas, s: ChibiStyle, facing: str, swing: int, dy: int) -> 
 
 def _draw_head(cv: Canvas, s: ChibiStyle, facing: str, dy: int) -> None:
     top, bot = HEAD_TOP + dy, HEAD_BOT + dy
-    x0, x1 = (HEAD_X0, HEAD_X1) if facing != 'side' else (5, 14)
+    x0, x1 = (HEAD_X0, HEAD_X1) if facing != 'side' else (5, 13)
     hair_dark = _shade(s.hair, 0.7)
 
     cv.rrect(x0, top, x1, bot, s.skin, r=2)
     cv.rect(x0 + 1, bot, x1 - 1, bot, _shade(s.skin, 0.85))
+    if facing == 'side':
+        # A 1px nose past the face edge: the cue that makes a profile a profile.
+        cv.rect(x1 + 1, top + 6, x1 + 1, top + 7, s.skin)
 
     if s.hair_style != 'bald':
         # Fringe across the brow, plus side locks framing the face.
         cv.rrect(x0, top, x1, top + 3, s.hair, r=2)
         cv.rect(x0, top + 2, x0 + 1, top + 5, s.hair)
-        cv.rect(x1 - 1, top + 2, x1, top + 5, s.hair)
+        if facing == 'side':
+            # In profile the hair masses at the back of the skull and leaves
+            # the face clear, rather than framing both cheeks.
+            cv.rect(x0, top + 2, x0 + 1, top + 7, s.hair)
+            cv.px(x0, top + 8, hair_dark)
+        else:
+            cv.rect(x1 - 1, top + 2, x1, top + 5, s.hair)
         cv.rect(x0 + 1, top + 1, x1 - 1, top + 1, _shade(s.hair, 1.18))
         if s.hair_style in ('long', 'ponytail'):
             cv.rect(x0, top + 2, x0 + 1, bot, s.hair)
-            cv.rect(x1 - 1, top + 2, x1, bot, s.hair)
+            if facing != 'side':
+                cv.rect(x1 - 1, top + 2, x1, bot, s.hair)
         if s.hair_style == 'ponytail':
-            cv.rect(x1 + 1, top + 3, x1 + 2, top + 8, s.hair)
-            cv.rect(x1 + 1, top + 8, x1 + 2, top + 9, hair_dark)
+            px = x0 - 2 if facing == 'side' else x1 + 1
+            cv.rect(px, top + 3, px + 1, top + 8, s.hair)
+            cv.rect(px, top + 8, px + 1, top + 9, hair_dark)
         if s.hair_style == 'spiky':
-            for sx in (x0 + 1, x0 + 4, x0 + 7, x0 + 10):
-                cv.px(sx, top - 1, s.hair)
+            # 2px chunks read as hair; single pixels get keylined into
+            # floating dots.
+            for sx in (x0 + 1, x0 + 5, x0 + 9):
+                cv.rect(sx, top - 1, sx + 1, top - 1, s.hair)
+                cv.px(sx, top - 2, s.hair)
         if s.hair_style == 'bun':
             cv.rrect(x0 + 4, top - 3, x0 + 7, top, s.hair, r=1)
 
@@ -241,8 +255,8 @@ def _draw_head(cv: Canvas, s: ChibiStyle, facing: str, dy: int) -> None:
             cv.rect(x0 + 1, eye_y - 1, x1 - 1, eye_y - 1, _shade(s.accessory_color, 1.3))
         else:
             if facing == 'side':
-                cv.rect(x1 - 4, eye_y, x1 - 3, eye_y + 1, s.outline)
-                cv.px(x1 - 3, eye_y, '#f8f8f8')
+                cv.rect(x1 - 3, eye_y, x1 - 2, eye_y + 1, s.outline)
+                cv.px(x1 - 2, eye_y, '#f8f8f8')
             else:
                 cv.rect(x0 + 2, eye_y, x0 + 3, eye_y + 1, s.outline)
                 cv.rect(x1 - 3, eye_y, x1 - 2, eye_y + 1, s.outline)
