@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "namePrefix": {
+      "value": "agentmon"
+    },
+    "location": {
+      "value": "swedencentral"
+    },
+    "cosmosDatabaseName": {
+      "value": "agentmon"
+    },
+    "appServicePlanSku": {
+      "value": "B1"
+    },
+    "nodeVersion": {
+      "value": "22-lts"
+    },
+    "jwtSecret": {
+      "value": "REPLACE_WITH_A_STRONG_SECRET_OR_PASS_VIA_deploy.ps1"
+    }
+  }
+}
