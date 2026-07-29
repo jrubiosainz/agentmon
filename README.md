@@ -299,3 +299,24 @@ Data Contributor role. There are no database keys anywhere — in app settings, 
 CI, or in this repository. Because that data-plane role grants no control-plane
 rights, `CosmosStore` tries `createIfNotExists` first and, on a 403, binds to the
 containers the Bicep template already created.
+
+### The one credential that remains
+
+`azure/webapps-deploy` with a publish profile requires **SCM basic auth to stay
+enabled** on the Web App. That single secret is the weakest link in an otherwise
+keyless design, and it is worth being explicit about rather than quietly leaving
+it on:
+
+- It is scoped to deployment only; it grants no access to Cosmos, which is
+  reachable solely over the private endpoint via managed identity.
+- Rotate it with `az webapp deployment list-publishing-profiles ... | gh secret set`
+  (the same command used to set it) whenever a collaborator leaves.
+
+To remove it entirely, swap the publish profile for OIDC federated credentials:
+register an app, add a federated credential for
+`repo:<owner>/agentmon:ref:refs/heads/main`, grant it Website Contributor on the
+resource group, replace the publish-profile input with `azure/login@v2` +
+`id-token: write` permission, and then set
+`az resource update --set properties.allow=false` on the site's
+`basicPublishingCredentialsPolicies/scm`. That trades one stored secret for a
+short-lived token minted per run.
