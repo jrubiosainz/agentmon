@@ -309,6 +309,17 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
   }
 }
 
+// The GitHub Actions workflow deploys with a publish profile, which needs SCM
+// basic auth. New sites disable it by default, so declare it explicitly rather
+// than leaving the pipeline to fail on the next fresh deployment.
+resource scmBasicAuth 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2023-12-01' = {
+  parent: webApp
+  name: 'scm'
+  properties: {
+    allow: true
+  }
+}
+
 // Data-plane RBAC: let the Web App's managed identity read/write documents.
 // Note this grants no control-plane rights, which is why CosmosStore falls back
 // to binding to the containers created above instead of creating them.
