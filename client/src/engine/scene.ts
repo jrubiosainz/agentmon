@@ -45,7 +45,18 @@ export class SceneStack {
     this.top?.pause();
     scene.attach(this.game);
     this.stack.push(scene);
-    await scene.enter(payload);
+    try {
+      await scene.enter(payload);
+    } catch (err) {
+      // A scene whose enter() threw is only half-built. Leaving it on the stack
+      // makes every later update() throw, which stops the frame before render
+      // and freezes the canvas on whatever was last drawn - usually a black
+      // transition curtain, with no way for the player to recover.
+      const i = this.stack.indexOf(scene);
+      if (i >= 0) this.stack.splice(i, 1);
+      this.top?.resume(undefined);
+      throw err;
+    }
   }
 
   pop(result?: unknown): void {
@@ -59,7 +70,13 @@ export class SceneStack {
     while (this.stack.length) this.stack.pop()?.exit();
     scene.attach(this.game);
     this.stack.push(scene);
-    await scene.enter(payload);
+    try {
+      await scene.enter(payload);
+    } catch (err) {
+      const i = this.stack.indexOf(scene);
+      if (i >= 0) this.stack.splice(i, 1);
+      throw err;
+    }
   }
 
   /** Pop scenes until `scene` is on top (exclusive of it). */

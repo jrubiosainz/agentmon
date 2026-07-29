@@ -18,6 +18,8 @@ export class Transitions {
   /** Held cover: after an "out" completes we keep the screen covered. */
   private covered = false;
   private coverColor = '#000000';
+  /** Frames the curtain has been down with nothing animating behind it. */
+  private stuck = 0;
 
   get busy(): boolean {
     return this.active !== null;
@@ -27,36 +29,66 @@ export class Transitions {
     return this.covered;
   }
 
+  /**
+   * How long the screen has been black with no transition running. A scene
+   * swap holds this for a handful of frames; anything longer means an await
+   * never resolved and the player is looking at a dead screen.
+   */
+  get stuckFrames(): number {
+    return this.stuck;
+  }
+
   /** Play a transition that covers the screen; resolves when fully covered. */
   out(kind: TransitionKind = 'fade', duration = 30, color = '#000000'): Promise<void> {
     return new Promise((resolve) => {
+      this.settle();
       this.active = { kind, duration, elapsed: 0, out: true, color, resolve };
       this.coverColor = color;
+      this.stuck = 0;
     });
   }
 
   /** Reveal the screen again; resolves when fully visible. */
   in(kind: TransitionKind = 'fade', duration = 30, color = '#000000'): Promise<void> {
     return new Promise((resolve) => {
+      this.settle();
       this.active = { kind, duration, elapsed: 0, out: false, color, resolve };
       this.coverColor = color;
       this.covered = true;
+      this.stuck = 0;
     });
+  }
+
+  /**
+   * Resolve a transition that is being replaced before it finished, so the
+   * caller awaiting it is never stranded.
+   */
+  private settle(): void {
+    const a = this.active;
+    if (!a) return;
+    this.active = null;
+    a.resolve();
   }
 
   cover(color = '#000000'): void {
     this.covered = true;
     this.coverColor = color;
+    this.stuck = 0;
   }
 
   uncover(): void {
     this.covered = false;
     this.active = null;
+    this.stuck = 0;
   }
 
   update(): void {
     const a = this.active;
-    if (!a) return;
+    if (!a) {
+      if (this.covered) this.stuck++;
+      return;
+    }
+    this.stuck = 0;
     a.elapsed++;
     if (a.elapsed >= a.duration) {
       this.covered = a.out;

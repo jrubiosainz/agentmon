@@ -13,6 +13,13 @@ import { setDex } from './data/dex.ts';
 import { saves } from './save.ts';
 import { DEFAULT_OPTIONS, newSave, type SaveData } from './state.ts';
 
+/**
+ * Two and a half seconds. Every legitimate cover is followed immediately by a
+ * transition, so a curtain that outlives this means an await was lost - short
+ * enough that a wedged screen self-heals before the player gives up on it.
+ */
+const STUCK_CURTAIN_FRAMES = 150;
+
 export class Game {
   readonly screen: Screen;
   readonly input = new Input();
@@ -129,6 +136,30 @@ export class Game {
     this.transitions.update();
     this.scenes.update();
     this.save.playtimeFrames++;
+    this.guardAgainstStuckCurtain();
+  }
+
+  /**
+   * Last line of defence against a dead-looking screen. A scene swap holds the
+   * curtain for a few frames; if it stays down far longer than that, some
+   * awaited step never completed, so lift it rather than strand the player.
+   */
+  private guardAgainstStuckCurtain(): void {
+    if (this.transitions.stuckFrames < STUCK_CURTAIN_FRAMES) return;
+    console.warn('agentmon: transition curtain was stuck; recovering');
+    this.transitions.uncover();
+  }
+
+  /**
+   * Recover from a crashed frame. The offending scene is discarded and the
+   * curtain lifted, so a bug costs the player the current scene instead of
+   * the whole session.
+   */
+  recoverFromCrash(err: unknown): void {
+    console.error('agentmon: frame crashed, recovering', err);
+    if (this.scenes.depth > 1) this.scenes.pop();
+    this.transitions.uncover();
+    this.input.clear();
   }
 
   render(): void {

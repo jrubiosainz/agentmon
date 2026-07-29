@@ -19,6 +19,7 @@ import { createAgent } from '../src/game/data/agent.ts';
 import { DEX, setDex, move as moveDef, species as speciesDef } from '../src/game/data/dex.ts';
 import { ITEMS } from '../src/game/data/items.ts';
 import { ALL_MAPS, mapExists } from '../src/game/data/maps.ts';
+import { ALL_TRACKS, trackExists } from '../src/game/data/music.ts';
 import { TRAINERS } from '../src/game/data/trainers.ts';
 import { addAgent, newSave } from '../src/game/state.ts';
 import { TileMap, type MapDef } from '../src/game/world/tilemap.ts';
@@ -422,5 +423,44 @@ describe('maps', () => {
     }
     const orphans = ALL_MAPS.map((m) => m.id).filter((id) => !visited.has(id));
     expect(orphans).toEqual([]);
+  });
+});
+
+describe('music', () => {
+  it('every map references a track that exists', () => {
+    const missing = ALL_MAPS
+      .filter((m) => !trackExists(m.music))
+      .map((m) => `${m.id} -> ${m.music}`);
+    expect(missing).toEqual([]);
+  });
+
+  it('every trainer battle theme exists', () => {
+    const missing = Object.entries(TRAINERS)
+      .filter(([, t]) => t.music && !trackExists(t.music))
+      .map(([k, t]) => `${k} -> ${t.music}`);
+    expect(missing).toEqual([]);
+  });
+
+  it('covers the themes the scenes ask for by name', () => {
+    // These are hard-coded in battle/evolution/title/intro, so a rename there
+    // would otherwise silently drop the music.
+    for (const n of ['title', 'intro', 'battleWild', 'battleTrainer', 'victory', 'evolution']) {
+      expect(trackExists(n), n).toBe(true);
+    }
+  });
+
+  it('every track has channels and parseable patterns', () => {
+    for (const [name, def] of Object.entries(ALL_TRACKS)) {
+      expect(def.channels.length, name).toBeGreaterThan(0);
+      expect(def.bpm, name).toBeGreaterThan(40);
+      for (const ch of def.channels) {
+        const tokens = ch.pattern.trim().split(/\s+/);
+        expect(tokens.length, `${name}/${ch.wave}`).toBeGreaterThan(0);
+        for (const t of tokens) {
+          // `PITCH:BEATS`, with `-` meaning a rest.
+          expect(t, `${name}/${ch.wave}`).toMatch(/^(-|[A-G][#b]?-?\d):\d*\.?\d+$/);
+        }
+      }
+    }
   });
 });

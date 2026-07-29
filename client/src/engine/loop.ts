@@ -11,6 +11,8 @@ export class Loop {
   private running = false;
   /** Total logical frames elapsed - handy for animation phases. */
   frame = 0;
+  /** Reports a crashed frame, so the game can show it instead of freezing. */
+  onError: ((err: unknown) => void) | null = null;
 
   constructor(
     private readonly update: () => void,
@@ -34,11 +36,24 @@ export class Loop {
       while (this.acc >= STEP_MS && steps < MAX_CATCHUP) {
         this.acc -= STEP_MS;
         this.frame++;
-        this.update();
+        // A throwing update must never take the renderer down with it.
+        // Otherwise the canvas freezes on the last frame drawn - typically a
+        // black transition curtain - and the player has no way to recover.
+        try {
+          this.update();
+        } catch (err) {
+          this.acc = 0;
+          this.onError?.(err);
+          break;
+        }
         steps++;
       }
       if (steps === MAX_CATCHUP) this.acc = 0;
-      this.render();
+      try {
+        this.render();
+      } catch (err) {
+        this.onError?.(err);
+      }
     };
     this.raf = requestAnimationFrame(tick);
   }

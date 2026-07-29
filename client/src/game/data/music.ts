@@ -433,3 +433,6 @@ export function registerAllTracks(): void {
 export function trackExists(name: string): boolean {
   return name in TRACKS || name in ALIASES;
 }
+
+/** Every composed track, for tooling and tests. */
+export const ALL_TRACKS: Readonly<Record<string, TrackDef>> = TRACKS;

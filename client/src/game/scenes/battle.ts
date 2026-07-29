@@ -97,18 +97,24 @@ export class BattleScene extends Scene {
   private ballAnim: { t: number; shakes: number; caught: boolean; total: number } | null = null;
   private trainerSlide = 0;
   private result: BattleResult | null = null;
-  private pendingChild: ((r: unknown) => void) | null = null;
+  /** LIFO resolvers for child scenes (bag, party); see OverworldScene. */
+  private childStack: ((r: unknown) => void)[] = [];
   private caughtAgent: AgentInstance | null = null;
   private levelPanel: { agent: AgentInstance; timer: number } | null = null;
 
   override async enter(payload?: unknown): Promise<void> {
-    this.payload = payload as BattlePayload;
+    const p = payload as BattlePayload | undefined;
+    if (!p?.foes?.length) throw new Error('BattleScene: payload has no foes');
     const save = this.game.save;
-    this.battle = new Battle(save.party, this.payload.foes, this.payload.config);
+    // Without this the engine picks party[0] of an empty array and dies deep
+    // inside makeCombatant, leaving the scene half-built.
+    if (!save.party.length) throw new Error('BattleScene: the player has no agents');
+    this.payload = p;
+    this.battle = new Battle(save.party, p.foes, p.config);
     this.pHpShown = this.battle.playerC.agent.hp;
     this.fHpShown = this.battle.foeC.agent.hp;
     this.expShown = this.expRatio();
-    audio.playMusic(this.payload.music ?? 'battleWild', true);
+    audio.playMusic(p.music ?? 'battleWild', true);
     this.game.transitions.cover();
     void this.game.transitions.in('fade', 26);
     this.seq = this.introSequence();
@@ -117,17 +123,18 @@ export class BattleScene extends Scene {
 
   override resume(result?: unknown): void {
     this.game.input.clear();
+    if (!this.battle) return;
     audio.playMusic(this.payload.music ?? 'battleWild');
-    const cb = this.pendingChild;
-    this.pendingChild = null;
-    cb?.(result);
+    this.childStack.pop()?.(result);
   }
 
   // ------------------------------------------------------------- sequencing
   private pushChild<T>(scene: Scene, payload?: unknown): Promise<T | undefined> {
     return new Promise<T | undefined>((resolve) => {
-      this.pendingChild = (r) => resolve(r as T | undefined);
-      void this.game.scenes.push(scene, payload);
+      this.childStack.push((r) => resolve(r as T | undefined));
+      void this.game.scenes.push(scene, payload).catch((err: unknown) => {
+        console.error('agentmon: battle child scene failed to start', err);
+      });
     });
   }
 
@@ -233,6 +240,9 @@ export class BattleScene extends Scene {
 
   // ----------------------------------------------------------------- update
   update(): void {
+    // enter() can legitimately reject on bad data; until the stack unwinds we
+    // must not touch the half-built state or every frame would throw.
+    if (!this.battle) return;
     this.tick++;
     this.updateSprites();
     this.tweenBars();
@@ -303,7 +313,7 @@ export class BattleScene extends Scene {
       yield* this.say('Choose your next AGÉNTMON!', false);
       let index = -1;
       yield () => {
-        if (this.pendingChild) return false;
+        if (this.childStack.length) return false;
         if (index >= 0) return true;
         void this.pushChild<{ index: number }>(new PartyScene(), { mode: 'switchIn' })
           .then((r) => { index = r?.index ?? this.game.save.party.findIndex((a) => !isFainted(a)); });
@@ -592,6 +602,7 @@ export class BattleScene extends Scene {
 
   // ----------------------------------------------------------------- render
   render(g: CanvasRenderingContext2D): void {
+    if (!this.battle) return;
     this.drawBackdrop(g);
     this.drawPlatforms(g);
 

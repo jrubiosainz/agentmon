@@ -36,6 +36,8 @@ function boot(): void {
 
   const game = new Game(canvas);
   const loop = new Loop(() => game.update(), () => game.render());
+  // A bug in one scene should cost that scene, not the whole session.
+  loop.onError = (err) => game.recoverFromCrash(err);
 
   // The browser will not let us make noise before a gesture.
   game.input.onFirstInteraction = () => {
@@ -67,8 +69,8 @@ function boot(): void {
   loop.start();
 
   // Handy for debugging from the console; harmless in production.
-  (window as unknown as { agentmon?: Game & { saves?: unknown; agent?: unknown } }).agentmon =
-    Object.assign(game, { saves, agent });
+  (window as unknown as { agentmon?: Game & { saves?: unknown; agent?: unknown; audio?: unknown } }).agentmon =
+    Object.assign(game, { saves, agent, audio });
 }
 
 try {

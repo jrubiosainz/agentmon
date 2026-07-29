@@ -77,7 +77,13 @@ export class OverworldScene extends Scene {
   /** Blocks player input while a script/dialogue/battle is running. */
   private busy = false;
   private dialogue: Dialogue | null = null;
-  private pendingResume: ((r: unknown) => void) | null = null;
+  /**
+   * Resolvers for scenes this one is waiting on. Pushes and pops are strictly
+   * LIFO, so a stack is correct - a single slot silently orphaned the earlier
+   * promise whenever two scenes overlapped, stranding the awaiting code and
+   * leaving the transition curtain down forever.
+   */
+  private resumeStack: ((r: unknown) => void)[] = [];
   private encounterCooldown = 0;
   private stepsSinceEncounter = 0;
   private exclaim: { actor: Actor; timer: number } | null = null;
@@ -90,8 +96,7 @@ export class OverworldScene extends Scene {
   }
 
   override resume(result?: unknown): void {
-    const cb = this.pendingResume;
-    this.pendingResume = null;
+    const cb = this.resumeStack.pop();
     this.game.input.clear();
     if (cb) cb(result);
     else this.playMapMusic();
@@ -345,6 +350,7 @@ export class OverworldScene extends Scene {
   }
 
   private async startWildBattle(foe: AgentInstance): Promise<void> {
+    if (!this.canFight()) return;
     this.busy = true;
     audio.sfx('encounter');
     await this.game.transitions.out('battleSwirl', 52);
@@ -361,6 +367,11 @@ export class OverworldScene extends Scene {
     };
     const result = await this.pushAndWait<BattleResult>(new BattleScene(), payload);
     await this.afterBattle(result);
+  }
+
+  /** No party means no battle - guards every entry point, not just encounters. */
+  private canFight(): boolean {
+    return this.game.save.party.length > 0;
   }
 
   private async afterBattle(result: BattleResult | undefined): Promise<void> {
@@ -528,6 +539,7 @@ export class OverworldScene extends Scene {
   private async runTrainerBattle(key: string): Promise<BattleResult | undefined> {
     const t: TrainerDef = trainerDef(key);
     await this.say(...t.intro);
+    if (!this.canFight()) return undefined;
     const foes = t.team.map((m) => createAgent(m.species, { level: m.level, moves: m.moves }));
     for (const f of foes) seeSpecies(this.game.save, f.speciesKey);
     audio.sfx('encounter');
@@ -748,6 +760,7 @@ export class OverworldScene extends Scene {
     );
     // The rival's team scales from whichever starter you passed on.
     const key = save.rivalStarter ?? 'boltkin';
+    if (!this.canFight()) return;
     const foes = [createAgent(key, { level: 5 })];
     audio.sfx('encounter');
     await this.game.transitions.out('battleSplit', 46);
@@ -834,15 +847,19 @@ export class OverworldScene extends Scene {
   // -------------------------------------------------------------- utilities
   private openMenu(): void {
     this.busy = true;
-    this.pendingResume = () => { this.busy = false; };
-    void this.game.scenes.push(new StartMenuScene());
+    void this.pushAndWait(new StartMenuScene()).then(() => { this.busy = false; });
   }
 
   /** Push a scene and resolve with whatever it passes to `pop()`. */
   private pushAndWait<T>(scene: Scene, payload?: unknown): Promise<T | undefined> {
     return new Promise<T | undefined>((resolve) => {
-      this.pendingResume = (r) => resolve(r as T | undefined);
-      void this.game.scenes.push(scene, payload);
+      this.resumeStack.push((r) => resolve(r as T | undefined));
+      // A scene whose enter() throws is rolled back by the stack, which resumes
+      // us with undefined - so the awaiting caller still completes and restores
+      // the screen instead of leaving the player on a black canvas.
+      void this.game.scenes.push(scene, payload).catch((err: unknown) => {
+        console.error('agentmon: scene failed to start', err);
+      });
     });
   }
 
