@@ -315,8 +315,21 @@ export function drawHpBar(g: CanvasRenderingContext2D, x: number, y: number, w: 
   drawBar(g, x, y, w, ratio, light, dark);
 }
 
+/** The EXP bar is slimmer than an HP bar and rides on a lighter track, so an
+ *  empty one reads as "no progress yet" rather than a black slab. */
 export function drawExpBar(g: CanvasRenderingContext2D, x: number, y: number, w: number, ratio: number): void {
-  drawBar(g, x, y, w, ratio, PALETTE.expBlue, PALETTE.expBlueDark);
+  x = Math.round(x); y = Math.round(y); w = Math.round(w);
+  g.fillStyle = PALETTE.black;
+  g.fillRect(x - 1, y - 1, w + 2, 4);
+  g.fillStyle = '#6c7488';
+  g.fillRect(x, y, w, 2);
+  const fillW = Math.max(0, Math.min(w, Math.round(w * ratio)));
+  if (fillW > 0) {
+    g.fillStyle = PALETTE.expBlue;
+    g.fillRect(x, y, fillW, 1);
+    g.fillStyle = PALETTE.expBlueDark;
+    g.fillRect(x, y + 1, fillW, 1);
+  }
 }
 
 /** Small "HP" tag drawn to the left of a health bar. */

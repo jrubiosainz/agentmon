@@ -16,6 +16,8 @@ export interface ShopPayload {
 
 type Mode = 'greet' | 'root' | 'buy' | 'sell' | 'quantity' | 'message';
 
+const SHELF_COLORS = ['#d84040', '#e8a020', '#48b8f8', '#2e9e50', '#a860d8', '#e86890'];
+
 export class ShopScene extends Scene {
   private stock: string[] = [];
   private mode: Mode = 'greet';
@@ -153,16 +155,41 @@ export class ShopScene extends Scene {
     }
   }
 
+  /** A wall shelf stocked with colourful boxes, used to dress the mart backdrop. */
+  private drawShelf(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+    g.fillStyle = '#5c3c20';
+    g.fillRect(x, y, w, h);
+    g.fillStyle = '#8c5c30';
+    g.fillRect(x + 1, y + 1, w - 2, h - 2);
+    const rows = Math.floor((h - 2) / 10);
+    for (let r = 0; r < rows; r++) {
+      const sy = y + 2 + r * 10;
+      g.fillStyle = '#5c3c20';
+      g.fillRect(x + 1, sy + 8, w - 2, 2);
+      for (let i = 0; x + 3 + i * 6 < x + w - 4; i++) {
+        const seed = (r * 31 + i * 17 + Math.floor(x / 7)) % SHELF_COLORS.length;
+        g.fillStyle = SHELF_COLORS[seed]!;
+        g.fillRect(x + 3 + i * 6, sy + 2, 4, 6);
+        g.fillStyle = 'rgba(255,255,255,0.35)';
+        g.fillRect(x + 3 + i * 6, sy + 2, 4, 1);
+      }
+    }
+  }
+
   render(g: CanvasRenderingContext2D): void {
     // Mart interior backdrop.
     g.fillStyle = '#4878b8';
     g.fillRect(0, 0, SCREEN_W, SCREEN_H);
     g.fillStyle = '#3c68a4';
     for (let y = 0; y < SCREEN_H; y += 16) g.fillRect(0, y, SCREEN_W, 8);
-    drawPanel(g, 0, 100, SCREEN_W, 60, '#c8b088', '#8c7050');
+    this.drawShelf(g, 6, 44, 84, 52);
+    this.drawShelf(g, 150, 44, 84, 52);
 
+    // The clerk stands behind the counter: draw them first so the counter
+    // occludes everything below the waist, which sells the depth.
     const clerk = this.game.charSheet('npc_clerk');
-    if (clerk) clerk.drawFrame(g, 'walk_down', 0, SCREEN_W / 2, 78, { scale: 2 });
+    if (clerk) clerk.drawFrame(g, 'walk_down', 0, SCREEN_W / 2, 114, { scale: 2 });
+    drawPanel(g, 0, 100, SCREEN_W, 60, '#c8b088', '#8c7050');
 
     drawWindow(g, 4, 4, 108, 26);
     font.draw(g, 'MONEY', 14, 8, 'normal', false);
@@ -182,9 +209,9 @@ export class ShopScene extends Scene {
       return;
     }
 
-    // Buy / sell list.
-    drawWindow(g, 96, 24, 140, 82);
-    this.list.draw(g, 112, 32, 14, 120);
+    // Buy / sell list. Starts below the MONEY panel so the two never overlap.
+    drawWindow(g, 96, 30, 140, 82);
+    this.list.draw(g, 112, 38, 14, 120);
     drawWindow(g, 2, TEXTBOX_Y, SCREEN_W - 4, TEXTBOX_H);
     const cur = this.list.current;
     const desc = cur && cur.value !== 'cancel'

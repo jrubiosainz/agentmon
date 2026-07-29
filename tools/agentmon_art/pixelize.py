@@ -97,6 +97,40 @@ def keyout(img: Image.Image, tolerance: int = 88) -> Image.Image:
     alpha = arr[:, :, 3].astype(np.int16)
     alpha[visited] = 0
 
+    # The border fill cannot reach backdrop that the subject encloses - the gap
+    # between two limbs, the hole through a ring. Those pockets survived as
+    # opaque magenta blobs stamped across the sprite. Sweep them up here, but
+    # only when a pocket really is backdrop: large enough to matter, and its
+    # mean distance to the reference colour is tiny. A *designed* magenta (a
+    # glowing eye, a plasma core) sits far from the flat key colour - measured
+    # across the dex, backdrop pockets score 4-13 and designed magenta 45-78 -
+    # so the threshold separates them with a wide margin.
+    pockets = similar & ~visited
+    if pockets.any():
+        min_size = max(24, int(h * w * 0.0002))
+        labels = np.zeros((h, w), dtype=np.int32)
+        blob = 0
+        for sy, sx in zip(*np.nonzero(pockets)):
+            if labels[sy, sx]:
+                continue
+            blob += 1
+            labels[sy, sx] = blob
+            stack = [(int(sy), int(sx))]
+            while stack:
+                y, x = stack.pop()
+                for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    ny, nx = y + dy, x + dx
+                    if 0 <= ny < h and 0 <= nx < w and pockets[ny, nx] and not labels[ny, nx]:
+                        labels[ny, nx] = blob
+                        stack.append((ny, nx))
+        for i in range(1, blob + 1):
+            m = labels == i
+            if int(m.sum()) < min_size:
+                continue
+            if float(dist[m].mean()) < 22.0:
+                alpha[m] = 0
+                visited |= m
+
     # Soften the 1px halo: pixels adjacent to the removed background that are
     # still close to the key colour get partial alpha so the downscale blends.
     edge = _dilate(visited) & ~visited
