@@ -944,11 +944,11 @@ export class OverworldScene extends Scene {
         draw: () => this.drawObject(g, obj.sprite, obj.x, obj.y, obj.w, obj.h, obj.ox ?? 0, obj.oy ?? 0),
       });
     }
-    for (const ball of this.def.items ?? []) {
-      if (flag(this.game.save, `item:${this.def.id}:${ball.id}`) || ball.hidden) continue;
+    for (const crate of this.def.items ?? []) {
+      if (flag(this.game.save, `item:${this.def.id}:${crate.id}`) || crate.hidden) continue;
       list.push({
-        y: (ball.y + 1) * TILE,
-        draw: () => this.drawItemBall(g, ball.x, ball.y),
+        y: (crate.y + 1) * TILE,
+        draw: () => this.drawItemCrate(g, crate.x, crate.y),
       });
     }
     for (const npc of this.npcs) list.push({ y: npc.y * TILE + npc.oy + TILE, draw: () => this.drawActor(g, npc) });
@@ -997,19 +997,24 @@ export class OverworldScene extends Scene {
     g.fillRect(dx + 4, dy + 8, 4, 4);
   }
 
-  private drawItemBall(g: CanvasRenderingContext2D, tx: number, ty: number): void {
-    const x = tx * TILE - this.camX + 4;
-    const y = ty * TILE - this.camY + 5;
+  /** Field pickups are powered supply crates, not spheres. */
+  private drawItemCrate(g: CanvasRenderingContext2D, tx: number, ty: number): void {
+    const x = tx * TILE - this.camX + 3;
+    const y = ty * TILE - this.camY + 4;
     g.fillStyle = '#101828';
-    g.fillRect(x - 1, y - 1, 10, 10);
-    g.fillStyle = '#d84038';
-    g.fillRect(x, y, 8, 4);
-    g.fillStyle = '#f0f0f0';
-    g.fillRect(x, y + 4, 8, 4);
-    g.fillStyle = '#101828';
-    g.fillRect(x, y + 3, 8, 2);
-    g.fillStyle = '#f8f8f8';
-    g.fillRect(x + 3, y + 3, 2, 2);
+    g.fillRect(x, y, 10, 11);
+    g.fillStyle = '#8c98ac';
+    g.fillRect(x + 1, y + 3, 8, 7);
+    g.fillStyle = '#5c687c';
+    g.fillRect(x + 1, y + 8, 8, 2);
+    g.fillStyle = '#3c4658';
+    g.fillRect(x + 4, y + 3, 2, 5);
+    g.fillStyle = '#40c8e0';
+    g.fillRect(x + 1, y + 1, 8, 2);
+    g.fillStyle = '#a8f0ff';
+    g.fillRect(x + 2, y + 1, 6, 1);
+    g.fillStyle = '#f0c840';
+    g.fillRect(x + 4, y + 5, 2, 1);
   }
 
   private drawActor(g: CanvasRenderingContext2D, a: Actor): void {

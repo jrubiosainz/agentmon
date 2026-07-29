@@ -678,22 +678,9 @@ export class BattleScene extends Scene {
     const x = PLAYER_X + (FOE_X - PLAYER_X) * t;
     const y = PLAYER_Y - 20 + (FOE_Y - PLAYER_Y + 20) * t - Math.sin(t * Math.PI) * 46;
     const wobble = b.total > 0 ? Math.sin(this.tick / 3) * 3 : 0;
-    const cx = t >= 1 ? FOE_X + wobble : x;
-    const cy = t >= 1 ? FOE_Y - 6 : y;
-    g.save();
-    g.translate(cx, cy);
-    if (t < 1) g.rotate(b.t * 0.4);
-    g.fillStyle = '#101828';
-    g.fillRect(-6, -6, 12, 12);
-    g.fillStyle = '#d84038';
-    g.fillRect(-5, -5, 10, 4);
-    g.fillStyle = '#f8f8f8';
-    g.fillRect(-5, -1, 10, 5);
-    g.fillStyle = '#101828';
-    g.fillRect(-5, -1, 10, 1);
-    g.fillStyle = '#f0c840';
-    g.fillRect(-2, -2, 4, 3);
-    g.restore();
+    const cx = Math.round(t >= 1 ? FOE_X + wobble : x);
+    const cy = Math.round(t >= 1 ? FOE_Y - 6 : y);
+    drawCaptureCore(g, cx, cy, t < 1 ? Math.floor(b.t / 3) : -1, this.tick);
   }
 
   private drawTrainerIntro(g: CanvasRenderingContext2D): void {
@@ -809,7 +796,40 @@ export function itemUsableInBattle(key: string): boolean {
   return def.category === 'ball' || def.category === 'medicine' || def.category === 'battle';
 }
 
-/** Convenience for scenes that need to know if the bag has any balls left. */
+/** Convenience for scenes that need to know if the bag has any capture cores left. */
 export function hasAnyBall(bag: { key: string; count: number }[]): boolean {
   return bag.some((b) => ITEMS[b.key]?.category === 'ball' && b.count > 0);
+}
+
+/**
+ * A capture CORE: an octagonal alloy shell around a live energy cell.
+ * Drawn scanline-by-scanline so it stays hard-edged at 1x - a rotated canvas
+ * path would anti-alias and break the pixel look.
+ * `spin` < 0 means the core has landed, so the orbiting spark is hidden.
+ */
+export function drawCaptureCore(
+  g: CanvasRenderingContext2D, cx: number, cy: number, spin: number, glow: number,
+): void {
+  const half = [3, 5, 6, 6, 6, 6, 6, 6, 5, 3];
+  const top = cy - 5;
+  for (let i = 0; i < half.length; i++) {
+    g.fillStyle = '#0c1424';
+    g.fillRect(cx - half[i], top + i, half[i] * 2, 1);
+  }
+  for (let i = 1; i < half.length - 1; i++) {
+    const w = half[i] - 1;
+    g.fillStyle = i < 3 ? '#7c94c4' : i < 5 ? '#546c98' : i < 7 ? '#3c4c70' : '#28344c';
+    g.fillRect(cx - w, top + i, w * 2, 1);
+  }
+  g.fillStyle = '#0c1424';
+  g.fillRect(cx - 5, top + 4, 10, 1);
+  g.fillStyle = ['#40e0f0', '#78f0ff', '#40e0f0', '#20b8d8'][Math.floor(glow / 4) % 4];
+  g.fillRect(cx - 2, top + 3, 4, 3);
+  g.fillStyle = '#e8ffff';
+  g.fillRect(cx - 1, top + 4, 2, 1);
+  if (spin >= 0) {
+    const orbit = [[-9, 4], [-1, -3], [7, 4], [-1, 10]][spin % 4]!;
+    g.fillStyle = '#c8fcff';
+    g.fillRect(cx + orbit[0]!, top + orbit[1]!, 2, 1);
+  }
 }

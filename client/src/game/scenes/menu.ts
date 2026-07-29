@@ -514,7 +514,7 @@ export class BagScene extends Scene {
     if (cur && cur.value !== 'close') {
       const def = itemDef(cur.value);
       this.drawItemIcon(g, def.category, 198, 46);
-      font.drawCentered(g, `\u00a5${formatMoney(def.price)}`, 198, 84, 'dim');
+      font.drawCentered(g, `\u00a5${formatMoney(def.price)}`, 198, 84, 'normal', false);
     }
 
     drawWindow(g, 2, TEXTBOX_Y, SCREEN_W - 4, TEXTBOX_H);
@@ -527,14 +527,15 @@ export class BagScene extends Scene {
   }
 
   private drawItemIcon(g: CanvasRenderingContext2D, cat: ItemCategory, cx: number, cy: number): void {
-    const colors: Record<ItemCategory, [string, string]> = {
-      ball: ['#d84038', '#f8f8f8'],
-      medicine: ['#58c060', '#f8f8f8'],
-      battle: ['#f0a828', '#f8e0a0'],
-      key: ['#a878d8', '#e0d0f8'],
-      misc: ['#58a0d8', '#d0e8f8'],
+    // [shell top, shell bottom, lens]. Capture CORES read as alloy + energy cell.
+    const colors: Record<ItemCategory, [string, string, string]> = {
+      ball: ['#7c94c4', '#28344c', '#40e0f0'],
+      medicine: ['#58c060', '#f8f8f8', '#f8f8f8'],
+      battle: ['#f0a828', '#f8e0a0', '#f8f8f8'],
+      key: ['#a878d8', '#e0d0f8', '#f8f8f8'],
+      misc: ['#58a0d8', '#d0e8f8', '#f8f8f8'],
     };
-    const [a, b] = colors[cat];
+    const [a, b, lens] = colors[cat];
     g.fillStyle = '#101828';
     g.fillRect(cx - 13, cy - 13, 26, 26);
     g.fillStyle = a;
@@ -543,7 +544,7 @@ export class BagScene extends Scene {
     g.fillRect(cx - 12, cy, 24, 12);
     g.fillStyle = '#101828';
     g.fillRect(cx - 12, cy - 1, 24, 2);
-    g.fillStyle = '#f8f8f8';
+    g.fillStyle = lens;
     g.fillRect(cx - 4, cy - 4, 8, 8);
     g.fillStyle = '#101828';
     g.fillRect(cx - 2, cy - 2, 4, 4);
@@ -658,29 +659,30 @@ export class TrainerCardScene extends Scene {
     drawPanel(g, 8, 8, SCREEN_W - 16, SCREEN_H - 16, '#f8b830', '#a06818');
     drawPanel(g, 14, 14, SCREEN_W - 28, SCREEN_H - 28, '#f8e8b8', '#c09828');
 
-    font.draw(g, 'TRAINER CARD', 24, 22, 'shadow', false);
-    font.draw(g, `NAME   ${save.playerName}`, 24, 42, 'shadow', false);
-    font.draw(g, `IDNo.  ${String(save.trainerId).padStart(5, '0')}`, 24, 56, 'shadow', false);
-    font.draw(g, `MONEY  \u00a5${formatMoney(save.money)}`, 24, 70, 'shadow', false);
-    font.draw(g, `AGÉNTDEX  ${save.dex.caught.length}`, 24, 84, 'shadow', false);
-    font.draw(g, `TIME   ${formatPlaytime(save.playtimeFrames)}`, 24, 98, 'shadow', false);
+    font.draw(g, 'TRAINER CARD', 24, 22, 'normal', false);
+    font.draw(g, `NAME   ${save.playerName}`, 24, 40, 'normal', false);
+    font.draw(g, `IDNo.  ${String(save.trainerId).padStart(5, '0')}`, 24, 53, 'normal', false);
+    font.draw(g, `MONEY  \u00a5${formatMoney(save.money)}`, 24, 66, 'normal', false);
+    font.draw(g, `AGÉNTDEX  ${save.dex.caught.length}`, 24, 79, 'normal', false);
+    font.draw(g, `TIME   ${formatPlaytime(save.playtimeFrames)}`, 24, 92, 'normal', false);
 
     const sheet = this.game.sheet(save.gender === 'm' ? 'ch:player_m' : 'ch:player_f');
-    if (sheet) sheet.drawFrame(g, 'walk_down', 0, 198, 96, { scale: 2 });
+    if (sheet) sheet.drawFrame(g, 'walk_down', 0, 198, 92, { scale: 2 });
 
-    font.draw(g, 'BADGES', 24, 116, 'shadow', false);
+    font.draw(g, 'BADGES', 24, 108, 'normal', false);
+    const step = Math.floor((SCREEN_W - 60) / Math.max(1, BADGE_ORDER.length));
     for (let i = 0; i < BADGE_ORDER.length; i++) {
       const flagKey = BADGE_ORDER[i]!;
       const owned = save.badges.includes(flagKey);
-      const x = 26 + i * 30;
-      const y = 128;
+      const x = 30 + step * i + Math.floor(step / 2);
+      const y = 125;
       const info = BADGE_INFO[flagKey];
       g.fillStyle = owned ? '#f0d040' : '#b8b0a0';
       g.beginPath();
       for (let k = 0; k < 6; k++) {
         const ang = (Math.PI / 3) * k - Math.PI / 2;
-        const px = x + Math.cos(ang) * 10;
-        const py = y + Math.sin(ang) * 10;
+        const px = x + Math.cos(ang) * 9;
+        const py = y + Math.sin(ang) * 9;
         if (k === 0) g.moveTo(px, py); else g.lineTo(px, py);
       }
       g.closePath();
@@ -691,7 +693,9 @@ export class TrainerCardScene extends Scene {
         g.fillStyle = '#fff8d0';
         g.fillRect(x - 2, y - 4, 4, 8);
       }
-      font.drawCentered(g, (info?.city ?? '').slice(0, 8), x, y + 14, owned ? 'shadow' : 'dim');
+      // First word only - full badge names do not fit under the hexagons.
+      const label = (info?.name ?? '').split(' ')[0] ?? '';
+      font.drawCentered(g, label, x, 138, owned ? 'normal' : 'dim', false);
     }
   }
 }
