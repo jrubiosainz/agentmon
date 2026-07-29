@@ -40,11 +40,15 @@ param nodeVersion string = '22-lts'
 @description('Address space for the application VNet.')
 param vnetAddressPrefix string = '10.20.0.0/16'
 
+@description('Globally unique Web App name; becomes https://<name>.azurewebsites.net.')
+@minLength(2)
+@maxLength(60)
+param webAppName string = namePrefix
+
 var uniqueSuffix = uniqueString(resourceGroup().id)
 // Cosmos account names must be lowercase, alphanumeric + hyphens, <= 44 chars.
 var cosmosAccountName = toLower('${namePrefix}-cosmos-${uniqueSuffix}')
 var appServicePlanName = '${namePrefix}-plan-${uniqueSuffix}'
-var webAppName = '${namePrefix}-web-${uniqueSuffix}'
 var appInsightsName = '${namePrefix}-ai-${uniqueSuffix}'
 var vnetName = '${namePrefix}-vnet'
 var cosmosDnsZoneName = 'privatelink.documents.azure.com'
@@ -118,6 +122,7 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-08-15' = {
     // Reached exclusively through the private endpoint below, using Entra ID.
     publicNetworkAccess: 'Disabled'
     disableLocalAuth: true
+    enableAutomaticFailover: true
   }
 }
 
@@ -167,7 +172,10 @@ resource savesContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/cont
 }
 
 resource cosmosPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
-  name: 'pe-${cosmosAccountName}'
+  // Fixed names: a VNet may only be linked to a private DNS zone once, so
+  // deriving these from the unique suffix would make the template create
+  // duplicates and fail on any redeploy.
+  name: 'pe-${namePrefix}-cosmos'
   location: location
   properties: {
     subnet: {
@@ -192,7 +200,7 @@ resource cosmosDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
 
 resource cosmosDnsLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   parent: cosmosDnsZone
-  name: 'link-${vnetName}'
+  name: 'link-${namePrefix}'
   location: 'global'
   properties: {
     registrationEnabled: false

@@ -5,6 +5,9 @@
     "namePrefix": {
       "value": "agentmon"
     },
+    "webAppName": {
+      "value": "agentmon"
+    },
     "location": {
       "value": "swedencentral"
     },

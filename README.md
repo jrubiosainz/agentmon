@@ -5,7 +5,7 @@ near-future world where the creatures are robots — Stackchan-likes, Reachy Min
 humanoid factory units — the houses are composite-shelled and solar-tiled, and the
 gyms are datacenters.
 
-Live: **https://agentmon-web-vli2qcm6niw26.azurewebsites.net**
+Live: **https://agentmon.azurewebsites.net**
 
 Everything renders into a **240×160** internal framebuffer (the Game Boy Advance
 resolution) and is integer-scaled to the viewport, with colours clamped to the
