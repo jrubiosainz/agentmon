@@ -1,0 +1,804 @@
+/** The battle scene: turns the engine's event stream into a GBA-style fight. */
+
+import { assets } from '../../engine/assets.ts';
+import { audio } from '../../engine/audio.ts';
+import { font } from '../../engine/font.ts';
+import { Scene } from '../../engine/scene.ts';
+import { SCREEN_H, SCREEN_W } from '../../engine/screen.ts';
+import type { SpriteSheet } from '../../engine/sprite.ts';
+import {
+  drawExpBar, drawHpBar, drawHpTag, drawWindow, Menu, PALETTE,
+  TEXTBOX_H, TEXTBOX_Y, Typewriter, type MenuItem,
+} from '../../engine/ui.ts';
+import {
+  displayName, expToNextLevel, isFainted, learnMove, maxHp, STATUS_COLOR, STATUS_SHORT,
+  type AgentInstance,
+} from '../data/agent.ts';
+import { move as moveDef, species, typeDef } from '../data/dex.ts';
+import { item as itemDef, ITEMS } from '../data/items.ts';
+import { trainer as trainerDef } from '../data/trainers.ts';
+import {
+  Battle, type BattleConfig, type BattleEvent, type BattleOutcome, type PlayerAction, type Side,
+} from '../battle/engine.ts';
+import { addAgent, catchSpecies, formatMoney, seeSpecies } from '../state.ts';
+import { BagScene, PartyScene } from './menu.ts';
+
+export interface BattlePayload {
+  foes: AgentInstance[];
+  config: BattleConfig;
+  trainerKey?: string;
+  backdrop?: string;
+  music?: string;
+}
+
+export interface BattleResult {
+  outcome: BattleOutcome;
+  caught?: AgentInstance;
+}
+
+type Step = number | (() => boolean);
+
+const FOE_X = 174;
+const FOE_Y = 68;
+const PLAYER_X = 62;
+const PLAYER_Y = 124;
+
+type Mode = 'script' | 'command' | 'moves' | 'wait';
+
+interface SpriteState {
+  anim: string;
+  frame: number;
+  timer: number;
+  loop: boolean;
+  visible: boolean;
+  offX: number;
+  offY: number;
+  alpha: number;
+  scale: number;
+  flash: number;
+}
+
+function newSpriteState(): SpriteState {
+  return { anim: 'idle', frame: 0, timer: 0, loop: true, visible: false, offX: 0, offY: 0, alpha: 1, scale: 1, flash: 0 };
+}
+
+export class BattleScene extends Scene {
+  private battle!: Battle;
+  private payload!: BattlePayload;
+  private tick = 0;
+  private mode: Mode = 'script';
+  private tw = new Typewriter();
+  private message = '';
+  private awaitingA = false;
+
+  private seq: Generator<Step, void, void> | null = null;
+  private waitFrames = 0;
+  private waitPred: (() => boolean) | null = null;
+
+  private cmdMenu = new Menu([], 2, 2);
+  private moveMenu = new Menu([], 2, 2);
+
+  private pSprite = newSpriteState();
+  private fSprite = newSpriteState();
+  /** Displayed HP values, tweened toward the real ones. */
+  private pHpShown = 0;
+  private fHpShown = 0;
+  private expShown = 0;
+  private ballAnim: { t: number; shakes: number; caught: boolean; total: number } | null = null;
+  private trainerSlide = 0;
+  private result: BattleResult | null = null;
+  private pendingChild: ((r: unknown) => void) | null = null;
+  private caughtAgent: AgentInstance | null = null;
+  private levelPanel: { agent: AgentInstance; timer: number } | null = null;
+
+  override async enter(payload?: unknown): Promise<void> {
+    this.payload = payload as BattlePayload;
+    const save = this.game.save;
+    this.battle = new Battle(save.party, this.payload.foes, this.payload.config);
+    this.pHpShown = this.battle.playerC.agent.hp;
+    this.fHpShown = this.battle.foeC.agent.hp;
+    this.expShown = this.expRatio();
+    audio.playMusic(this.payload.music ?? 'battleWild', true);
+    this.game.transitions.cover();
+    void this.game.transitions.in('fade', 26);
+    this.seq = this.introSequence();
+    this.mode = 'script';
+  }
+
+  override resume(result?: unknown): void {
+    this.game.input.clear();
+    audio.playMusic(this.payload.music ?? 'battleWild');
+    const cb = this.pendingChild;
+    this.pendingChild = null;
+    cb?.(result);
+  }
+
+  // ------------------------------------------------------------- sequencing
+  private pushChild<T>(scene: Scene, payload?: unknown): Promise<T | undefined> {
+    return new Promise<T | undefined>((resolve) => {
+      this.pendingChild = (r) => resolve(r as T | undefined);
+      void this.game.scenes.push(scene, payload);
+    });
+  }
+
+  private *say(text: string, hold = true): Generator<Step, void, void> {
+    this.tw.speed = this.game.textDelay;
+    this.tw.setText(text);
+    this.message = text;
+    this.awaitingA = false;
+    yield () => {
+      this.tw.update();
+      return this.tw.pageComplete && this.tw.isLastPage;
+    };
+    if (hold) {
+      this.awaitingA = true;
+      let elapsed = 0;
+      yield () => {
+        elapsed++;
+        if (this.game.input.pressed('a') || this.game.input.pressed('b')) return true;
+        return elapsed > 78;
+      };
+      this.awaitingA = false;
+    } else {
+      yield 18;
+    }
+  }
+
+  private sprite(side: Side): SpriteState {
+    return side === 'player' ? this.pSprite : this.fSprite;
+  }
+
+  private play(side: Side, anim: string, loop = false): void {
+    const s = this.sprite(side);
+    s.anim = anim;
+    s.frame = 0;
+    s.timer = 0;
+    s.loop = loop;
+  }
+
+  private sheetFor(side: Side): SpriteSheet | null {
+    const agent = side === 'player' ? this.battle.playerC.agent : this.battle.foeC.agent;
+    return this.game.creatureSheet(agent.speciesKey, side === 'player');
+  }
+
+  // ------------------------------------------------------------------ intro
+  private *introSequence(): Generator<Step, void, void> {
+    const cfg = this.payload.config;
+    if (cfg.kind === 'trainer') {
+      this.trainerSlide = 0;
+      yield () => {
+        this.trainerSlide = Math.min(1, this.trainerSlide + 0.045);
+        return this.trainerSlide >= 1;
+      };
+      yield* this.say(`${cfg.trainerName ?? 'A CHALLENGER'} wants to battle!`);
+      yield () => {
+        this.trainerSlide = Math.max(0, this.trainerSlide - 0.06);
+        return this.trainerSlide <= 0;
+      };
+      this.fSprite.visible = true;
+      this.play('foe', 'appear');
+      yield* this.say(`${cfg.trainerName ?? 'FOE'} sent out ${this.battle.foeC.agent ? displayName(this.battle.foeC.agent) : ''}!`, false);
+    } else {
+      this.fSprite.visible = true;
+      this.play('foe', 'appear');
+      seeSpecies(this.game.save, this.battle.foeC.agent.speciesKey);
+      yield* this.say(`A wild ${displayName(this.battle.foeC.agent)} appeared!`);
+    }
+    this.play('foe', 'idle', true);
+
+    this.pSprite.visible = true;
+    this.play('player', 'appear');
+    yield* this.say(`Go! ${displayName(this.battle.playerC.agent)}!`, false);
+    this.play('player', 'idle', true);
+    this.syncBars(true);
+    this.openCommandMenu();
+  }
+
+  // ---------------------------------------------------------------- menus
+  private openCommandMenu(): void {
+    this.seq = null;
+    this.mode = 'command';
+    this.message = `What will ${displayName(this.battle.playerC.agent)} do?`;
+    this.tw.setText(this.message);
+    this.tw.skipAll();
+    this.cmdMenu.setItems([
+      { label: 'FIGHT', value: 'fight' },
+      { label: 'BAG', value: 'bag' },
+      { label: 'AGENT', value: 'agent' },
+      { label: this.payload.config.kind === 'wild' ? 'RUN' : 'RUN', value: 'run' },
+    ]);
+  }
+
+  private openMoveMenu(): void {
+    const agent = this.battle.playerC.agent;
+    const items: MenuItem[] = agent.moves.map((slot, i) => ({
+      label: moveDef(slot.key).name,
+      value: String(i),
+      disabled: slot.pp <= 0,
+    }));
+    if (items.length === 0) items.push({ label: 'STRUGGLE', value: '-1' });
+    this.moveMenu.setItems(items);
+    this.mode = 'moves';
+  }
+
+  // ----------------------------------------------------------------- update
+  update(): void {
+    this.tick++;
+    this.updateSprites();
+    this.tweenBars();
+    if (this.levelPanel && --this.levelPanel.timer <= 0) this.levelPanel = null;
+
+    if (this.seq) { this.advanceSequence(); return; }
+
+    const inp = this.game.input;
+    if (this.mode === 'command') {
+      if ((inp.repeat('up') || inp.repeat('down')) && this.cmdMenu.move(0, inp.repeat('down') ? 1 : -1)) audio.sfx('cursor');
+      if ((inp.repeat('left') || inp.repeat('right')) && this.cmdMenu.move(inp.repeat('right') ? 1 : -1, 0)) audio.sfx('cursor');
+      if (inp.pressed('a')) {
+        audio.sfx('select');
+        const v = this.cmdMenu.current?.value;
+        if (v === 'fight') this.openMoveMenu();
+        else if (v === 'bag') void this.chooseItem();
+        else if (v === 'agent') void this.chooseSwitch();
+        else if (v === 'run') this.runSequence({ kind: 'run' });
+      }
+      return;
+    }
+
+    if (this.mode === 'moves') {
+      if ((inp.repeat('up') || inp.repeat('down')) && this.moveMenu.move(0, inp.repeat('down') ? 1 : -1)) audio.sfx('cursor');
+      if ((inp.repeat('left') || inp.repeat('right')) && this.moveMenu.move(inp.repeat('right') ? 1 : -1, 0)) audio.sfx('cursor');
+      if (inp.pressed('b')) { audio.sfx('cancel'); this.openCommandMenu(); return; }
+      if (inp.pressed('a')) {
+        const cur = this.moveMenu.current;
+        if (!cur) return;
+        if (cur.disabled) { audio.sfx('error'); return; }
+        audio.sfx('select');
+        this.runSequence({ kind: 'move', index: Number(cur.value) });
+      }
+    }
+  }
+
+  private advanceSequence(): void {
+    if (this.waitPred) {
+      if (!this.waitPred()) return;
+      this.waitPred = null;
+    }
+    if (this.waitFrames > 0) { this.waitFrames--; return; }
+    const next = this.seq!.next();
+    if (next.done) { this.seq = null; return; }
+    const step = next.value;
+    if (typeof step === 'number') this.waitFrames = step;
+    else this.waitPred = step;
+  }
+
+  private runSequence(action: PlayerAction): void {
+    this.mode = 'script';
+    this.seq = this.turnSequence(action);
+  }
+
+  // ------------------------------------------------------------------ turns
+  private *turnSequence(action: PlayerAction): Generator<Step, void, void> {
+    const events = this.battle.takeTurn(action);
+    yield* this.playEvents(events);
+    yield* this.postTurn();
+  }
+
+  private *postTurn(): Generator<Step, void, void> {
+    if (this.battle.outcome) { yield* this.finish(); return; }
+    // Someone fainted and needs replacing.
+    if (isFainted(this.battle.playerC.agent)) {
+      const alive = this.game.save.party.some((a) => !isFainted(a));
+      if (!alive) { yield* this.finish(); return; }
+      yield* this.say('Choose your next AGENTMON!', false);
+      let index = -1;
+      yield () => {
+        if (this.pendingChild) return false;
+        if (index >= 0) return true;
+        void this.pushChild<{ index: number }>(new PartyScene(), { mode: 'switchIn' })
+          .then((r) => { index = r?.index ?? this.game.save.party.findIndex((a) => !isFainted(a)); });
+        return false;
+      };
+      yield () => index >= 0;
+      const events = this.battle.replaceFainted(index);
+      yield* this.playEvents(events);
+    }
+    if (this.battle.outcome) { yield* this.finish(); return; }
+    this.openCommandMenu();
+  }
+
+  private *finish(): Generator<Step, void, void> {
+    const outcome = this.battle.outcome ?? 'lose';
+    if (outcome === 'win' && this.payload.config.kind === 'trainer') {
+      const key = this.payload.config.trainerKey;
+      const t = key ? trainerDef(key) : null;
+      const prize = this.battle.prize();
+      this.game.save.money = Math.min(999999, this.game.save.money + prize);
+      audio.playMusic('victory', true);
+      yield* this.say(`${this.payload.config.trainerName ?? t?.name ?? 'FOE'} was defeated!`);
+      yield* this.say(`${this.game.save.playerName} got \u00a5${formatMoney(prize)} for winning!`);
+    } else if (outcome === 'win') {
+      audio.playMusic('victory', true);
+    } else if (outcome === 'caught') {
+      const caught = this.battle.caught;
+      if (caught) {
+        this.caughtAgent = caught;
+        catchSpecies(this.game.save, caught.speciesKey);
+        const where = addAgent(this.game.save, caught);
+        audio.playMusic('victory', true);
+        yield* this.say(`Gotcha! ${displayName(caught)} was captured!`);
+        const sp = species(caught.speciesKey);
+        yield* this.say(`${sp.name}'s data was added to the AGENTDEX.`);
+        if (where === 'box') yield* this.say(`${displayName(caught)} was transferred to STORAGE.`);
+        else if (where === 'full') yield* this.say('Your storage is full! It had to be released...');
+      }
+    } else if (outcome === 'fled') {
+      yield* this.say('Got away safely!', false);
+    }
+    this.result = { outcome, caught: this.caughtAgent ?? undefined };
+    yield 12;
+    this.game.transitions.cover();
+    this.game.pop(this.result);
+  }
+
+  // ----------------------------------------------------------------- events
+  private *playEvents(events: BattleEvent[]): Generator<Step, void, void> {
+    for (const ev of events) {
+      switch (ev.t) {
+        case 'text':
+          yield* this.say(ev.text, ev.wait !== false);
+          break;
+        case 'sfx':
+          audio.sfx(ev.name as never);
+          break;
+        case 'useMove': {
+          this.play(ev.side, 'attack');
+          yield 6;
+          break;
+        }
+        case 'damage': {
+          const s = this.sprite(ev.side);
+          this.play(ev.side, 'hit');
+          s.flash = 20;
+          audio.sfx(ev.effectiveness > 1 ? 'hitSuper' : ev.effectiveness < 1 ? 'hitWeak' : 'hitNormal');
+          if (ev.side === 'player') this.pHpShown = ev.from; else this.fHpShown = ev.from;
+          yield () => (ev.side === 'player'
+            ? Math.abs(this.pHpShown - this.battle.playerC.agent.hp) < 0.6
+            : Math.abs(this.fHpShown - this.battle.foeC.agent.hp) < 0.6);
+          this.play(ev.side, 'idle', true);
+          break;
+        }
+        case 'heal': {
+          audio.sfx('heal');
+          yield () => (ev.side === 'player'
+            ? Math.abs(this.pHpShown - this.battle.playerC.agent.hp) < 0.6
+            : Math.abs(this.fHpShown - this.battle.foeC.agent.hp) < 0.6);
+          break;
+        }
+        case 'faint': {
+          audio.sfx('faint');
+          this.play(ev.side, 'faint');
+          const s = this.sprite(ev.side);
+          yield () => {
+            s.offY += 2.2;
+            s.alpha = Math.max(0, s.alpha - 0.05);
+            return s.alpha <= 0;
+          };
+          s.visible = false;
+          break;
+        }
+        case 'withdraw': {
+          const s = this.sprite(ev.side);
+          yield () => {
+            s.scale = Math.max(0.05, s.scale - 0.08);
+            s.alpha = Math.max(0, s.alpha - 0.09);
+            return s.scale <= 0.06;
+          };
+          s.visible = false;
+          break;
+        }
+        case 'sendOut': {
+          const s = this.sprite(ev.side);
+          s.visible = true;
+          s.alpha = 1;
+          s.scale = 1;
+          s.offX = 0;
+          s.offY = 0;
+          this.play(ev.side, 'appear');
+          if (ev.side === 'player') this.pHpShown = this.battle.playerC.agent.hp;
+          else {
+            this.fHpShown = this.battle.foeC.agent.hp;
+            seeSpecies(this.game.save, this.battle.foeC.agent.speciesKey);
+          }
+          this.expShown = this.expRatio();
+          yield 24;
+          this.play(ev.side, 'idle', true);
+          break;
+        }
+        case 'status':
+        case 'statChange':
+        case 'miss':
+        case 'noEffect':
+          break;
+        case 'throwBall': {
+          audio.sfx('ballThrow');
+          this.ballAnim = { t: 0, shakes: ev.shakes, caught: ev.caught, total: 0 };
+          const fs = this.fSprite;
+          yield () => {
+            this.ballAnim!.t += 1;
+            return this.ballAnim!.t > 34;
+          };
+          yield () => {
+            fs.scale = Math.max(0.05, fs.scale - 0.09);
+            fs.alpha = Math.max(0, fs.alpha - 0.1);
+            return fs.scale <= 0.06;
+          };
+          fs.visible = false;
+          for (let i = 0; i < ev.shakes; i++) {
+            yield 26;
+            audio.sfx('ballShake');
+            this.ballAnim!.total = i + 1;
+          }
+          yield 24;
+          if (ev.caught) {
+            audio.sfx('ballCatch');
+            yield 24;
+          } else {
+            fs.visible = true;
+            fs.scale = 1;
+            fs.alpha = 1;
+            this.ballAnim = null;
+            this.play('foe', 'appear');
+            yield 16;
+            this.play('foe', 'idle', true);
+          }
+          break;
+        }
+        case 'useItem':
+          audio.sfx('item');
+          break;
+        case 'exp': {
+          const target = this.game.save.party[ev.index];
+          if (!target) break;
+          if (ev.index === this.battle.player.activeIndex) {
+            audio.sfx('charge');
+            yield () => Math.abs(this.expShown - this.expRatio()) < 0.01;
+          }
+          break;
+        }
+        case 'levelUp': {
+          audio.sfx('levelUp');
+          const agent = this.game.save.party[ev.index];
+          if (agent) this.levelPanel = { agent, timer: 110 };
+          this.expShown = 0;
+          yield 40;
+          break;
+        }
+        case 'learnMove': {
+          const agent = this.game.save.party[ev.index];
+          if (!agent) break;
+          const md = moveDef(ev.moveKey);
+          if (agent.moves.length < 4) {
+            learnMove(agent, ev.moveKey);
+            yield* this.say(`${displayName(agent)} learned ${md.name}!`);
+          } else {
+            yield* this.say(`${displayName(agent)} wants to learn ${md.name},`);
+            yield* this.say(`but it already knows four moves. It gave up on ${md.name}.`);
+          }
+          break;
+        }
+        case 'evolve': {
+          const agent = this.game.save.party[ev.index];
+          if (agent) agent.pendingEvolution = ev.to;
+          break;
+        }
+        case 'flee':
+          if (ev.success) audio.sfx('flee');
+          break;
+        case 'requestSwitch':
+          break;
+        case 'end':
+          break;
+      }
+    }
+  }
+
+  // ------------------------------------------------------------- sub-scenes
+  private async chooseItem(): Promise<void> {
+    this.mode = 'wait';
+    const res = await this.pushChild<{ key: string }>(new BagScene(), { mode: 'battle' });
+    if (!res?.key) { this.openCommandMenu(); return; }
+    const def = itemDef(res.key);
+    if (def.category === 'medicine' || def.revive !== undefined) {
+      const target = await this.pushChild<{ index: number }>(new PartyScene(), {
+        mode: 'useItem', itemKey: res.key,
+      });
+      if (target?.index === undefined) { this.openCommandMenu(); return; }
+      this.runSequence({ kind: 'item', key: res.key, targetIndex: target.index });
+      return;
+    }
+    this.runSequence({ kind: 'item', key: res.key });
+  }
+
+  private async chooseSwitch(): Promise<void> {
+    this.mode = 'wait';
+    const res = await this.pushChild<{ index: number }>(new PartyScene(), { mode: 'battle' });
+    if (res?.index === undefined) { this.openCommandMenu(); return; }
+    if (res.index === this.battle.player.activeIndex) { this.openCommandMenu(); return; }
+    if (isFainted(this.game.save.party[res.index]!)) { this.openCommandMenu(); return; }
+    this.runSequence({ kind: 'switch', index: res.index });
+  }
+
+  // ---------------------------------------------------------------- helpers
+  private expRatio(): number {
+    const a = this.battle.playerC.agent;
+    const { have, need } = expToNextLevel(a);
+    return need <= 0 ? 1 : Math.max(0, Math.min(1, have / need));
+  }
+
+  private syncBars(snap: boolean): void {
+    if (!snap) return;
+    this.pHpShown = this.battle.playerC.agent.hp;
+    this.fHpShown = this.battle.foeC.agent.hp;
+    this.expShown = this.expRatio();
+  }
+
+  private tweenBars(): void {
+    const pTarget = this.battle.playerC.agent.hp;
+    const fTarget = this.battle.foeC.agent.hp;
+    const pMax = maxHp(this.battle.playerC.agent);
+    const fMax = maxHp(this.battle.foeC.agent);
+    const pStep = Math.max(0.35, pMax / 90);
+    const fStep = Math.max(0.35, fMax / 90);
+    if (this.pHpShown > pTarget) this.pHpShown = Math.max(pTarget, this.pHpShown - pStep);
+    else if (this.pHpShown < pTarget) this.pHpShown = Math.min(pTarget, this.pHpShown + pStep);
+    if (this.fHpShown > fTarget) this.fHpShown = Math.max(fTarget, this.fHpShown - fStep);
+    else if (this.fHpShown < fTarget) this.fHpShown = Math.min(fTarget, this.fHpShown + fStep);
+
+    const eTarget = this.expRatio();
+    if (this.expShown < eTarget) this.expShown = Math.min(eTarget, this.expShown + 0.012);
+    else if (this.expShown > eTarget) this.expShown = Math.max(eTarget, this.expShown - 0.03);
+  }
+
+  private updateSprites(): void {
+    for (const side of ['player', 'foe'] as Side[]) {
+      const s = this.sprite(side);
+      if (s.flash > 0) s.flash--;
+      const sheet = this.sheetFor(side);
+      if (!sheet || !sheet.has(s.anim)) continue;
+      const frames = sheet.frameCount(s.anim);
+      const rate = s.anim === 'idle' ? 10 : 5;
+      if (++s.timer >= rate) {
+        s.timer = 0;
+        if (s.frame + 1 >= frames) {
+          if (s.loop) s.frame = 0;
+        } else s.frame++;
+      }
+    }
+  }
+
+  // ----------------------------------------------------------------- render
+  render(g: CanvasRenderingContext2D): void {
+    this.drawBackdrop(g);
+    this.drawPlatforms(g);
+
+    if (this.trainerSlide > 0) this.drawTrainerIntro(g);
+
+    this.drawCreature(g, 'foe');
+    this.drawCreature(g, 'player');
+    if (this.ballAnim) this.drawBall(g);
+
+    if (this.fSprite.visible || this.battle.foeC.agent.hp > 0) this.drawFoeBox(g);
+    if (this.pSprite.visible) this.drawPlayerBox(g);
+
+    if (this.levelPanel) this.drawLevelPanel(g);
+
+    this.drawTextbox(g);
+    if (this.mode === 'command') this.drawCommandMenu(g);
+    if (this.mode === 'moves') this.drawMoveMenu(g);
+  }
+
+  private drawBackdrop(g: CanvasRenderingContext2D): void {
+    const img = assets.image(`bg:${this.payload.backdrop ?? 'bg_grass'}`);
+    if (img) {
+      g.drawImage(img, 0, 0, SCREEN_W, SCREEN_H - TEXTBOX_H);
+    } else {
+      const grad = g.createLinearGradient(0, 0, 0, SCREEN_H);
+      grad.addColorStop(0, '#78b0e8');
+      grad.addColorStop(1, '#c8e0f8');
+      g.fillStyle = grad;
+      g.fillRect(0, 0, SCREEN_W, SCREEN_H);
+    }
+    g.fillStyle = '#f8f8f8';
+    g.fillRect(0, SCREEN_H - TEXTBOX_H - 2, SCREEN_W, TEXTBOX_H + 2);
+  }
+
+  private drawPlatforms(g: CanvasRenderingContext2D): void {
+    const drawPad = (cx: number, cy: number, rx: number, light: string, dark: string): void => {
+      g.fillStyle = dark;
+      g.beginPath();
+      g.ellipse(cx, cy, rx, rx * 0.3, 0, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = light;
+      g.beginPath();
+      g.ellipse(cx, cy - 2, rx - 2, rx * 0.26, 0, 0, Math.PI * 2);
+      g.fill();
+    };
+    drawPad(FOE_X, FOE_Y + 4, 40, '#88c078', '#4c7c4c');
+    drawPad(PLAYER_X, PLAYER_Y + 4, 52, '#88c078', '#4c7c4c');
+  }
+
+  private drawCreature(g: CanvasRenderingContext2D, side: Side): void {
+    const s = this.sprite(side);
+    if (!s.visible) return;
+    const agent = side === 'player' ? this.battle.playerC.agent : this.battle.foeC.agent;
+    const sheet = this.sheetFor(side);
+    const baseX = side === 'player' ? PLAYER_X : FOE_X;
+    const baseY = side === 'player' ? PLAYER_Y : FOE_Y;
+    const x = baseX + s.offX;
+    const y = baseY + s.offY;
+
+    if (!sheet) {
+      // Placeholder silhouette so the fight still reads without art.
+      const sp = species(agent.speciesKey);
+      const w = side === 'player' ? 56 : 46;
+      g.globalAlpha = s.alpha;
+      g.fillStyle = typeDef(sp.types[0]!).color ?? '#586074';
+      g.fillRect(x - w / 2, y - w, w, w);
+      g.globalAlpha = 1;
+      font.drawCentered(g, sp.name, x, y - w - 10, 'shadow');
+      return;
+    }
+
+    const anim = sheet.has(s.anim) ? s.anim : 'idle';
+    sheet.drawFrame(g, anim, s.frame, x, y, { alpha: s.alpha, scale: s.scale });
+    if (s.flash > 0 && Math.floor(s.flash / 3) % 2 === 0) {
+      g.save();
+      g.globalCompositeOperation = 'lighter';
+      g.globalAlpha = 0.35;
+      sheet.drawFrame(g, anim, s.frame, x, y, { alpha: 1, scale: s.scale });
+      g.restore();
+    }
+  }
+
+  private drawBall(g: CanvasRenderingContext2D): void {
+    const b = this.ballAnim!;
+    const t = Math.min(1, b.t / 34);
+    const x = PLAYER_X + (FOE_X - PLAYER_X) * t;
+    const y = PLAYER_Y - 20 + (FOE_Y - PLAYER_Y + 20) * t - Math.sin(t * Math.PI) * 46;
+    const wobble = b.total > 0 ? Math.sin(this.tick / 3) * 3 : 0;
+    const cx = t >= 1 ? FOE_X + wobble : x;
+    const cy = t >= 1 ? FOE_Y - 6 : y;
+    g.save();
+    g.translate(cx, cy);
+    if (t < 1) g.rotate(b.t * 0.4);
+    g.fillStyle = '#101828';
+    g.fillRect(-6, -6, 12, 12);
+    g.fillStyle = '#d84038';
+    g.fillRect(-5, -5, 10, 4);
+    g.fillStyle = '#f8f8f8';
+    g.fillRect(-5, -1, 10, 5);
+    g.fillStyle = '#101828';
+    g.fillRect(-5, -1, 10, 1);
+    g.fillStyle = '#f0c840';
+    g.fillRect(-2, -2, 4, 3);
+    g.restore();
+  }
+
+  private drawTrainerIntro(g: CanvasRenderingContext2D): void {
+    const key = this.payload.config.trainerKey;
+    const t = key ? trainerDef(key) : null;
+    const img = t ? assets.image(`tr:${t.sprite}`) : null;
+    const x = SCREEN_W - 60 + (1 - this.trainerSlide) * 120;
+    if (img) {
+      g.drawImage(img, x - img.width / 2, 96 - img.height);
+    } else {
+      g.fillStyle = '#404868';
+      g.fillRect(x - 22, 34, 44, 62);
+    }
+  }
+
+  private drawFoeBox(g: CanvasRenderingContext2D): void {
+    const a = this.battle.foeC.agent;
+    const x = 6;
+    const y = 10;
+    drawWindow(g, x, y, 108, 30, 'flat');
+    font.draw(g, displayName(a).slice(0, 10), x + 6, y + 4, 'normal', false);
+    font.drawRight(g, `:L${a.level}`, x + 102, y + 4, 'normal', false);
+    drawHpTag(g, x + 6, y + 17);
+    drawHpBar(g, x + 24, y + 17, 74, this.fHpShown / maxHp(a));
+    if (a.status !== 'none') {
+      g.fillStyle = STATUS_COLOR[a.status];
+      g.fillRect(x + 6, y + 24, 22, 8);
+      font.draw(g, STATUS_SHORT[a.status], x + 8, y + 25, 'shadow', false);
+    }
+    if (this.game.save.dex.caught.includes(a.speciesKey)) {
+      g.fillStyle = PALETTE.gold;
+      g.fillRect(x + 100, y + 24, 6, 6);
+      g.fillStyle = PALETTE.dark;
+      g.fillRect(x + 102, y + 26, 2, 2);
+    }
+  }
+
+  private drawPlayerBox(g: CanvasRenderingContext2D): void {
+    const a = this.battle.playerC.agent;
+    const x = SCREEN_W - 118;
+    const y = SCREEN_H - TEXTBOX_H - 46;
+    drawWindow(g, x, y, 112, 40, 'flat');
+    font.draw(g, displayName(a).slice(0, 10), x + 6, y + 3, 'normal', false);
+    font.drawRight(g, `:L${a.level}`, x + 106, y + 3, 'normal', false);
+    drawHpTag(g, x + 6, y + 15);
+    drawHpBar(g, x + 24, y + 15, 74, this.pHpShown / maxHp(a));
+    font.drawRight(g, `${Math.ceil(this.pHpShown)}/${maxHp(a)}`, x + 106, y + 24, 'normal', false);
+    drawExpBar(g, x + 6, y + 34, 100, this.expShown);
+    if (a.status !== 'none') {
+      g.fillStyle = STATUS_COLOR[a.status];
+      g.fillRect(x + 6, y + 24, 22, 8);
+      font.draw(g, STATUS_SHORT[a.status], x + 8, y + 25, 'shadow', false);
+    }
+  }
+
+  private drawLevelPanel(g: CanvasRenderingContext2D): void {
+    const a = this.levelPanel!.agent;
+    const x = SCREEN_W - 96;
+    const y = 34;
+    drawWindow(g, x, y, 92, 62);
+    font.draw(g, 'LEVEL UP!', x + 8, y + 4, 'gold', false);
+    font.draw(g, `Lv. ${a.level}`, x + 8, y + 16, 'normal', false);
+    font.draw(g, `HP  ${maxHp(a)}`, x + 8, y + 28, 'normal', false);
+    font.draw(g, displayName(a).slice(0, 10), x + 8, y + 44, 'dim', false);
+  }
+
+  private drawTextbox(g: CanvasRenderingContext2D): void {
+    if (this.mode === 'command' || this.mode === 'moves') {
+      drawWindow(g, 2, TEXTBOX_Y, 140, TEXTBOX_H);
+      const lines = font.wrap(this.message, 128);
+      for (const [i, line] of lines.slice(0, 3).entries()) {
+        font.draw(g, line, 10, TEXTBOX_Y + 8 + i * 12, 'normal', false);
+      }
+      return;
+    }
+    this.tw.draw(g, this.awaitingA && Math.floor(this.tick / 16) % 2 === 0);
+  }
+
+  private drawCommandMenu(g: CanvasRenderingContext2D): void {
+    const x = 146;
+    const y = TEXTBOX_Y;
+    drawWindow(g, x, y, SCREEN_W - x - 2, TEXTBOX_H);
+    this.cmdMenu.draw(g, x + 16, y + 10, 18, 44);
+  }
+
+  private drawMoveMenu(g: CanvasRenderingContext2D): void {
+    const agent = this.battle.playerC.agent;
+    const x = 2;
+    const y = TEXTBOX_Y;
+    drawWindow(g, x, y, 156, TEXTBOX_H);
+    this.moveMenu.draw(g, x + 14, y + 8, 13, 70);
+
+    // PP / type panel on the right, exactly like the originals.
+    drawWindow(g, 160, y, SCREEN_W - 162, TEXTBOX_H);
+    const slot = agent.moves[this.moveMenu.index];
+    if (!slot) return;
+    const md = moveDef(slot.key);
+    font.draw(g, 'PP', 168, y + 8, 'dim', false);
+    font.drawRight(g, `${slot.pp}/${slot.maxPp}`, SCREEN_W - 8, y + 8, 'normal', false);
+    const td = typeDef(md.type);
+    g.fillStyle = td.color ?? '#586074';
+    g.fillRect(166, y + 22, 66, 12);
+    g.fillStyle = 'rgba(0,0,0,0.25)';
+    g.fillRect(166, y + 32, 66, 2);
+    font.drawCentered(g, td.name.toUpperCase(), 199, y + 24, 'shadow');
+  }
+}
+
+/** Utility used by the party screen to preview a battle item's usefulness. */
+export function itemUsableInBattle(key: string): boolean {
+  const def = ITEMS[key];
+  if (!def) return false;
+  return def.category === 'ball' || def.category === 'medicine' || def.category === 'battle';
+}
+
+/** Convenience for scenes that need to know if the bag has any balls left. */
+export function hasAnyBall(bag: { key: string; count: number }[]): boolean {
+  return bag.some((b) => ITEMS[b.key]?.category === 'ball' && b.count > 0);
+}

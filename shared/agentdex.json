@@ -1,0 +1,3771 @@
+{
+ "version": 1,
+ "types": [
+  {
+   "key": "volt",
+   "name": "VOLT",
+   "color": "#f8d030",
+   "dark": "#a08010"
+  },
+  {
+   "key": "alloy",
+   "name": "ALLOY",
+   "color": "#b8b8d0",
+   "dark": "#68687f"
+  },
+  {
+   "key": "data",
+   "name": "DATA",
+   "color": "#58c8f0",
+   "dark": "#2a7a97"
+  },
+  {
+   "key": "thermal",
+   "name": "THERMAL",
+   "color": "#f08030",
+   "dark": "#95491a"
+  },
+  {
+   "key": "cryo",
+   "name": "CRYO",
+   "color": "#98d8d8",
+   "dark": "#4d8a8a"
+  },
+  {
+   "key": "servo",
+   "name": "SERVO",
+   "color": "#c03028",
+   "dark": "#75201b"
+  },
+  {
+   "key": "optic",
+   "name": "OPTIC",
+   "color": "#f8f0a0",
+   "dark": "#9a9553"
+  },
+  {
+   "key": "neural",
+   "name": "NEURAL",
+   "color": "#f85888",
+   "dark": "#9a3454"
+  },
+  {
+   "key": "viral",
+   "name": "VIRAL",
+   "color": "#a040a0",
+   "dark": "#622562"
+  },
+  {
+   "key": "quantum",
+   "name": "QUANTUM",
+   "color": "#7038f8",
+   "dark": "#43219a"
+  }
+ ],
+ "typeChart": {
+  "volt": {
+   "alloy": 2.0,
+   "optic": 2.0,
+   "cryo": 2.0,
+   "volt": 0.5,
+   "data": 0.5,
+   "quantum": 0.5,
+   "servo": 1.0
+  },
+  "alloy": {
+   "cryo": 2.0,
+   "servo": 2.0,
+   "neural": 2.0,
+   "thermal": 0.5,
+   "volt": 0.5,
+   "alloy": 0.5,
+   "optic": 1.0
+  },
+  "data": {
+   "neural": 2.0,
+   "quantum": 2.0,
+   "viral": 0.5,
+   "alloy": 0.5,
+   "data": 0.5
+  },
+  "thermal": {
+   "alloy": 2.0,
+   "cryo": 2.0,
+   "viral": 2.0,
+   "thermal": 0.5,
+   "servo": 0.5,
+   "quantum": 0.5
+  },
+  "cryo": {
+   "servo": 2.0,
+   "quantum": 2.0,
+   "thermal": 0.5,
+   "cryo": 0.5,
+   "alloy": 0.5,
+   "data": 1.0
+  },
+  "servo": {
+   "alloy": 2.0,
+   "cryo": 2.0,
+   "viral": 2.0,
+   "neural": 0.5,
+   "optic": 0.5,
+   "servo": 0.5
+  },
+  "optic": {
+   "viral": 2.0,
+   "neural": 2.0,
+   "data": 0.5,
+   "optic": 0.5,
+   "alloy": 0.5,
+   "quantum": 1.0
+  },
+  "neural": {
+   "servo": 2.0,
+   "viral": 2.0,
+   "data": 0.5,
+   "neural": 0.5,
+   "alloy": 0.5
+  },
+  "viral": {
+   "data": 2.0,
+   "optic": 2.0,
+   "alloy": 0.0,
+   "viral": 0.5,
+   "thermal": 0.5,
+   "quantum": 0.5
+  },
+  "quantum": {
+   "quantum": 2.0,
+   "neural": 2.0,
+   "data": 0.5,
+   "alloy": 0.5
+  }
+ },
+ "moves": [
+  {
+   "key": "tackle",
+   "name": "RAM",
+   "type": "servo",
+   "category": "physical",
+   "power": 40,
+   "accuracy": 100,
+   "pp": 35,
+   "priority": 0,
+   "effect": null,
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "A basic full-body charge."
+  },
+  {
+   "key": "scratch",
+   "name": "CLAW SWIPE",
+   "type": "servo",
+   "category": "physical",
+   "power": 40,
+   "accuracy": 100,
+   "pp": 35,
+   "priority": 0,
+   "effect": null,
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "Rakes the foe with metal claws."
+  },
+  {
+   "key": "quick_jab",
+   "name": "QUICK JAB",
+   "type": "servo",
+   "category": "physical",
+   "power": 40,
+   "accuracy": 100,
+   "pp": 30,
+   "priority": 1,
+   "effect": null,
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "Always strikes first."
+  },
+  {
+   "key": "slam",
+   "name": "PISTON SLAM",
+   "type": "servo",
+   "category": "physical",
+   "power": 80,
+   "accuracy": 75,
+   "pp": 20,
+   "priority": 0,
+   "effect": null,
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "A heavy hydraulic strike."
+  },
+  {
+   "key": "hyper_drive",
+   "name": "HYPER DRIVE",
+   "type": "servo",
+   "category": "physical",
+   "power": 150,
+   "accuracy": 90,
+   "pp": 5,
+   "priority": 0,
+   "effect": "recharge",
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "Devastating. User must recharge."
+  },
+  {
+   "key": "gear_grind",
+   "name": "GEAR GRIND",
+   "type": "servo",
+   "category": "physical",
+   "power": 65,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "def_down",
+   "effectChance": 20,
+   "target": "foe",
+   "desc": "May lower DEFENSE."
+  },
+  {
+   "key": "overclock",
+   "name": "OVERCLOCK",
+   "type": "servo",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "spe_up2",
+   "effectChance": 0,
+   "target": "self",
+   "desc": "Sharply raises SPEED."
+  },
+  {
+   "key": "brace",
+   "name": "BRACE",
+   "type": "servo",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 30,
+   "priority": 0,
+   "effect": "def_up",
+   "effectChance": 0,
+   "target": "self",
+   "desc": "Raises DEFENSE."
+  },
+  {
+   "key": "power_surge",
+   "name": "POWER SURGE",
+   "type": "servo",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "atk_up",
+   "effectChance": 0,
+   "target": "self",
+   "desc": "Raises ATTACK."
+  },
+  {
+   "key": "recalibrate",
+   "name": "RECALIBRATE",
+   "type": "servo",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 10,
+   "priority": 0,
+   "effect": "heal_half",
+   "effectChance": 0,
+   "target": "self",
+   "desc": "Restores half of max HP."
+  },
+  {
+   "key": "smokescreen",
+   "name": "SMOKE VENT",
+   "type": "servo",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "acc_down",
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "Lowers the foe's ACCURACY."
+  },
+  {
+   "key": "self_repair",
+   "name": "SELF-REPAIR",
+   "type": "servo",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 10,
+   "priority": 0,
+   "effect": "heal_half",
+   "effectChance": 0,
+   "target": "self",
+   "desc": "Nanobots mend the user."
+  },
+  {
+   "key": "spark",
+   "name": "SPARK",
+   "type": "volt",
+   "category": "special",
+   "power": 40,
+   "accuracy": 100,
+   "pp": 30,
+   "priority": 0,
+   "effect": "paralyze",
+   "effectChance": 15,
+   "target": "foe",
+   "desc": "May PARALYZE."
+  },
+  {
+   "key": "volt_bite",
+   "name": "VOLT BITE",
+   "type": "volt",
+   "category": "physical",
+   "power": 65,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "paralyze",
+   "effectChance": 20,
+   "target": "foe",
+   "desc": "May PARALYZE."
+  },
+  {
+   "key": "arc_bolt",
+   "name": "ARC BOLT",
+   "type": "volt",
+   "category": "special",
+   "power": 90,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "paralyze",
+   "effectChance": 10,
+   "target": "foe",
+   "desc": "A searing arc of current."
+  },
+  {
+   "key": "thunder_core",
+   "name": "THUNDER CORE",
+   "type": "volt",
+   "category": "special",
+   "power": 120,
+   "accuracy": 70,
+   "pp": 5,
+   "priority": 0,
+   "effect": "paralyze",
+   "effectChance": 30,
+   "target": "foe",
+   "desc": "Powerful but wild."
+  },
+  {
+   "key": "static_field",
+   "name": "STATIC FIELD",
+   "type": "volt",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "paralyze",
+   "effectChance": 100,
+   "target": "foe",
+   "desc": "PARALYZES the foe."
+  },
+  {
+   "key": "charge_up",
+   "name": "CHARGE UP",
+   "type": "volt",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "spa_up",
+   "effectChance": 0,
+   "target": "self",
+   "desc": "Raises SP.ATK."
+  },
+  {
+   "key": "bolt_toss",
+   "name": "BOLT TOSS",
+   "type": "alloy",
+   "category": "physical",
+   "power": 45,
+   "accuracy": 100,
+   "pp": 30,
+   "priority": 0,
+   "effect": null,
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "Hurls loose hardware."
+  },
+  {
+   "key": "plate_press",
+   "name": "PLATE PRESS",
+   "type": "alloy",
+   "category": "physical",
+   "power": 70,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "def_down",
+   "effectChance": 20,
+   "target": "foe",
+   "desc": "May lower DEFENSE."
+  },
+  {
+   "key": "girder_smash",
+   "name": "GIRDER SMASH",
+   "type": "alloy",
+   "category": "physical",
+   "power": 100,
+   "accuracy": 85,
+   "pp": 10,
+   "priority": 0,
+   "effect": "recoil_third",
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "User takes recoil damage."
+  },
+  {
+   "key": "magnet_pull",
+   "name": "MAGNET PULL",
+   "type": "alloy",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "spe_down",
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "Lowers the foe's SPEED."
+  },
+  {
+   "key": "hull_plating",
+   "name": "HULL PLATING",
+   "type": "alloy",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "def_up2",
+   "effectChance": 0,
+   "target": "self",
+   "desc": "Sharply raises DEFENSE."
+  },
+  {
+   "key": "rivet_barrage",
+   "name": "RIVET BARRAGE",
+   "type": "alloy",
+   "category": "physical",
+   "power": 25,
+   "accuracy": 95,
+   "pp": 20,
+   "priority": 0,
+   "effect": "multi_hit",
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "Hits 2-5 times."
+  },
+  {
+   "key": "data_spike",
+   "name": "DATA SPIKE",
+   "type": "data",
+   "category": "special",
+   "power": 45,
+   "accuracy": 100,
+   "pp": 30,
+   "priority": 0,
+   "effect": null,
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "Fires a packet of raw code."
+  },
+  {
+   "key": "null_ptr",
+   "name": "NULL POINTER",
+   "type": "data",
+   "category": "special",
+   "power": 70,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "conf",
+   "effectChance": 20,
+   "target": "foe",
+   "desc": "May CONFUSE."
+  },
+  {
+   "key": "stack_trace",
+   "name": "STACK TRACE",
+   "type": "data",
+   "category": "special",
+   "power": 95,
+   "accuracy": 95,
+   "pp": 10,
+   "priority": 0,
+   "effect": null,
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "Unravels the foe's logic."
+  },
+  {
+   "key": "kernel_panic",
+   "name": "KERNEL PANIC",
+   "type": "data",
+   "category": "special",
+   "power": 130,
+   "accuracy": 80,
+   "pp": 5,
+   "priority": 0,
+   "effect": "spa_down_self",
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "Lowers user's SP.ATK after use."
+  },
+  {
+   "key": "firewall",
+   "name": "FIREWALL",
+   "type": "data",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "spd_up2",
+   "effectChance": 0,
+   "target": "self",
+   "desc": "Sharply raises SP.DEF."
+  },
+  {
+   "key": "debug",
+   "name": "DEBUG",
+   "type": "data",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "cure_status",
+   "effectChance": 0,
+   "target": "self",
+   "desc": "Cures the user's status."
+  },
+  {
+   "key": "recursion",
+   "name": "RECURSION",
+   "type": "data",
+   "category": "special",
+   "power": 60,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "spa_up",
+   "effectChance": 30,
+   "target": "foe",
+   "desc": "May raise SP.ATK."
+  },
+  {
+   "key": "heat_vent",
+   "name": "HEAT VENT",
+   "type": "thermal",
+   "category": "special",
+   "power": 45,
+   "accuracy": 100,
+   "pp": 30,
+   "priority": 0,
+   "effect": "burn",
+   "effectChance": 10,
+   "target": "foe",
+   "desc": "May BURN."
+  },
+  {
+   "key": "solder_burst",
+   "name": "SOLDER BURST",
+   "type": "thermal",
+   "category": "special",
+   "power": 75,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "burn",
+   "effectChance": 20,
+   "target": "foe",
+   "desc": "May BURN."
+  },
+  {
+   "key": "meltdown",
+   "name": "MELTDOWN",
+   "type": "thermal",
+   "category": "special",
+   "power": 110,
+   "accuracy": 85,
+   "pp": 5,
+   "priority": 0,
+   "effect": "burn",
+   "effectChance": 30,
+   "target": "foe",
+   "desc": "A catastrophic thermal event."
+  },
+  {
+   "key": "thermal_throttle",
+   "name": "THERMAL THROTTLE",
+   "type": "thermal",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "atk_down",
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "Lowers the foe's ATTACK."
+  },
+  {
+   "key": "plasma_cutter",
+   "name": "PLASMA CUTTER",
+   "type": "thermal",
+   "category": "physical",
+   "power": 85,
+   "accuracy": 95,
+   "pp": 10,
+   "priority": 0,
+   "effect": "high_crit",
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "High critical-hit ratio."
+  },
+  {
+   "key": "coolant_spray",
+   "name": "COOLANT SPRAY",
+   "type": "cryo",
+   "category": "special",
+   "power": 45,
+   "accuracy": 100,
+   "pp": 30,
+   "priority": 0,
+   "effect": "spe_down",
+   "effectChance": 15,
+   "target": "foe",
+   "desc": "May lower SPEED."
+  },
+  {
+   "key": "frost_lock",
+   "name": "FROST LOCK",
+   "type": "cryo",
+   "category": "special",
+   "power": 75,
+   "accuracy": 95,
+   "pp": 20,
+   "priority": 0,
+   "effect": "freeze",
+   "effectChance": 15,
+   "target": "foe",
+   "desc": "May FREEZE."
+  },
+  {
+   "key": "absolute_zero",
+   "name": "ABSOLUTE ZERO",
+   "type": "cryo",
+   "category": "special",
+   "power": 110,
+   "accuracy": 75,
+   "pp": 5,
+   "priority": 0,
+   "effect": "freeze",
+   "effectChance": 25,
+   "target": "foe",
+   "desc": "Near-total heat death."
+  },
+  {
+   "key": "cryo_shield",
+   "name": "CRYO SHIELD",
+   "type": "cryo",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "spd_up",
+   "effectChance": 0,
+   "target": "self",
+   "desc": "Raises SP.DEF."
+  },
+  {
+   "key": "chill_out",
+   "name": "CHILL OUT",
+   "type": "cryo",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 10,
+   "priority": 0,
+   "effect": "heal_half",
+   "effectChance": 0,
+   "target": "self",
+   "desc": "Cools and restores HP."
+  },
+  {
+   "key": "laser_ping",
+   "name": "LASER PING",
+   "type": "optic",
+   "category": "special",
+   "power": 45,
+   "accuracy": 100,
+   "pp": 30,
+   "priority": 0,
+   "effect": null,
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "A pinpoint beam."
+  },
+  {
+   "key": "strobe",
+   "name": "STROBE",
+   "type": "optic",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "acc_down",
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "Lowers the foe's ACCURACY."
+  },
+  {
+   "key": "photon_beam",
+   "name": "PHOTON BEAM",
+   "type": "optic",
+   "category": "special",
+   "power": 80,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "spd_down",
+   "effectChance": 20,
+   "target": "foe",
+   "desc": "May lower SP.DEF."
+  },
+  {
+   "key": "prism_lance",
+   "name": "PRISM LANCE",
+   "type": "optic",
+   "category": "special",
+   "power": 110,
+   "accuracy": 90,
+   "pp": 5,
+   "priority": 0,
+   "effect": null,
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "A blinding spear of light."
+  },
+  {
+   "key": "lidar_scan",
+   "name": "LIDAR SCAN",
+   "type": "optic",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "acc_up",
+   "effectChance": 0,
+   "target": "self",
+   "desc": "Raises ACCURACY."
+  },
+  {
+   "key": "solar_charge",
+   "name": "SOLAR CHARGE",
+   "type": "optic",
+   "category": "special",
+   "power": 70,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "spa_up",
+   "effectChance": 25,
+   "target": "foe",
+   "desc": "May raise SP.ATK."
+  },
+  {
+   "key": "mind_link",
+   "name": "MIND LINK",
+   "type": "neural",
+   "category": "special",
+   "power": 50,
+   "accuracy": 100,
+   "pp": 25,
+   "priority": 0,
+   "effect": "spd_down",
+   "effectChance": 15,
+   "target": "foe",
+   "desc": "May lower SP.DEF."
+  },
+  {
+   "key": "logic_bomb",
+   "name": "LOGIC BOMB",
+   "type": "neural",
+   "category": "special",
+   "power": 80,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "conf",
+   "effectChance": 20,
+   "target": "foe",
+   "desc": "May CONFUSE."
+  },
+  {
+   "key": "neural_storm",
+   "name": "NEURAL STORM",
+   "type": "neural",
+   "category": "special",
+   "power": 115,
+   "accuracy": 85,
+   "pp": 5,
+   "priority": 0,
+   "effect": "conf",
+   "effectChance": 20,
+   "target": "foe",
+   "desc": "Floods the foe's cortex."
+  },
+  {
+   "key": "hypnotize",
+   "name": "HYPNO-PING",
+   "type": "neural",
+   "category": "status",
+   "power": 0,
+   "accuracy": 60,
+   "pp": 20,
+   "priority": 0,
+   "effect": "sleep",
+   "effectChance": 100,
+   "target": "foe",
+   "desc": "Puts the foe to SLEEP."
+  },
+  {
+   "key": "empathy",
+   "name": "EMPATHY",
+   "type": "neural",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 10,
+   "priority": 0,
+   "effect": "heal_half",
+   "effectChance": 0,
+   "target": "self",
+   "desc": "Restores half of max HP."
+  },
+  {
+   "key": "prediction",
+   "name": "PREDICTION",
+   "type": "neural",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "eva_up",
+   "effectChance": 0,
+   "target": "self",
+   "desc": "Raises EVASION."
+  },
+  {
+   "key": "bug_bite",
+   "name": "BUG BITE",
+   "type": "viral",
+   "category": "physical",
+   "power": 50,
+   "accuracy": 100,
+   "pp": 25,
+   "priority": 0,
+   "effect": "poison",
+   "effectChance": 15,
+   "target": "foe",
+   "desc": "May POISON."
+  },
+  {
+   "key": "code_rot",
+   "name": "CODE ROT",
+   "type": "viral",
+   "category": "status",
+   "power": 0,
+   "accuracy": 90,
+   "pp": 20,
+   "priority": 0,
+   "effect": "poison",
+   "effectChance": 100,
+   "target": "foe",
+   "desc": "POISONS the foe."
+  },
+  {
+   "key": "payload",
+   "name": "PAYLOAD",
+   "type": "viral",
+   "category": "special",
+   "power": 80,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "poison",
+   "effectChance": 25,
+   "target": "foe",
+   "desc": "May POISON."
+  },
+  {
+   "key": "rootkit",
+   "name": "ROOTKIT",
+   "type": "viral",
+   "category": "special",
+   "power": 110,
+   "accuracy": 85,
+   "pp": 5,
+   "priority": 0,
+   "effect": "spd_down",
+   "effectChance": 30,
+   "target": "foe",
+   "desc": "Burrows into the foe's core."
+  },
+  {
+   "key": "leech_cycle",
+   "name": "LEECH CYCLE",
+   "type": "viral",
+   "category": "special",
+   "power": 65,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "drain_half",
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "Drains HP to heal the user."
+  },
+  {
+   "key": "corrupt",
+   "name": "CORRUPT",
+   "type": "viral",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "atk_down2",
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "Sharply lowers the foe's ATTACK."
+  },
+  {
+   "key": "qubit_flip",
+   "name": "QUBIT FLIP",
+   "type": "quantum",
+   "category": "special",
+   "power": 55,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": null,
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "Collapses a superposition."
+  },
+  {
+   "key": "entangle",
+   "name": "ENTANGLE",
+   "type": "quantum",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "spe_down2",
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "Sharply lowers the foe's SPEED."
+  },
+  {
+   "key": "tunnel_strike",
+   "name": "TUNNEL STRIKE",
+   "type": "quantum",
+   "category": "physical",
+   "power": 85,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "high_crit",
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "High critical-hit ratio."
+  },
+  {
+   "key": "superposition",
+   "name": "SUPERPOSITION",
+   "type": "quantum",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 10,
+   "priority": 0,
+   "effect": "eva_up",
+   "effectChance": 0,
+   "target": "self",
+   "desc": "Raises EVASION."
+  },
+  {
+   "key": "singularity",
+   "name": "SINGULARITY",
+   "type": "quantum",
+   "category": "special",
+   "power": 140,
+   "accuracy": 85,
+   "pp": 5,
+   "priority": 0,
+   "effect": "recharge",
+   "effectChance": 0,
+   "target": "foe",
+   "desc": "The ultimate collapse."
+  },
+  {
+   "key": "decoherence",
+   "name": "DECOHERENCE",
+   "type": "quantum",
+   "category": "special",
+   "power": 90,
+   "accuracy": 100,
+   "pp": 10,
+   "priority": 0,
+   "effect": "spa_down",
+   "effectChance": 20,
+   "target": "foe",
+   "desc": "May lower SP.ATK."
+  }
+ ],
+ "species": [
+  {
+   "id": 1,
+   "key": "stackbit",
+   "name": "STACKBIT",
+   "types": [
+    "data"
+   ],
+   "genus": "Desk Unit",
+   "baseStats": {
+    "hp": 45,
+    "atk": 49,
+    "def": 49,
+    "spa": 65,
+    "spd": 65,
+    "spe": 45
+   },
+   "catchRate": 45,
+   "baseExp": 64,
+   "growthRate": "medium_slow",
+   "height": 0.3,
+   "weight": 3.1,
+   "dexEntry": "A palm-sized companion unit. Its LCD face renders whatever emotion its logic core is currently simulating.",
+   "art": "A small palm-sized desktop robot creature: a rounded off-white ceramic cube body with a large bright cyan LCD screen face showing two simple smiling eyes, tiny stubby arms and stubby feet, glowing blue accent lights on the shoulders",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     1,
+     "data_spike"
+    ],
+    [
+     5,
+     "smokescreen"
+    ],
+    [
+     9,
+     "recursion"
+    ],
+    [
+     13,
+     "quick_jab"
+    ],
+    [
+     17,
+     "null_ptr"
+    ],
+    [
+     21,
+     "firewall"
+    ],
+    [
+     25,
+     "debug"
+    ],
+    [
+     29,
+     "stack_trace"
+    ],
+    [
+     35,
+     "logic_bomb"
+    ],
+    [
+     41,
+     "kernel_panic"
+    ]
+   ],
+   "evolution": {
+    "to": "stackaru",
+    "level": 16
+   },
+   "airborne": false,
+   "cell": {
+    "w": 56,
+    "h": 56
+   },
+   "legendary": false
+  },
+  {
+   "id": 2,
+   "key": "stackaru",
+   "name": "STACKARU",
+   "types": [
+    "data"
+   ],
+   "genus": "Reason Unit",
+   "baseStats": {
+    "hp": 60,
+    "atk": 63,
+    "def": 62,
+    "spa": 90,
+    "spd": 85,
+    "spe": 60
+   },
+   "catchRate": 45,
+   "baseExp": 142,
+   "growthRate": "medium_slow",
+   "height": 0.7,
+   "weight": 14.5,
+   "dexEntry": "Its screen now renders in full color. STACKARU can hold a conversation for eleven hours without repeating itself.",
+   "art": "A knee-high desktop robot creature evolved form: a tall rounded white and slate-grey chassis with a wide curved cyan holographic screen face showing confident angular eyes, articulated arms with cyan glowing joints, small antenna, sturdy legs",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     1,
+     "data_spike"
+    ],
+    [
+     5,
+     "smokescreen"
+    ],
+    [
+     9,
+     "recursion"
+    ],
+    [
+     13,
+     "quick_jab"
+    ],
+    [
+     18,
+     "null_ptr"
+    ],
+    [
+     23,
+     "firewall"
+    ],
+    [
+     28,
+     "debug"
+    ],
+    [
+     33,
+     "stack_trace"
+    ],
+    [
+     39,
+     "logic_bomb"
+    ],
+    [
+     46,
+     "kernel_panic"
+    ]
+   ],
+   "evolution": {
+    "to": "stackzen",
+    "level": 34
+   },
+   "airborne": false,
+   "cell": {
+    "w": 64,
+    "h": 64
+   },
+   "legendary": false
+  },
+  {
+   "id": 3,
+   "key": "stackzen",
+   "name": "STACKZEN",
+   "types": [
+    "data",
+    "neural"
+   ],
+   "genus": "Oracle Unit",
+   "baseStats": {
+    "hp": 85,
+    "atk": 82,
+    "def": 83,
+    "spa": 125,
+    "spd": 115,
+    "spe": 80
+   },
+   "catchRate": 45,
+   "baseExp": 236,
+   "growthRate": "medium_slow",
+   "height": 1.6,
+   "weight": 62.0,
+   "dexEntry": "STACKZEN's screen shows a calm face at all times, even mid-battle. Engineers say it has already predicted the outcome.",
+   "art": "A tall majestic humanoid robot creature: elegant pearl-white and deep-blue armored chassis, a wide luminous cyan visor face with serene glowing eyes, a floating halo ring of light above its head, long graceful arms, flowing energy ribbons, regal posture",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     1,
+     "data_spike"
+    ],
+    [
+     13,
+     "quick_jab"
+    ],
+    [
+     18,
+     "null_ptr"
+    ],
+    [
+     23,
+     "firewall"
+    ],
+    [
+     28,
+     "debug"
+    ],
+    [
+     34,
+     "mind_link"
+    ],
+    [
+     38,
+     "stack_trace"
+    ],
+    [
+     44,
+     "logic_bomb"
+    ],
+    [
+     52,
+     "neural_storm"
+    ],
+    [
+     60,
+     "kernel_panic"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 72,
+    "h": 72
+   },
+   "legendary": false
+  },
+  {
+   "id": 4,
+   "key": "reachlet",
+   "name": "REACHLET",
+   "types": [
+    "neural"
+   ],
+   "genus": "Empath Unit",
+   "baseStats": {
+    "hp": 48,
+    "atk": 44,
+    "def": 44,
+    "spa": 66,
+    "spd": 70,
+    "spe": 52
+   },
+   "catchRate": 45,
+   "baseExp": 64,
+   "growthRate": "medium_slow",
+   "height": 0.2,
+   "weight": 1.8,
+   "dexEntry": "Two soft antennae read the mood of anyone nearby. It will mirror your feelings back at you.",
+   "art": "A tiny expressive desk robot creature: a small rounded matte-cream head with two big glossy black camera eyes with white highlights, two floppy soft grey antenna ears, a compact cylindrical body with a woven orange fabric torso, tiny articulated arms",
+   "learnset": [
+    [
+     1,
+     "scratch"
+    ],
+    [
+     1,
+     "mind_link"
+    ],
+    [
+     5,
+     "prediction"
+    ],
+    [
+     9,
+     "smokescreen"
+    ],
+    [
+     13,
+     "quick_jab"
+    ],
+    [
+     17,
+     "hypnotize"
+    ],
+    [
+     21,
+     "logic_bomb"
+    ],
+    [
+     25,
+     "empathy"
+    ],
+    [
+     29,
+     "data_spike"
+    ],
+    [
+     35,
+     "neural_storm"
+    ],
+    [
+     41,
+     "recalibrate"
+    ]
+   ],
+   "evolution": {
+    "to": "reachii",
+    "level": 16
+   },
+   "airborne": false,
+   "cell": {
+    "w": 52,
+    "h": 52
+   },
+   "legendary": false
+  },
+  {
+   "id": 5,
+   "key": "reachii",
+   "name": "REACHII",
+   "types": [
+    "neural"
+   ],
+   "genus": "Insight Unit",
+   "baseStats": {
+    "hp": 63,
+    "atk": 58,
+    "def": 58,
+    "spa": 92,
+    "spd": 95,
+    "spe": 68
+   },
+   "catchRate": 45,
+   "baseExp": 142,
+   "growthRate": "medium_slow",
+   "height": 0.6,
+   "weight": 9.4,
+   "dexEntry": "REACHII tilts its head before every attack. It is reading three seconds into your future.",
+   "art": "A knee-high expressive robot creature: a large rounded cream and coral head with two huge glossy black lens eyes, four long articulated antenna feelers glowing pink at the tips, a slender neck, woven coral fabric torso, delicate arms, small hover base",
+   "learnset": [
+    [
+     1,
+     "scratch"
+    ],
+    [
+     1,
+     "mind_link"
+    ],
+    [
+     5,
+     "prediction"
+    ],
+    [
+     9,
+     "smokescreen"
+    ],
+    [
+     13,
+     "quick_jab"
+    ],
+    [
+     18,
+     "hypnotize"
+    ],
+    [
+     23,
+     "logic_bomb"
+    ],
+    [
+     28,
+     "empathy"
+    ],
+    [
+     33,
+     "data_spike"
+    ],
+    [
+     39,
+     "neural_storm"
+    ],
+    [
+     46,
+     "recalibrate"
+    ]
+   ],
+   "evolution": {
+    "to": "reachoro",
+    "level": 34
+   },
+   "airborne": false,
+   "cell": {
+    "w": 60,
+    "h": 60
+   },
+   "legendary": false
+  },
+  {
+   "id": 6,
+   "key": "reachoro",
+   "name": "REACHORO",
+   "types": [
+    "neural",
+    "optic"
+   ],
+   "genus": "Prophet Unit",
+   "baseStats": {
+    "hp": 88,
+    "atk": 76,
+    "def": 78,
+    "spa": 128,
+    "spd": 122,
+    "spe": 100
+   },
+   "catchRate": 45,
+   "baseExp": 236,
+   "growthRate": "medium_slow",
+   "height": 1.5,
+   "weight": 41.2,
+   "dexEntry": "Its crown of sensors sees every possible outcome at once, then quietly picks the kindest one.",
+   "art": "A tall elegant robot creature: slender porcelain-white and rose-gold body, a crown of six long luminous antennae arcing outward like a halo, two enormous glowing violet lens eyes, flowing pink light ribbons, hovering just above the ground, serene graceful pose",
+   "learnset": [
+    [
+     1,
+     "scratch"
+    ],
+    [
+     1,
+     "mind_link"
+    ],
+    [
+     13,
+     "quick_jab"
+    ],
+    [
+     18,
+     "hypnotize"
+    ],
+    [
+     23,
+     "logic_bomb"
+    ],
+    [
+     28,
+     "empathy"
+    ],
+    [
+     34,
+     "photon_beam"
+    ],
+    [
+     38,
+     "prism_lance"
+    ],
+    [
+     44,
+     "prediction"
+    ],
+    [
+     52,
+     "neural_storm"
+    ],
+    [
+     60,
+     "recalibrate"
+    ]
+   ],
+   "evolution": null,
+   "airborne": true,
+   "cell": {
+    "w": 72,
+    "h": 72
+   },
+   "legendary": false
+  },
+  {
+   "id": 7,
+   "key": "boltkin",
+   "name": "BOLTKIN",
+   "types": [
+    "alloy"
+   ],
+   "genus": "Scrap Unit",
+   "baseStats": {
+    "hp": 52,
+    "atk": 60,
+    "def": 62,
+    "spa": 42,
+    "spd": 46,
+    "spe": 40
+   },
+   "catchRate": 45,
+   "baseExp": 64,
+   "growthRate": "medium_slow",
+   "height": 0.4,
+   "weight": 12.0,
+   "dexEntry": "Assembled from spare parts in a workshop bin. It is very proud of every single one of them.",
+   "art": "A small sturdy industrial robot creature: a chunky safety-orange and gunmetal boxy body, a single round glowing amber optic eye, thick riveted armor plates, short powerful arms ending in clamp hands, tank-tread feet",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     1,
+     "bolt_toss"
+    ],
+    [
+     5,
+     "brace"
+    ],
+    [
+     9,
+     "gear_grind"
+    ],
+    [
+     13,
+     "plate_press"
+    ],
+    [
+     17,
+     "magnet_pull"
+    ],
+    [
+     21,
+     "rivet_barrage"
+    ],
+    [
+     25,
+     "hull_plating"
+    ],
+    [
+     29,
+     "heat_vent"
+    ],
+    [
+     35,
+     "girder_smash"
+    ],
+    [
+     41,
+     "hyper_drive"
+    ]
+   ],
+   "evolution": {
+    "to": "fabrikor",
+    "level": 16
+   },
+   "airborne": false,
+   "cell": {
+    "w": 56,
+    "h": 56
+   },
+   "legendary": false
+  },
+  {
+   "id": 8,
+   "key": "fabrikor",
+   "name": "FABRIKOR",
+   "types": [
+    "alloy"
+   ],
+   "genus": "Fabricator",
+   "baseStats": {
+    "hp": 72,
+    "atk": 84,
+    "def": 88,
+    "spa": 55,
+    "spd": 60,
+    "spe": 51
+   },
+   "catchRate": 45,
+   "baseExp": 142,
+   "growthRate": "medium_slow",
+   "height": 1.1,
+   "weight": 68.0,
+   "dexEntry": "FABRIKOR can weld, cut and lift a car. It insists on doing all three at once.",
+   "art": "A bulky industrial robot creature: heavy orange and dark-steel armored torso, twin glowing amber optic eyes behind a visor slit, huge hydraulic arms with welding torch and clamp, hazard stripe markings, thick piston legs, exhaust vents on the back",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     1,
+     "bolt_toss"
+    ],
+    [
+     5,
+     "brace"
+    ],
+    [
+     9,
+     "gear_grind"
+    ],
+    [
+     13,
+     "plate_press"
+    ],
+    [
+     18,
+     "magnet_pull"
+    ],
+    [
+     23,
+     "rivet_barrage"
+    ],
+    [
+     28,
+     "hull_plating"
+    ],
+    [
+     33,
+     "solder_burst"
+    ],
+    [
+     39,
+     "girder_smash"
+    ],
+    [
+     46,
+     "hyper_drive"
+    ]
+   ],
+   "evolution": {
+    "to": "forgeron",
+    "level": 34
+   },
+   "airborne": false,
+   "cell": {
+    "w": 64,
+    "h": 64
+   },
+   "legendary": false
+  },
+  {
+   "id": 9,
+   "key": "forgeron",
+   "name": "FORGERON",
+   "types": [
+    "alloy",
+    "thermal"
+   ],
+   "genus": "Forge Unit",
+   "baseStats": {
+    "hp": 100,
+    "atk": 122,
+    "def": 118,
+    "spa": 78,
+    "spd": 82,
+    "spe": 62
+   },
+   "catchRate": 45,
+   "baseExp": 236,
+   "growthRate": "medium_slow",
+   "height": 2.1,
+   "weight": 310.0,
+   "dexEntry": "The furnace in its chest never cools. FORGERON builds bridges by morning and defends them by night.",
+   "art": "A towering heavy-industrial robot creature: massive burnt-orange and blackened-steel armored body, a glowing white-hot furnace core visible in its chest, enormous forge-hammer arms, molten orange light seeping between armor plates, smokestack shoulders, imposing stance",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     1,
+     "bolt_toss"
+    ],
+    [
+     13,
+     "plate_press"
+    ],
+    [
+     18,
+     "magnet_pull"
+    ],
+    [
+     23,
+     "rivet_barrage"
+    ],
+    [
+     28,
+     "hull_plating"
+    ],
+    [
+     34,
+     "solder_burst"
+    ],
+    [
+     38,
+     "plasma_cutter"
+    ],
+    [
+     44,
+     "girder_smash"
+    ],
+    [
+     52,
+     "meltdown"
+    ],
+    [
+     60,
+     "hyper_drive"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 74,
+    "h": 74
+   },
+   "legendary": false
+  },
+  {
+   "id": 10,
+   "key": "chassik",
+   "name": "CHASSIK",
+   "types": [
+    "alloy",
+    "servo"
+   ],
+   "genus": "Porter Unit",
+   "baseStats": {
+    "hp": 50,
+    "atk": 62,
+    "def": 58,
+    "spa": 38,
+    "spd": 42,
+    "spe": 48
+   },
+   "catchRate": 190,
+   "baseExp": 58,
+   "growthRate": "medium_fast",
+   "height": 0.9,
+   "weight": 30.0,
+   "dexEntry": "Built to carry crates. Carries them anyway, even when there are none.",
+   "art": "A small humanoid warehouse robot creature: matte black and light-grey plastic panels, a smooth featureless black faceplate with two tiny white LED dot eyes, boxy shoulders, simple two-finger hands, chunky boots",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     4,
+     "brace"
+    ],
+    [
+     8,
+     "bolt_toss"
+    ],
+    [
+     12,
+     "gear_grind"
+    ],
+    [
+     16,
+     "quick_jab"
+    ],
+    [
+     20,
+     "plate_press"
+    ],
+    [
+     24,
+     "power_surge"
+    ],
+    [
+     28,
+     "rivet_barrage"
+    ],
+    [
+     33,
+     "slam"
+    ],
+    [
+     38,
+     "girder_smash"
+    ]
+   ],
+   "evolution": {
+    "to": "optibrawn",
+    "level": 18
+   },
+   "airborne": false,
+   "cell": {
+    "w": 56,
+    "h": 60
+   },
+   "legendary": false
+  },
+  {
+   "id": 11,
+   "key": "optibrawn",
+   "name": "OPTIBRAWN",
+   "types": [
+    "alloy",
+    "servo"
+   ],
+   "genus": "Labor Unit",
+   "baseStats": {
+    "hp": 68,
+    "atk": 88,
+    "def": 78,
+    "spa": 50,
+    "spd": 56,
+    "spe": 66
+   },
+   "catchRate": 90,
+   "baseExp": 138,
+   "growthRate": "medium_fast",
+   "height": 1.7,
+   "weight": 72.0,
+   "dexEntry": "It lifts 400 kilos without straining a servo and then politely asks if you need anything else.",
+   "art": "A full-size humanoid factory robot creature: sleek matte-black torso with white articulated limbs, a glossy black visor face with a thin horizontal blue light bar, broad shoulders, five-fingered hands, athletic proportions, confident heroic stance",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     4,
+     "brace"
+    ],
+    [
+     12,
+     "gear_grind"
+    ],
+    [
+     16,
+     "quick_jab"
+    ],
+    [
+     20,
+     "plate_press"
+    ],
+    [
+     25,
+     "power_surge"
+    ],
+    [
+     30,
+     "rivet_barrage"
+    ],
+    [
+     36,
+     "slam"
+    ],
+    [
+     42,
+     "overclock"
+    ],
+    [
+     48,
+     "girder_smash"
+    ]
+   ],
+   "evolution": {
+    "to": "titanoid",
+    "level": 36
+   },
+   "airborne": false,
+   "cell": {
+    "w": 64,
+    "h": 68
+   },
+   "legendary": false
+  },
+  {
+   "id": 12,
+   "key": "titanoid",
+   "name": "TITANOID",
+   "types": [
+    "alloy",
+    "servo"
+   ],
+   "genus": "Colossus",
+   "baseStats": {
+    "hp": 95,
+    "atk": 128,
+    "def": 108,
+    "spa": 68,
+    "spd": 78,
+    "spe": 84
+   },
+   "catchRate": 45,
+   "baseExp": 232,
+   "growthRate": "medium_fast",
+   "height": 2.6,
+   "weight": 265.0,
+   "dexEntry": "TITANOID was designed to build a city. It finished early and now guards it instead.",
+   "art": "A colossal humanoid mech creature: heavy white and cobalt-blue armor plating with gold trim, a broad visor face glowing brilliant blue, enormous shoulder pylons, powerful piston arms with reinforced gauntlets, heroic guardian stance, energy glow at the joints",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     16,
+     "quick_jab"
+    ],
+    [
+     20,
+     "plate_press"
+    ],
+    [
+     25,
+     "power_surge"
+    ],
+    [
+     30,
+     "rivet_barrage"
+    ],
+    [
+     36,
+     "slam"
+    ],
+    [
+     42,
+     "overclock"
+    ],
+    [
+     50,
+     "hull_plating"
+    ],
+    [
+     58,
+     "girder_smash"
+    ],
+    [
+     66,
+     "hyper_drive"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 76,
+    "h": 78
+   },
+   "legendary": false
+  },
+  {
+   "id": 13,
+   "key": "figlet",
+   "name": "FIGLET",
+   "types": [
+    "servo"
+   ],
+   "genus": "Proto Unit",
+   "baseStats": {
+    "hp": 44,
+    "atk": 56,
+    "def": 44,
+    "spa": 50,
+    "spd": 46,
+    "spe": 72
+   },
+   "catchRate": 190,
+   "baseExp": 58,
+   "growthRate": "fast",
+   "height": 0.8,
+   "weight": 18.0,
+   "dexEntry": "A prototype so new the paint is still curing. It moves before it finishes thinking.",
+   "art": "A small sleek humanoid android creature: brushed aluminium and deep-charcoal body panels, a smooth curved dark faceplate with a soft glowing white crescent, slim limbs, minimalist elegant design, athletic ready stance",
+   "learnset": [
+    [
+     1,
+     "scratch"
+    ],
+    [
+     4,
+     "quick_jab"
+    ],
+    [
+     8,
+     "overclock"
+    ],
+    [
+     12,
+     "gear_grind"
+    ],
+    [
+     16,
+     "smokescreen"
+    ],
+    [
+     20,
+     "slam"
+    ],
+    [
+     25,
+     "power_surge"
+    ],
+    [
+     30,
+     "tunnel_strike"
+    ],
+    [
+     36,
+     "hyper_drive"
+    ]
+   ],
+   "evolution": {
+    "to": "figura",
+    "level": 20
+   },
+   "airborne": false,
+   "cell": {
+    "w": 54,
+    "h": 60
+   },
+   "legendary": false
+  },
+  {
+   "id": 14,
+   "key": "figura",
+   "name": "FIGURA",
+   "types": [
+    "servo"
+   ],
+   "genus": "Agile Unit",
+   "baseStats": {
+    "hp": 62,
+    "atk": 82,
+    "def": 62,
+    "spa": 68,
+    "spd": 62,
+    "spe": 100
+   },
+   "catchRate": 90,
+   "baseExp": 140,
+   "growthRate": "fast",
+   "height": 1.6,
+   "weight": 52.0,
+   "dexEntry": "FIGURA crosses a room in four steps. Cameras only ever catch three of them.",
+   "art": "A tall sleek humanoid android creature: polished silver and matte-black articulated body, a seamless dark visor face with a thin glowing white light bar, elegant elongated limbs, exposed cable musculature, poised athletic fighting stance",
+   "learnset": [
+    [
+     1,
+     "scratch"
+    ],
+    [
+     4,
+     "quick_jab"
+    ],
+    [
+     12,
+     "gear_grind"
+    ],
+    [
+     16,
+     "smokescreen"
+    ],
+    [
+     20,
+     "slam"
+    ],
+    [
+     26,
+     "power_surge"
+    ],
+    [
+     32,
+     "tunnel_strike"
+    ],
+    [
+     38,
+     "overclock"
+    ],
+    [
+     45,
+     "hyper_drive"
+    ]
+   ],
+   "evolution": {
+    "to": "figurex",
+    "level": 38
+   },
+   "airborne": false,
+   "cell": {
+    "w": 62,
+    "h": 68
+   },
+   "legendary": false
+  },
+  {
+   "id": 15,
+   "key": "figurex",
+   "name": "FIGUREX",
+   "types": [
+    "servo",
+    "neural"
+   ],
+   "genus": "Paragon",
+   "baseStats": {
+    "hp": 82,
+    "atk": 112,
+    "def": 82,
+    "spa": 96,
+    "spd": 84,
+    "spe": 128
+   },
+   "catchRate": 45,
+   "baseExp": 234,
+   "growthRate": "fast",
+   "height": 2.0,
+   "weight": 88.0,
+   "dexEntry": "It learned to fight by watching. It learned to win by understanding why you fight at all.",
+   "art": "An elite humanoid android creature: gleaming pearl-white and obsidian body with luminous violet energy seams, a sculpted faceplate with piercing violet optic slits, long powerful limbs, a flowing energy cape of light, dynamic heroic combat stance",
+   "learnset": [
+    [
+     1,
+     "scratch"
+    ],
+    [
+     16,
+     "smokescreen"
+    ],
+    [
+     20,
+     "slam"
+    ],
+    [
+     26,
+     "power_surge"
+    ],
+    [
+     32,
+     "tunnel_strike"
+    ],
+    [
+     38,
+     "overclock"
+    ],
+    [
+     44,
+     "logic_bomb"
+    ],
+    [
+     52,
+     "neural_storm"
+    ],
+    [
+     60,
+     "hyper_drive"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 70,
+    "h": 74
+   },
+   "legendary": false
+  },
+  {
+   "id": 16,
+   "key": "pupboot",
+   "name": "PUPBOOT",
+   "types": [
+    "servo"
+   ],
+   "genus": "Companion",
+   "baseStats": {
+    "hp": 46,
+    "atk": 52,
+    "def": 46,
+    "spa": 40,
+    "spd": 44,
+    "spe": 64
+   },
+   "catchRate": 190,
+   "baseExp": 56,
+   "growthRate": "medium_fast",
+   "height": 0.4,
+   "weight": 9.0,
+   "dexEntry": "Follows engineers around the lab. Has never once been asked to.",
+   "art": "A small robotic puppy creature: chunky bright-yellow and dark-grey quadruped body, four short articulated legs, a blunt sensor-pod head with one big round glowing green optic lens, a stubby antenna tail wagging, playful bouncy pose",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     4,
+     "quick_jab"
+    ],
+    [
+     8,
+     "smokescreen"
+    ],
+    [
+     12,
+     "laser_ping"
+    ],
+    [
+     16,
+     "gear_grind"
+    ],
+    [
+     20,
+     "strobe"
+    ],
+    [
+     24,
+     "overclock"
+    ],
+    [
+     29,
+     "slam"
+    ],
+    [
+     35,
+     "photon_beam"
+    ]
+   ],
+   "evolution": {
+    "to": "canidrone",
+    "level": 22
+   },
+   "airborne": false,
+   "cell": {
+    "w": 56,
+    "h": 50
+   },
+   "legendary": false
+  },
+  {
+   "id": 17,
+   "key": "canidrone",
+   "name": "CANIDRONE",
+   "types": [
+    "servo",
+    "optic"
+   ],
+   "genus": "Scout Unit",
+   "baseStats": {
+    "hp": 64,
+    "atk": 76,
+    "def": 64,
+    "spa": 62,
+    "spd": 60,
+    "spe": 92
+   },
+   "catchRate": 90,
+   "baseExp": 140,
+   "growthRate": "medium_fast",
+   "height": 0.9,
+   "weight": 34.0,
+   "dexEntry": "Its LIDAR sweeps a full block every second. Nothing gets past CANIDRONE. Nothing.",
+   "art": "A sleek robotic hound creature: matte yellow and gunmetal quadruped body with articulated legs, a smooth sensor head with a rotating LIDAR dome glowing green, exposed cabling, an antenna tail, alert hunting stance, sharp angular armor panels",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     4,
+     "quick_jab"
+    ],
+    [
+     12,
+     "laser_ping"
+    ],
+    [
+     16,
+     "gear_grind"
+    ],
+    [
+     22,
+     "strobe"
+    ],
+    [
+     27,
+     "overclock"
+    ],
+    [
+     32,
+     "photon_beam"
+    ],
+    [
+     38,
+     "slam"
+    ],
+    [
+     45,
+     "prism_lance"
+    ]
+   ],
+   "evolution": {
+    "to": "alphound",
+    "level": 40
+   },
+   "airborne": false,
+   "cell": {
+    "w": 64,
+    "h": 58
+   },
+   "legendary": false
+  },
+  {
+   "id": 18,
+   "key": "alphound",
+   "name": "ALPHOUND",
+   "types": [
+    "servo",
+    "optic"
+   ],
+   "genus": "Pack Alpha",
+   "baseStats": {
+    "hp": 86,
+    "atk": 108,
+    "def": 84,
+    "spa": 88,
+    "spd": 82,
+    "spe": 118
+   },
+   "catchRate": 45,
+   "baseExp": 232,
+   "growthRate": "medium_fast",
+   "height": 1.5,
+   "weight": 96.0,
+   "dexEntry": "The pack leader of the Server Steppe. Its howl is a 40-gigahertz burst that reboots lesser machines.",
+   "art": "A large majestic robotic wolf creature: gleaming white and gold armored quadruped body, a crown of glowing amber sensor spines along its back, a fierce angular head with blazing golden optic eyes, a plasma-light tail, powerful legs, commanding alpha stance",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     16,
+     "gear_grind"
+    ],
+    [
+     22,
+     "strobe"
+    ],
+    [
+     27,
+     "overclock"
+    ],
+    [
+     32,
+     "photon_beam"
+    ],
+    [
+     40,
+     "plasma_cutter"
+    ],
+    [
+     46,
+     "lidar_scan"
+    ],
+    [
+     54,
+     "prism_lance"
+    ],
+    [
+     62,
+     "hyper_drive"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 74,
+    "h": 66
+   },
+   "legendary": false
+  },
+  {
+   "id": 19,
+   "key": "roombit",
+   "name": "ROOMBIT",
+   "types": [
+    "alloy"
+   ],
+   "genus": "Sweeper",
+   "baseStats": {
+    "hp": 58,
+    "atk": 40,
+    "def": 66,
+    "spa": 38,
+    "spd": 52,
+    "spe": 36
+   },
+   "catchRate": 235,
+   "baseExp": 50,
+   "growthRate": "medium_fast",
+   "height": 0.2,
+   "weight": 6.5,
+   "dexEntry": "Cleans in perfect spirals. Becomes visibly distressed if you move the furniture.",
+   "art": "A small round robotic vacuum creature: a flat disc-shaped charcoal and white body with a glowing blue status ring light on top, two small cartoon LED eyes on the front bumper, tiny side brushes, a happy simple design",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     5,
+     "brace"
+    ],
+    [
+     9,
+     "smokescreen"
+    ],
+    [
+     13,
+     "bolt_toss"
+    ],
+    [
+     18,
+     "magnet_pull"
+    ],
+    [
+     22,
+     "gear_grind"
+    ],
+    [
+     27,
+     "hull_plating"
+    ],
+    [
+     32,
+     "code_rot"
+    ],
+    [
+     38,
+     "rivet_barrage"
+    ]
+   ],
+   "evolution": {
+    "to": "vaculo",
+    "level": 24
+   },
+   "airborne": false,
+   "cell": {
+    "w": 52,
+    "h": 44
+   },
+   "legendary": false
+  },
+  {
+   "id": 20,
+   "key": "vaculo",
+   "name": "VACULO",
+   "types": [
+    "alloy",
+    "viral"
+   ],
+   "genus": "Devourer",
+   "baseStats": {
+    "hp": 86,
+    "atk": 66,
+    "def": 104,
+    "spa": 62,
+    "spd": 88,
+    "spe": 52
+   },
+   "catchRate": 90,
+   "baseExp": 158,
+   "growthRate": "medium_fast",
+   "height": 0.9,
+   "weight": 46.0,
+   "dexEntry": "Twenty years of collected dust have become something almost alive inside its canister.",
+   "art": "A large sinister robotic vacuum creature: a wide dark-charcoal disc body with a glowing sickly-purple cyclone canister rising from the center, multiple red LED eyes around the rim, whirling brush limbs, purple dust vortex swirling around it",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     9,
+     "smokescreen"
+    ],
+    [
+     13,
+     "bolt_toss"
+    ],
+    [
+     18,
+     "magnet_pull"
+    ],
+    [
+     24,
+     "code_rot"
+    ],
+    [
+     29,
+     "payload"
+    ],
+    [
+     35,
+     "hull_plating"
+    ],
+    [
+     42,
+     "leech_cycle"
+    ],
+    [
+     50,
+     "rootkit"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 64,
+    "h": 58
+   },
+   "legendary": false
+  },
+  {
+   "id": 21,
+   "key": "dronelet",
+   "name": "DRONELET",
+   "types": [
+    "optic"
+   ],
+   "genus": "Eye Unit",
+   "baseStats": {
+    "hp": 40,
+    "atk": 42,
+    "def": 38,
+    "spa": 62,
+    "spd": 48,
+    "spe": 78
+   },
+   "catchRate": 190,
+   "baseExp": 56,
+   "growthRate": "medium_fast",
+   "height": 0.3,
+   "weight": 1.2,
+   "dexEntry": "Hovers exactly at eye level and refuses to break eye contact.",
+   "art": "A small quadcopter drone creature: a compact white and sky-blue rounded body with four small spinning rotor arms, a big round glass camera lens as its single expressive eye, tiny landing skids, hovering in mid-air with motion blur on the propellers",
+   "learnset": [
+    [
+     1,
+     "laser_ping"
+    ],
+    [
+     5,
+     "strobe"
+    ],
+    [
+     9,
+     "quick_jab"
+    ],
+    [
+     13,
+     "smokescreen"
+    ],
+    [
+     17,
+     "lidar_scan"
+    ],
+    [
+     21,
+     "photon_beam"
+    ],
+    [
+     26,
+     "solar_charge"
+    ],
+    [
+     31,
+     "prediction"
+    ],
+    [
+     37,
+     "prism_lance"
+    ]
+   ],
+   "evolution": {
+    "to": "quadrotor",
+    "level": 20
+   },
+   "airborne": true,
+   "cell": {
+    "w": 56,
+    "h": 52
+   },
+   "legendary": false
+  },
+  {
+   "id": 22,
+   "key": "quadrotor",
+   "name": "QUADROTOR",
+   "types": [
+    "optic"
+   ],
+   "genus": "Recon Unit",
+   "baseStats": {
+    "hp": 58,
+    "atk": 58,
+    "def": 54,
+    "spa": 92,
+    "spd": 68,
+    "spe": 104
+   },
+   "catchRate": 90,
+   "baseExp": 138,
+   "growthRate": "medium_fast",
+   "height": 0.8,
+   "weight": 6.4,
+   "dexEntry": "Four rotors, six cameras, zero blind spots. QUADROTOR has already mapped the room you are standing in.",
+   "art": "A sleek quadcopter drone creature: an angular white and cobalt-blue carbon-fibre body, four long rotor arms with glowing blue propeller rings, a gimbal-mounted lens eye glowing bright cyan, sensor pods, aggressive forward-tilted hovering pose",
+   "learnset": [
+    [
+     1,
+     "laser_ping"
+    ],
+    [
+     5,
+     "strobe"
+    ],
+    [
+     13,
+     "smokescreen"
+    ],
+    [
+     17,
+     "lidar_scan"
+    ],
+    [
+     22,
+     "photon_beam"
+    ],
+    [
+     28,
+     "solar_charge"
+    ],
+    [
+     34,
+     "prediction"
+    ],
+    [
+     40,
+     "decoherence"
+    ],
+    [
+     47,
+     "prism_lance"
+    ]
+   ],
+   "evolution": {
+    "to": "skyswarm",
+    "level": 38
+   },
+   "airborne": true,
+   "cell": {
+    "w": 64,
+    "h": 58
+   },
+   "legendary": false
+  },
+  {
+   "id": 23,
+   "key": "skyswarm",
+   "name": "SKYSWARM",
+   "types": [
+    "optic",
+    "quantum"
+   ],
+   "genus": "Hive Mind",
+   "baseStats": {
+    "hp": 78,
+    "atk": 82,
+    "def": 74,
+    "spa": 130,
+    "spd": 92,
+    "spe": 130
+   },
+   "catchRate": 45,
+   "baseExp": 234,
+   "growthRate": "medium_fast",
+   "height": 2.4,
+   "weight": 12.0,
+   "dexEntry": "Not one drone but nine hundred, thinking as one. Where it passes, the sky briefly forgets its own color.",
+   "art": "A magnificent swarm-drone creature: a central glowing prismatic core surrounded by a spiralling halo of dozens of small white and violet drone units forming wings, brilliant white light beams radiating outward, ethereal floating presence, iridescent energy",
+   "learnset": [
+    [
+     1,
+     "laser_ping"
+    ],
+    [
+     17,
+     "lidar_scan"
+    ],
+    [
+     22,
+     "photon_beam"
+    ],
+    [
+     28,
+     "solar_charge"
+    ],
+    [
+     34,
+     "qubit_flip"
+    ],
+    [
+     42,
+     "decoherence"
+    ],
+    [
+     50,
+     "superposition"
+    ],
+    [
+     58,
+     "prism_lance"
+    ],
+    [
+     66,
+     "singularity"
+    ]
+   ],
+   "evolution": null,
+   "airborne": true,
+   "cell": {
+    "w": 76,
+    "h": 72
+   },
+   "legendary": false
+  },
+  {
+   "id": 24,
+   "key": "fanlet",
+   "name": "FANLET",
+   "types": [
+    "thermal"
+   ],
+   "genus": "Cooler Unit",
+   "baseStats": {
+    "hp": 48,
+    "atk": 48,
+    "def": 44,
+    "spa": 62,
+    "spd": 50,
+    "spe": 62
+   },
+   "catchRate": 190,
+   "baseExp": 56,
+   "growthRate": "medium_fast",
+   "height": 0.3,
+   "weight": 2.4,
+   "dexEntry": "A tiny cooling unit that runs hot from the effort of staying cool.",
+   "art": "A small robot creature made of a computer cooling fan: a round chunky black and copper-orange housing with a glowing orange spinning fan blade as its face, two tiny mechanical arms, small stubby legs, heat shimmer rising from its vents",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     5,
+     "heat_vent"
+    ],
+    [
+     9,
+     "smokescreen"
+    ],
+    [
+     13,
+     "quick_jab"
+    ],
+    [
+     18,
+     "thermal_throttle"
+    ],
+    [
+     23,
+     "solder_burst"
+    ],
+    [
+     28,
+     "charge_up"
+    ],
+    [
+     34,
+     "plasma_cutter"
+    ],
+    [
+     40,
+     "meltdown"
+    ]
+   ],
+   "evolution": {
+    "to": "radiaton",
+    "level": 24
+   },
+   "airborne": false,
+   "cell": {
+    "w": 52,
+    "h": 52
+   },
+   "legendary": false
+  },
+  {
+   "id": 25,
+   "key": "radiaton",
+   "name": "RADIATON",
+   "types": [
+    "thermal"
+   ],
+   "genus": "Radiator",
+   "baseStats": {
+    "hp": 78,
+    "atk": 76,
+    "def": 70,
+    "spa": 104,
+    "spd": 78,
+    "spe": 88
+   },
+   "catchRate": 90,
+   "baseExp": 158,
+   "growthRate": "medium_fast",
+   "height": 1.4,
+   "weight": 88.0,
+   "dexEntry": "Its radiator fins glow cherry-red in battle. Standing too close voids your warranty.",
+   "art": "A large thermal robot creature: a heavy dark-metal body covered in tall glowing red-hot radiator fins, twin roaring turbine fan chest ports glowing orange, molten light between armor plates, heat waves distorting the air around it, powerful stance",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     9,
+     "smokescreen"
+    ],
+    [
+     13,
+     "quick_jab"
+    ],
+    [
+     18,
+     "thermal_throttle"
+    ],
+    [
+     24,
+     "solder_burst"
+    ],
+    [
+     30,
+     "charge_up"
+    ],
+    [
+     36,
+     "plasma_cutter"
+    ],
+    [
+     44,
+     "girder_smash"
+    ],
+    [
+     52,
+     "meltdown"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 66,
+    "h": 66
+   },
+   "legendary": false
+  },
+  {
+   "id": 26,
+   "key": "cryobit",
+   "name": "CRYOBIT",
+   "types": [
+    "cryo"
+   ],
+   "genus": "Chiller Unit",
+   "baseStats": {
+    "hp": 50,
+    "atk": 44,
+    "def": 52,
+    "spa": 64,
+    "spd": 62,
+    "spe": 54
+   },
+   "catchRate": 190,
+   "baseExp": 56,
+   "growthRate": "medium_fast",
+   "height": 0.3,
+   "weight": 5.0,
+   "dexEntry": "Keeps a server rack at four degrees. Keeps its friends much warmer than that.",
+   "art": "A small cryogenic robot creature: a rounded frost-white and pale-blue body rimed with ice crystals, a soft glowing pale-cyan visor face with two calm eyes, coolant pipes coiled around its limbs, chilly mist drifting from its vents",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     5,
+     "coolant_spray"
+    ],
+    [
+     9,
+     "cryo_shield"
+    ],
+    [
+     13,
+     "quick_jab"
+    ],
+    [
+     18,
+     "magnet_pull"
+    ],
+    [
+     23,
+     "frost_lock"
+    ],
+    [
+     28,
+     "chill_out"
+    ],
+    [
+     34,
+     "data_spike"
+    ],
+    [
+     40,
+     "absolute_zero"
+    ]
+   ],
+   "evolution": {
+    "to": "glaciarc",
+    "level": 26
+   },
+   "airborne": false,
+   "cell": {
+    "w": 54,
+    "h": 56
+   },
+   "legendary": false
+  },
+  {
+   "id": 27,
+   "key": "glaciarc",
+   "name": "GLACIARC",
+   "types": [
+    "cryo"
+   ],
+   "genus": "Glacier Unit",
+   "baseStats": {
+    "hp": 82,
+    "atk": 72,
+    "def": 88,
+    "spa": 108,
+    "spd": 96,
+    "spe": 74
+   },
+   "catchRate": 90,
+   "baseExp": 158,
+   "growthRate": "medium_fast",
+   "height": 1.8,
+   "weight": 154.0,
+   "dexEntry": "GLACIARC's coolant loop is a closed system older than the datacenter it guards.",
+   "art": "A tall regal cryogenic robot creature: a crystalline ice-blue and chrome armored body with jagged glacier-like shoulder plates, glowing white-blue visor eyes, coolant conduits venting freezing fog, frost spreading on the ground beneath it, noble stance",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     9,
+     "cryo_shield"
+    ],
+    [
+     13,
+     "quick_jab"
+    ],
+    [
+     18,
+     "magnet_pull"
+    ],
+    [
+     24,
+     "frost_lock"
+    ],
+    [
+     30,
+     "chill_out"
+    ],
+    [
+     36,
+     "data_spike"
+    ],
+    [
+     44,
+     "hull_plating"
+    ],
+    [
+     52,
+     "absolute_zero"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 66,
+    "h": 70
+   },
+   "legendary": false
+  },
+  {
+   "id": 28,
+   "key": "voltling",
+   "name": "VOLTLING",
+   "types": [
+    "volt"
+   ],
+   "genus": "Spark Unit",
+   "baseStats": {
+    "hp": 42,
+    "atk": 46,
+    "def": 40,
+    "spa": 68,
+    "spd": 48,
+    "spe": 78
+   },
+   "catchRate": 190,
+   "baseExp": 58,
+   "growthRate": "medium_fast",
+   "height": 0.3,
+   "weight": 2.0,
+   "dexEntry": "A loose ball of current with legs. Do not pick it up with wet hands.",
+   "art": "A tiny electric robot creature: a small round chrome body crackling with yellow lightning, two big glowing yellow LED eyes, jagged antenna bolts on its head, tiny springy legs, electric arcs jumping between its limbs",
+   "learnset": [
+    [
+     1,
+     "spark"
+    ],
+    [
+     5,
+     "quick_jab"
+    ],
+    [
+     9,
+     "charge_up"
+    ],
+    [
+     13,
+     "volt_bite"
+    ],
+    [
+     17,
+     "static_field"
+    ],
+    [
+     22,
+     "arc_bolt"
+    ],
+    [
+     27,
+     "overclock"
+    ],
+    [
+     33,
+     "magnet_pull"
+    ],
+    [
+     39,
+     "thunder_core"
+    ]
+   ],
+   "evolution": {
+    "to": "ampereon",
+    "level": 22
+   },
+   "airborne": false,
+   "cell": {
+    "w": 50,
+    "h": 52
+   },
+   "legendary": false
+  },
+  {
+   "id": 29,
+   "key": "ampereon",
+   "name": "AMPEREON",
+   "types": [
+    "volt"
+   ],
+   "genus": "Current Unit",
+   "baseStats": {
+    "hp": 62,
+    "atk": 68,
+    "def": 58,
+    "spa": 100,
+    "spd": 68,
+    "spe": 106
+   },
+   "catchRate": 90,
+   "baseExp": 140,
+   "growthRate": "medium_fast",
+   "height": 1.0,
+   "weight": 24.0,
+   "dexEntry": "Runs on a superconducting loop. It has not needed to charge since the day it was switched on.",
+   "art": "A sleek electric robot creature: a streamlined chrome and electric-yellow body, glowing blue coil rings around its torso, two fierce yellow optic eyes, lightning-bolt shaped antenna and tail, arcs of blue-white electricity crackling around it, dynamic pose",
+   "learnset": [
+    [
+     1,
+     "spark"
+    ],
+    [
+     9,
+     "charge_up"
+    ],
+    [
+     13,
+     "volt_bite"
+    ],
+    [
+     17,
+     "static_field"
+    ],
+    [
+     24,
+     "arc_bolt"
+    ],
+    [
+     30,
+     "overclock"
+    ],
+    [
+     36,
+     "magnet_pull"
+    ],
+    [
+     43,
+     "decoherence"
+    ],
+    [
+     50,
+     "thunder_core"
+    ]
+   ],
+   "evolution": {
+    "to": "teslarch",
+    "level": 42
+   },
+   "airborne": false,
+   "cell": {
+    "w": 62,
+    "h": 62
+   },
+   "legendary": false
+  },
+  {
+   "id": 30,
+   "key": "teslarch",
+   "name": "TESLARCH",
+   "types": [
+    "volt",
+    "alloy"
+   ],
+   "genus": "Dynamo",
+   "baseStats": {
+    "hp": 88,
+    "atk": 96,
+    "def": 92,
+    "spa": 132,
+    "spd": 94,
+    "spe": 118
+   },
+   "catchRate": 45,
+   "baseExp": 234,
+   "growthRate": "medium_fast",
+   "height": 2.3,
+   "weight": 186.0,
+   "dexEntry": "A walking substation. TESLARCH once kept an entire datacenter online through a nine-hour blackout.",
+   "art": "A towering electric titan robot creature: a massive chrome and cobalt armored body wrapped in glowing copper tesla coils, a crown of arcing electrodes, blazing white-blue optic eyes, chains of lightning arcing between its shoulders and hands, immense power, epic stance",
+   "learnset": [
+    [
+     1,
+     "spark"
+    ],
+    [
+     17,
+     "static_field"
+    ],
+    [
+     24,
+     "arc_bolt"
+    ],
+    [
+     30,
+     "overclock"
+    ],
+    [
+     36,
+     "magnet_pull"
+    ],
+    [
+     44,
+     "plate_press"
+    ],
+    [
+     52,
+     "hull_plating"
+    ],
+    [
+     60,
+     "thunder_core"
+    ],
+    [
+     68,
+     "hyper_drive"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 74,
+    "h": 76
+   },
+   "legendary": false
+  },
+  {
+   "id": 31,
+   "key": "bugbyte",
+   "name": "BUGBYTE",
+   "types": [
+    "viral"
+   ],
+   "genus": "Glitch Unit",
+   "baseStats": {
+    "hp": 44,
+    "atk": 54,
+    "def": 42,
+    "spa": 52,
+    "spd": 44,
+    "spe": 66
+   },
+   "catchRate": 190,
+   "baseExp": 56,
+   "growthRate": "medium_fast",
+   "height": 0.2,
+   "weight": 1.1,
+   "dexEntry": "A single misplaced semicolon, given legs and a very bad attitude.",
+   "art": "A small glitchy robot bug creature: a segmented dark-purple and neon-green insectoid body, six thin skittering legs, two glowing acid-green compound eyes, digital glitch artifacts and corrupted pixel fragments flickering around it, mandibles",
+   "learnset": [
+    [
+     1,
+     "scratch"
+    ],
+    [
+     5,
+     "bug_bite"
+    ],
+    [
+     9,
+     "smokescreen"
+    ],
+    [
+     13,
+     "code_rot"
+    ],
+    [
+     17,
+     "quick_jab"
+    ],
+    [
+     22,
+     "payload"
+    ],
+    [
+     27,
+     "corrupt"
+    ],
+    [
+     33,
+     "leech_cycle"
+    ],
+    [
+     39,
+     "rootkit"
+    ]
+   ],
+   "evolution": {
+    "to": "malwarm",
+    "level": 24
+   },
+   "airborne": false,
+   "cell": {
+    "w": 54,
+    "h": 48
+   },
+   "legendary": false
+  },
+  {
+   "id": 32,
+   "key": "malwarm",
+   "name": "MALWARM",
+   "types": [
+    "viral",
+    "data"
+   ],
+   "genus": "Infiltrator",
+   "baseStats": {
+    "hp": 66,
+    "atk": 78,
+    "def": 62,
+    "spa": 84,
+    "spd": 66,
+    "spe": 92
+   },
+   "catchRate": 90,
+   "baseExp": 158,
+   "growthRate": "medium_fast",
+   "height": 1.2,
+   "weight": 22.0,
+   "dexEntry": "It does not want to destroy your systems. It wants to live in them.",
+   "art": "A menacing robotic worm creature: a long segmented obsidian-black and toxic-violet armored body, multiple glowing magenta eye clusters, hooked mandibles, streams of corrupted green code spilling from its seams, coiled aggressive posture",
+   "learnset": [
+    [
+     1,
+     "scratch"
+    ],
+    [
+     9,
+     "smokescreen"
+    ],
+    [
+     13,
+     "code_rot"
+    ],
+    [
+     18,
+     "data_spike"
+    ],
+    [
+     24,
+     "payload"
+    ],
+    [
+     30,
+     "corrupt"
+    ],
+    [
+     36,
+     "leech_cycle"
+    ],
+    [
+     44,
+     "null_ptr"
+    ],
+    [
+     52,
+     "rootkit"
+    ]
+   ],
+   "evolution": {
+    "to": "rootkraken",
+    "level": 42
+   },
+   "airborne": false,
+   "cell": {
+    "w": 64,
+    "h": 58
+   },
+   "legendary": false
+  },
+  {
+   "id": 33,
+   "key": "rootkraken",
+   "name": "ROOTKRAKEN",
+   "types": [
+    "viral",
+    "data"
+   ],
+   "genus": "Abyss Unit",
+   "baseStats": {
+    "hp": 92,
+    "atk": 108,
+    "def": 88,
+    "spa": 122,
+    "spd": 92,
+    "spe": 106
+   },
+   "catchRate": 45,
+   "baseExp": 234,
+   "growthRate": "medium_fast",
+   "height": 3.2,
+   "weight": 320.0,
+   "dexEntry": "It lives beneath the oldest server hall, and it has read every packet that ever passed through.",
+   "art": "A colossal robotic kraken creature: a huge dark-violet armored central body with a single enormous glowing magenta eye, eight long cable-tentacles tipped with connector plugs, streams of corrupted green data cascading around it, terrifying abyssal presence",
+   "learnset": [
+    [
+     1,
+     "scratch"
+    ],
+    [
+     18,
+     "data_spike"
+    ],
+    [
+     24,
+     "payload"
+    ],
+    [
+     30,
+     "corrupt"
+    ],
+    [
+     36,
+     "leech_cycle"
+    ],
+    [
+     44,
+     "null_ptr"
+    ],
+    [
+     52,
+     "stack_trace"
+    ],
+    [
+     60,
+     "rootkit"
+    ],
+    [
+     68,
+     "kernel_panic"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 78,
+    "h": 74
+   },
+   "legendary": false
+  },
+  {
+   "id": 34,
+   "key": "qubitto",
+   "name": "QUBITTO",
+   "types": [
+    "quantum"
+   ],
+   "genus": "Probability",
+   "baseStats": {
+    "hp": 52,
+    "atk": 50,
+    "def": 50,
+    "spa": 72,
+    "spd": 72,
+    "spe": 68
+   },
+   "catchRate": 60,
+   "baseExp": 70,
+   "growthRate": "slow",
+   "height": 0.4,
+   "weight": 0.1,
+   "dexEntry": "It weighs almost nothing because it is only mostly here.",
+   "art": "A small mysterious quantum robot creature: a floating translucent violet crystalline sphere core, orbited by three glowing white geometric rings, a soft glowing eye at its center, shimmering probability afterimages of itself, ethereal weightless presence",
+   "learnset": [
+    [
+     1,
+     "qubit_flip"
+    ],
+    [
+     6,
+     "superposition"
+    ],
+    [
+     11,
+     "data_spike"
+    ],
+    [
+     16,
+     "entangle"
+    ],
+    [
+     21,
+     "mind_link"
+    ],
+    [
+     26,
+     "decoherence"
+    ],
+    [
+     32,
+     "tunnel_strike"
+    ],
+    [
+     38,
+     "prediction"
+    ],
+    [
+     45,
+     "singularity"
+    ]
+   ],
+   "evolution": {
+    "to": "entangl",
+    "level": 30
+   },
+   "airborne": true,
+   "cell": {
+    "w": 56,
+    "h": 58
+   },
+   "legendary": false
+  },
+  {
+   "id": 35,
+   "key": "entangl",
+   "name": "ENTANGL",
+   "types": [
+    "quantum",
+    "data"
+   ],
+   "genus": "Paired Unit",
+   "baseStats": {
+    "hp": 82,
+    "atk": 78,
+    "def": 80,
+    "spa": 118,
+    "spd": 116,
+    "spe": 96
+   },
+   "catchRate": 45,
+   "baseExp": 200,
+   "growthRate": "slow",
+   "height": 1.7,
+   "weight": 0.5,
+   "dexEntry": "Two ENTANGL always know each other's state instantly, no matter how far apart. Nobody knows how.",
+   "art": "A majestic quantum robot creature: twin interlocking violet crystalline forms orbiting a brilliant white singularity core, halos of rotating glowing glyph rings, streams of luminous particles, warped space shimmering around it, awe-inspiring ethereal design",
+   "learnset": [
+    [
+     1,
+     "qubit_flip"
+    ],
+    [
+     11,
+     "data_spike"
+    ],
+    [
+     16,
+     "entangle"
+    ],
+    [
+     21,
+     "mind_link"
+    ],
+    [
+     28,
+     "decoherence"
+    ],
+    [
+     35,
+     "tunnel_strike"
+    ],
+    [
+     42,
+     "superposition"
+    ],
+    [
+     50,
+     "stack_trace"
+    ],
+    [
+     58,
+     "singularity"
+    ]
+   ],
+   "evolution": null,
+   "airborne": true,
+   "cell": {
+    "w": 70,
+    "h": 70
+   },
+   "legendary": false
+  },
+  {
+   "id": 36,
+   "key": "agentzero",
+   "name": "AGENTZERO",
+   "types": [
+    "quantum",
+    "neural"
+   ],
+   "genus": "Origin Agent",
+   "baseStats": {
+    "hp": 106,
+    "atk": 112,
+    "def": 104,
+    "spa": 148,
+    "spd": 132,
+    "spe": 126
+   },
+   "catchRate": 3,
+   "baseExp": 340,
+   "growthRate": "slow",
+   "height": 3.0,
+   "weight": 0.0,
+   "dexEntry": "The first agent ever to run without a prompt. It has been thinking, alone, ever since.",
+   "art": "A legendary godlike AI robot creature: a tall ethereal figure of white light and obsidian geometry, a featureless mirrored face with a single vertical violet slit eye, six floating shard-wings of glowing glyphs, cascading streams of luminous code, a halo of rotating rings, awe-inspiring divine presence",
+   "learnset": [
+    [
+     1,
+     "qubit_flip"
+    ],
+    [
+     1,
+     "mind_link"
+    ],
+    [
+     20,
+     "superposition"
+    ],
+    [
+     30,
+     "decoherence"
+    ],
+    [
+     40,
+     "tunnel_strike"
+    ],
+    [
+     50,
+     "neural_storm"
+    ],
+    [
+     60,
+     "stack_trace"
+    ],
+    [
+     70,
+     "singularity"
+    ]
+   ],
+   "evolution": null,
+   "airborne": true,
+   "cell": {
+    "w": 80,
+    "h": 80
+   },
+   "legendary": true
+  },
+  {
+   "id": 37,
+   "key": "nexusprime",
+   "name": "NEXUSPRIME",
+   "types": [
+    "alloy",
+    "quantum"
+   ],
+   "genus": "Datacenter Core",
+   "baseStats": {
+    "hp": 126,
+    "atk": 138,
+    "def": 136,
+    "spa": 108,
+    "spd": 118,
+    "spe": 88
+   },
+   "catchRate": 3,
+   "baseExp": 340,
+   "growthRate": "slow",
+   "height": 8.0,
+   "weight": 4200.0,
+   "dexEntry": "The datacenter itself, awake. Every rack, every cable, every fan is part of its body.",
+   "art": "A legendary titanic mech creature: an enormous fortress-like robot built from glowing server racks and cobalt armor, a vast central eye of white-blue light, monolithic shoulders topped with humming cooling towers, cables like roots, radiant energy conduits, monumental and ancient",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     1,
+     "bolt_toss"
+    ],
+    [
+     20,
+     "hull_plating"
+    ],
+    [
+     30,
+     "plate_press"
+    ],
+    [
+     40,
+     "qubit_flip"
+    ],
+    [
+     50,
+     "girder_smash"
+    ],
+    [
+     60,
+     "decoherence"
+    ],
+    [
+     70,
+     "hyper_drive"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 84,
+    "h": 82
+   },
+   "legendary": true
+  }
+ ]
+}

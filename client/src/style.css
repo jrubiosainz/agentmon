@@ -1,0 +1,239 @@
+/* Agéntmon - the "console" shell around the 240x160 screen. */
+
+:root {
+  --bg: #0b0d14;
+  --bg-2: #141a29;
+  --shell: #23283c;
+  --shell-hi: #333a54;
+  --accent: #58c8f0;
+  --accent-2: #f0a828;
+  --text: #d8e0f0;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(1200px 700px at 50% -10%, #1d2740 0%, transparent 60%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.012) 0 2px, transparent 2px 4px);
+  pointer-events: none;
+}
+
+#app {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 100%;
+  padding: 12px;
+}
+
+#screen-frame {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+  padding: 14px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, var(--shell-hi), var(--shell));
+  box-shadow:
+    0 0 0 2px #0c0f18,
+    0 18px 40px rgba(0, 0, 0, .6),
+    inset 0 1px 0 rgba(255, 255, 255, .08);
+}
+
+#screen-frame::after {
+  content: "AGÉNTMON";
+  position: absolute;
+  bottom: 4px;
+  right: 14px;
+  font-size: 9px;
+  letter-spacing: .28em;
+  color: rgba(216, 224, 240, .28);
+  font-weight: 700;
+}
+
+#screen {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: #000;
+  border-radius: 3px;
+  box-shadow: 0 0 0 3px #0a0c12, 0 0 22px rgba(88, 200, 240, .16);
+}
+
+#overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+#overlay > * { pointer-events: auto; }
+
+#hint {
+  margin: 0;
+  font-size: 12px;
+  opacity: .55;
+  text-align: center;
+}
+
+#hint b {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------------- touch UI */
+#touch-controls {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 560px;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+#touch-controls[hidden] { display: none; }
+
+.dpad {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  justify-self: start;
+}
+
+.dpad .btn {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  background: var(--shell-hi);
+  border: 1px solid #0c0f18;
+  border-radius: 8px;
+}
+
+.dpad [data-btn="up"]    { left: 44px; top: 0; }
+.dpad [data-btn="down"]  { left: 44px; top: 88px; }
+.dpad [data-btn="left"]  { left: 0; top: 44px; }
+.dpad [data-btn="right"] { left: 88px; top: 44px; }
+
+.actions {
+  display: flex;
+  gap: 14px;
+  justify-self: end;
+  align-items: center;
+}
+
+.system {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn {
+  appearance: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--shell-hi);
+  border: 1px solid #0c0f18;
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 #0c0f18;
+  touch-action: none;
+}
+
+.btn:active,
+.btn.pressed {
+  transform: translateY(2px);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.5);
+  background: var(--accent);
+  color: #0b0d14;
+}
+
+.btn.round {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  font-size: 18px;
+  background: var(--accent-2);
+  color: #241a06;
+}
+
+.btn.pill {
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: .12em;
+}
+
+/* ---------------------------------------------------------------- fatal */
+.fatal {
+  max-width: 320px;
+  padding: 18px 20px;
+  border-radius: 10px;
+  background: #1a1020;
+  border: 2px solid #d84038;
+  text-align: center;
+  font-size: 13px;
+}
+
+.fatal h2 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  letter-spacing: .16em;
+  color: #ff8878;
+}
+
+.fatal pre {
+  max-height: 120px;
+  overflow: auto;
+  padding: 8px;
+  border-radius: 6px;
+  background: #0d0810;
+  font-size: 11px;
+  text-align: left;
+  white-space: pre-wrap;
+}
+
+.fatal button {
+  margin-top: 10px;
+  padding: 8px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #06131a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-height: 520px) {
+  #hint { display: none; }
+  #screen-frame { padding: 8px; border-radius: 12px; }
+}
