@@ -11,9 +11,11 @@ import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { buildTileset, type TileSetResult } from '../src/engine/tilegen.ts';
+import { Battle } from '../src/game/battle/engine.ts';
 import {
   BACKDROP_KEYS, BUILDING_KEYS, CHARACTER_KEYS, TRAINER_KEYS,
 } from '../src/game/data/artkeys.ts';
+import { createAgent } from '../src/game/data/agent.ts';
 import { DEX, setDex, move as moveDef, species as speciesDef } from '../src/game/data/dex.ts';
 import { ITEMS } from '../src/game/data/items.ts';
 import { ALL_MAPS, mapExists } from '../src/game/data/maps.ts';
@@ -189,6 +191,44 @@ describe('trainers', () => {
       }
     }
     expect(problems).toEqual([]);
+  });
+});
+
+describe('battle items', () => {
+  function stage(kind: 'wild' | 'trainer'): Battle {
+    const mine = createAgent('stackbit', { level: 30 });
+    const theirs = createAgent('stackbit', { level: 5 });
+    return new Battle([mine], [theirs], {
+      kind, playerName: 'AAA', canRun: true, seed: 1234,
+    });
+  }
+
+  it('announces the throw so the command prompt is replaced', () => {
+    const b = stage('wild');
+    const ev = b.takeTurn({ kind: 'item', key: 'nanocore' });
+    const said = ev.find((e) => e.t === 'text');
+    expect(said && 'text' in said ? said.text : '').toBe('AAA used the NANO CORE!');
+  });
+
+  it('emits useItem exactly once for a real use, so the bag is charged once', () => {
+    const b = stage('wild');
+    const ev = b.takeTurn({ kind: 'item', key: 'patch', targetIndex: 0 });
+    expect(ev.filter((e) => e.t === 'useItem')).toHaveLength(1);
+  });
+
+  it('does not charge for a ball a trainer battle refuses', () => {
+    const b = stage('trainer');
+    const ev = b.takeTurn({ kind: 'item', key: 'nanocore' });
+    expect(ev.filter((e) => e.t === 'useItem')).toHaveLength(0);
+    const said = ev.find((e) => e.t === 'text');
+    expect(said && 'text' in said ? said.text : '').toContain("can't capture");
+  });
+
+  it('a 255-rate core always captures', () => {
+    const b = stage('wild');
+    b.takeTurn({ kind: 'item', key: 'masterkey' });
+    expect(b.outcome).toBe('caught');
+    expect(b.caught?.otName).toBe('AAA');
   });
 });
 

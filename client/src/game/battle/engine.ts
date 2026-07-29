@@ -625,9 +625,14 @@ export class Battle {
   // -------------------------------------------------------------------- items
   private applyItem(ev: BattleEvent[], action: Extract<PlayerAction, { kind: 'item' }>): void {
     const def = item(action.key);
-    ev.push({ t: 'useItem', itemKey: action.key });
 
     if (def.ballRate !== undefined) {
+      if (this.config.kind === 'trainer') {
+        // Refused, so the ball is never announced and never consumed.
+        ev.push({ t: 'text', text: "You can't capture another engineer's AGÉNTMON!", wait: true });
+        return;
+      }
+      ev.push({ t: 'useItem', itemKey: action.key });
       this.throwBall(ev, def);
       return;
     }
@@ -636,6 +641,7 @@ export class Battle {
     if (!target) return;
     const isActive = targetIndex === this.player.activeIndex;
 
+    ev.push({ t: 'useItem', itemKey: action.key });
     ev.push({ t: 'text', text: `${this.config.playerName} used ${def.name}!`, wait: true });
 
     if (def.revive && isFainted(target)) {
@@ -668,13 +674,12 @@ export class Battle {
   }
 
   private throwBall(ev: BattleEvent[], def: ItemDef): void {
-    if (this.config.kind === 'trainer') {
-      ev.push({ t: 'text', text: "You can't capture another engineer's AGÉNTMON!", wait: true });
-      return;
-    }
     const target = this.foeC.agent;
     const sp = species(target.speciesKey);
     const max = maxHp(target);
+    // Announce the throw before the animation so the text box isn't still
+    // showing "What will X do?" while the ball is in the air.
+    ev.push({ t: 'text', text: `${this.config.playerName} used the ${def.name}!`, wait: false });
     const ballRate = def.key === 'netcore'
       ? (this.foeC.turnsOut >= 6 ? 3 : 1.5)
       : def.ballRate!;

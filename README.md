@@ -209,16 +209,25 @@ against minified builds.
 font renders a character by looking it up in a table, and a character that is not
 in that table **draws nothing at all** — no box, no warning. A missing symbol can
 therefore ship unnoticed, which is exactly what happened to `¥` across seven call
-sites. `glyphcheck` collects every character reachable from the dex, item and move
-data plus the UI copy, renders each one through the real font onto an offscreen
-canvas, and fails if any produces zero pixels.
+sites.
+
+The character set is deliberately *not* hand-maintained, because a hand-written
+list has the same blind spot as the font table: it only contains what someone
+remembered to add. `glyphcheck` instead derives its set from the source — the
+printable ASCII range, plus every non-ASCII character and every `\uXXXX` escape
+found under `client/src` (excluding `src/game/ui`, the DOM auth overlay, which is
+styled HTML rather than canvas text). Each one is rendered through the real font
+onto an offscreen canvas, and the run fails if any produces zero pixels.
+
+Making that change immediately surfaced four glyphs that had been silently
+invisible: `◀` (so the options screen read "Adjust with&nbsp;&nbsp;&nbsp;B to
+close"), `▲`, and `○`/`●` — the AGÉNTDEX seen/caught markers, which meant the dex
+had been shipping with a permanently blank status column.
 
 ```powershell
 cd client
-node tools\glyphcheck.mjs      # -> "all 92 glyphs render"
+node tools\glyphcheck.mjs      # -> "all 96 glyphs render (17 discovered in source)"
 ```
-
-Run it after adding any new symbol to on-screen text.
 
 ## Controls
 

@@ -20,7 +20,7 @@ import { trainer as trainerDef } from '../data/trainers.ts';
 import {
   Battle, type BattleConfig, type BattleEvent, type BattleOutcome, type PlayerAction, type Side,
 } from '../battle/engine.ts';
-import { addAgent, catchSpecies, formatMoney, seeSpecies } from '../state.ts';
+import { addAgent, bagRemove, catchSpecies, formatMoney, seeSpecies } from '../state.ts';
 import { BagScene, PartyScene } from './menu.ts';
 
 export interface BattlePayload {
@@ -466,6 +466,9 @@ export class BattleScene extends Scene {
         }
         case 'useItem':
           audio.sfx('item');
+          // The bag scene only reports the choice; the battle is what actually
+          // spends it, so a refused throw (trainer battle) costs nothing.
+          bagRemove(this.game.save, ev.itemKey, 1);
           break;
         case 'exp': {
           const target = this.game.save.party[ev.index];

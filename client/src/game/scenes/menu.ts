@@ -221,35 +221,46 @@ export class PartyScene extends Scene {
     for (let i = 0; i < this.party.length; i++) {
       const a = this.party[i]!;
       const first = i === 0;
+      // The lead gets a tall portrait box on the left; the rest stack as
+      // compact rows that must all clear the text box at the bottom.
       const x = first ? 4 : 78;
-      const y = first ? 6 : 4 + (i - 1) * 25;
+      const y = first ? 6 : 4 + (i - 1) * 21;
       const w = first ? 70 : 158;
-      const h = first ? 46 : 23;
+      const h = first ? 88 : 20;
       const selected = i === this.index;
       drawPanel(g, x, y, w, h,
         selected ? '#f0e0a8' : (this.swapFrom === i ? '#a8d8f0' : '#e8e8f0'),
         selected ? '#c09828' : '#606880');
 
-      const icon = this.game.atlas('icons');
-      const iconKey = a.speciesKey;
-      if (icon?.has(iconKey)) icon.draw(g, iconKey, x + 2, y + (first ? 8 : -4), first ? 1 : 0.75);
-      else {
-        g.fillStyle = typeDef(species(a.speciesKey).types[0]!).color;
-        g.fillRect(x + 6, y + 4, 14, 14);
+      const tx = x + (first ? 4 : 28);
+      const ty = y + (first ? 4 : 2);
+      font.draw(g, displayName(a).slice(0, 10), tx, ty, 'normal', false);
+      const ratio = a.hp / maxHp(a);
+      if (first) {
+        font.draw(g, `:L${a.level}`, tx, ty + 11, 'normal', false);
+        drawHpBar(g, tx, ty + 24, 62, ratio);
+        font.drawRight(g, `${a.hp}/${maxHp(a)}`, x + w - 4, ty + 32, 'normal', false);
+      } else {
+        font.draw(g, `:L${a.level}`, tx, ty + 9, 'normal', false);
+        drawHpBar(g, x + 96, ty + 10, 44, ratio);
+        font.drawRight(g, `${a.hp}/${maxHp(a)}`, x + w - 4, ty, 'normal', false);
       }
 
-      const tx = x + (first ? 4 : 30);
-      const ty = y + (first ? 2 : 3);
-      font.draw(g, displayName(a).slice(0, 10), tx, ty, 'normal', false);
-      font.draw(g, `:L${a.level}`, tx, ty + 10, 'normal', false);
-      const ratio = a.hp / maxHp(a);
-      drawHpBar(g, tx + 34, ty + 11, 44, ratio);
-      font.drawRight(g, `${a.hp}/${maxHp(a)}`, x + w - 4, ty + (first ? 22 : 10), 'normal', false);
+      const icon = this.game.atlas('icons');
+      if (icon?.has(a.speciesKey)) {
+        // Compact rows are 20px tall, so the icon has to scale to fit exactly:
+        // any overhang bleeds into the neighbouring row.
+        if (first) icon.draw(g, a.speciesKey, x + Math.floor(w / 2) - 16, y + 50, 1);
+        else icon.draw(g, a.speciesKey, x + 2, y, 0.625);
+      } else {
+        g.fillStyle = typeDef(species(a.speciesKey).types[0]!).color;
+        g.fillRect(first ? x + 28 : x + 6, first ? y + 56 : y + 3, 14, 14);
+      }
+
       if (a.status !== 'none') {
-        // Compact rows have no spare line, so the chip rides the right end of
-        // the name row; the big panel has room underneath.
-        const sx = first ? tx : x + w - 26;
-        const sy = ty + (first ? 32 : 0);
+        // The chip has to dodge the HP bar, which sits at x+96 on compact rows.
+        const sx = first ? x + w - 26 : x + 70;
+        const sy = ty + (first ? 11 : 9);
         g.fillStyle = STATUS_COLOR[a.status];
         g.fillRect(sx, sy, 22, 9);
         font.drawCentered(g, STATUS_SHORT[a.status], sx + 11, sy + 1, 'white', false);
