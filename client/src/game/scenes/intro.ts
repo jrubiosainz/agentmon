@@ -209,21 +209,28 @@ export class IntroScene extends Scene {
   }
 
   private renderGender(g: CanvasRenderingContext2D): void {
-    font.drawCentered(g, 'Are you a boy? Or a girl?', SCREEN_W / 2, 22, 'white');
+    font.drawCentered(g, 'Are you a boy? Or a girl?', SCREEN_W / 2, 8, 'white');
     const labels = ['BOY', 'GIRL'];
     for (let i = 0; i < 2; i++) {
       const x = 60 + i * 120;
       const selected = i === this.genderIndex;
       const sheet = this.game.sheet(i === 0 ? 'ch:player_m' : 'ch:player_f');
       if (selected) {
-        g.fillStyle = 'rgba(240,200,64,0.18)';
-        g.fillRect(x - 34, 34, 68, 84);
+        // A translucent fill alone blends to a muddy grey over the navy
+        // backdrop, so the selection reads as a lit gold frame instead.
+        g.fillStyle = 'rgba(240,200,64,0.14)';
+        g.fillRect(x - 34, 26, 68, 92);
+        g.fillStyle = '#f0c840';
+        g.fillRect(x - 34, 26, 68, 1);
+        g.fillRect(x - 34, 117, 68, 1);
+        g.fillRect(x - 34, 26, 1, 92);
+        g.fillRect(x + 33, 26, 1, 92);
       }
       if (sheet) {
-        sheet.drawFrame(g, 'walk_down', 0, x, 108, { scale: 3 });
+        sheet.drawFrame(g, 'walk_down', 0, x, 112, { scale: 3 });
       } else {
         g.fillStyle = i === 0 ? '#4878d8' : '#d85888';
-        g.fillRect(x - 12, 66, 24, 40);
+        g.fillRect(x - 12, 70, 24, 40);
       }
       font.drawCentered(g, labels[i]!, x, 122, selected ? 'gold' : 'dim');
     }

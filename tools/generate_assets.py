@@ -20,8 +20,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from PIL import Image  # noqa: E402
 
-from agentmon_art import anim, sheet  # noqa: E402
+from agentmon_art import anim, chibi, sheet  # noqa: E402
 from agentmon_art.azureimg import AzureImageClient, ImageRequest  # noqa: E402
+from agentmon_art.char_styles import CHARACTER_STYLES  # noqa: E402
 from agentmon_art.pixelize import PixelizeConfig, pixelize  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -183,6 +184,15 @@ def creature_requests(only: set[str] | None = None) -> list[ImageRequest]:
 
 
 def character_requests() -> list[ImageRequest]:
+    """Overworld characters are authored in code by `build_characters`.
+
+    Kept as a no-op so the `--characters` group still exists; the concept-art
+    prompts below stay as the reference the chibi styles were matched to.
+    """
+    return []
+
+
+def _character_concept_requests() -> list[ImageRequest]:
     reqs: list[ImageRequest] = []
     for key, desc in CHARACTERS.items():
         for view_key, view in VIEWS.items():
@@ -278,34 +288,21 @@ def build_creatures(client: AzureImageClient, reqs: list[ImageRequest]) -> None:
 
 
 def build_characters(client: AzureImageClient, reqs: list[ImageRequest]) -> None:
-    by_char: dict[str, dict[str, Path]] = {}
-    for r in reqs:
-        p = cache_path(client, r)
-        if p:
-            by_char.setdefault(r.meta["char"], {})[r.meta["view"]] = p
+    """Author the overworld cast procedurally rather than downscaling AI art.
 
-    for key, views in by_char.items():
-        cfg = PixelizeConfig(width=20, height=28, colors=12, align="bottom", outline=True, despeckle=False)
-        bases: dict[str, Image.Image] = {}
-        if "down" in views:
-            bases["down"] = pixelize(str(views["down"]), cfg)
-        if "up" in views:
-            bases["up"] = pixelize(str(views["up"]), cfg)
-        if "side" in views:
-            right = pixelize(str(views["side"]), cfg)
-            bases["right"] = right
-            bases["left"] = anim.turn_flip(right)
-        if not bases:
-            continue
-
-        anims: dict[str, list[Image.Image]] = {}
-        for d in ("down", "up", "left", "right"):
-            base = bases.get(d) or next(iter(bases.values()))
-            anims[f"walk_{d}"] = anim.walk_cycle(base, frames=4, leg_ratio=0.36, stride=1)
+    A 20x28 overworld cell gives a realistically proportioned figure a ~4px
+    head, which is unreadable at GBA scale. Handheld sprites work because they
+    are chibi (head ~45% of the figure), use ~15 flat colours and carry a hard
+    1px keyline - authoring decisions a downscaler cannot recover. So the
+    overworld cast is drawn by `agentmon_art.chibi` from a per-character style,
+    while AI art still drives the battle portraits, creatures and buildings.
+    """
+    for key, style in CHARACTER_STYLES.items():
+        anims = chibi.build_character(style)
         sh, meta = sheet.pack_animations(anims)
         meta["character"] = key
         sheet.save(sh, meta, OUT / "chars" / f"{key}.png", OUT / "chars" / f"{key}.json")
-        print(f"  character {key}", flush=True)
+        print(f"  character {key} ({sh.size[0]}x{sh.size[1]})", flush=True)
 
 
 def build_trainers(client: AzureImageClient, reqs: list[ImageRequest]) -> None:

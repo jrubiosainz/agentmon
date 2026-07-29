@@ -35,7 +35,8 @@ server/          Node 22 + Express API; also serves the built client
   src/db/        Store abstraction with Cosmos DB and in-memory implementations
 shared/          agentdex.json — the species/move/type database, shared by both sides
 tools/           Python art pipeline (AI concept art -> GBA sprite sheets)
-  agentmon_art/  azureimg (Azure image API), pixelize, anim (the animation tool), sheet (packer)
+  agentmon_art/  azureimg (Azure image API), pixelize, anim (the animation tool),
+                 chibi (procedural overworld sprites), char_styles, sheet (packer)
 infra/           Bicep template + deploy script
 ```
 
@@ -98,11 +99,46 @@ Stages:
 Character sheets come out as 80×112 = 4 columns × 4 rows of 20×28 cells, one row
 per facing (`walk_down`, `walk_up`, `walk_left`, `walk_right`).
 
-A practical note that cost a lot of iterations: sprites read badly on the dark
-datacenter backdrops unless the prompt asks for light, saturated garment colours
-*and* explicitly says `bright even daylight, high contrast, no dark shadows`.
-Every character prompt in `tools/generate_assets.py` is written that way and the
-resulting sheets average a luminance of ~105–160.
+### Why the overworld cast is drawn in code, not generated
+
+The 15 walking characters go through a different path — `agentmon_art/chibi.py`,
+a procedural sprite generator — and this was the single biggest art correction of
+the project.
+
+Running the AI concept art through the pipeline above produced sheets with
+**105–107 colours** and no readable silhouette. The cause is proportion, not
+resolution: a realistically proportioned figure squeezed into a 20×28 cell gets a
+**~4 pixel head**, which cannot carry a face. Handheld sprites of this era look
+the way they do because they are *authored* chibi — head roughly 45% of the total
+figure, ~15 flat colours, a hard 1px keyline all the way round. Those are
+decisions made while drawing; no downscaler can recover them from a photorealistic
+source.
+
+So `chibi.py` draws each character from a `ChibiStyle` — skin, hair, top, bottom,
+shoes, trim, plus `hair_style` (short/spiky/long/ponytail/bun/bald), `headgear`
+(cap/hardhat/helmet/hood), `accessory` (glasses/visor/goggles), and the flags
+`coat`, `backpack`, `beard`, `height` and `extras` (apron/collar/badge). From one
+style it emits all 16 frames: front, back and profile views, each with a 4-frame
+walk cycle. The gait alternates a planted leg (extended 1px) against a trailing
+leg (lifted 1px) and lifts the upper body 1px on the step frames — that bob is
+what actually sells walking at this size. The profile view uses a scissor gait
+and `walk_left` is a horizontal flip of `walk_right`.
+
+The 15 styles live in `agentmon_art/char_styles.py` and are matched to the same
+written descriptions the battle portraits are generated from, so the overworld
+sprite and the portrait agree. Result: **15–20 colours per sheet** instead of 105,
+and all 15 sheets together weigh 25 KB.
+
+The lesson generalises — it is also why the terrain tiles are authored in
+`client/src/engine/tilegen.ts` rather than generated. AI art earns its place where
+detail is the point (creatures, buildings, portraits, backdrops, title art) and
+loses to hand-authored pixels wherever a tiny cell has to stay legible.
+
+A practical note that cost a lot of iterations on the generated art: sprites read
+badly on the dark datacenter backdrops unless the prompt asks for light, saturated
+garment colours *and* explicitly says `bright even daylight, high contrast, no
+dark shadows`. Every character prompt in `tools/generate_assets.py` is written
+that way and the resulting sheets average a luminance of ~105–160.
 
 ## Verification harness
 

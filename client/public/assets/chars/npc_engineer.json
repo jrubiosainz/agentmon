@@ -10,11 +10,11 @@
       "row": 1,
       "frames": 4
     },
-    "walk_left": {
+    "walk_right": {
       "row": 2,
       "frames": 4
     },
-    "walk_right": {
+    "walk_left": {
       "row": 3,
       "frames": 4
     }
