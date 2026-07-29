@@ -248,7 +248,7 @@ describe('storage', () => {
   });
 
   it('boxes hold every overflow capture', () => {
-    const save = newSave('TESTER');
+    const save = newSave('TESTER', 'm', 'RIVAL');
     for (let i = 0; i < 6; i++) save.party.push(createAgent('stackbit', { level: 5 }));
     const where = addAgent(save, createAgent('reachlet', { level: 5 }));
     expect(where).toBe('box');

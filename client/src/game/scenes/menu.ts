@@ -17,7 +17,7 @@ import { CATEGORY_NAME, CATEGORY_ORDER, item as itemDef, type ItemCategory } fro
 import { BADGE_INFO, BADGE_ORDER } from '../data/trainers.ts';
 import { saves, summarise } from '../save.ts';
 import {
-  bagAdd, bagRemove, BOX_SIZE, MAX_BOXES, formatMoney, formatPlaytime, type SaveData,
+  bagAdd, bagRemove, BOX_COUNT, BOX_SIZE, formatMoney, formatPlaytime, type SaveData,
 } from '../state.ts';
 
 // =========================================================================== //
@@ -928,7 +928,7 @@ export class StorageScene extends Scene {
       }
       if (save.boxes.length === 0) save.boxes.push([]);
       let open = save.boxes.find((b) => b.length < BOX_SIZE);
-      if (!open && save.boxes.length < MAX_BOXES) {
+      if (!open && save.boxes.length < BOX_COUNT) {
         open = [];
         save.boxes.push(open);
       }
@@ -958,7 +958,7 @@ export class StorageScene extends Scene {
     drawWindow(g, 4, 4, 88, 56);
     font.draw(g, 'STORAGE', 12, 10, 'normal', false);
     font.draw(g, 'STORED', 12, 26, 'dim', false);
-    font.drawRight(g, `${stored}/${MAX_BOXES * BOX_SIZE}`, 84, 26, 'normal', false);
+    font.drawRight(g, `${stored}/${BOX_COUNT * BOX_SIZE}`, 84, 26, 'normal', false);
     font.draw(g, 'TEAM', 12, 40, 'dim', false);
     font.drawRight(g, `${save.party.length}/6`, 84, 40, 'normal', false);
 

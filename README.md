@@ -252,10 +252,11 @@ Two rules keep the player from soft-locking themselves, and both are enforced in
 - You can never deposit your way down to zero *working* agents — the check is
   "is anything else still standing", not simply "is the party bigger than one",
   so a party of one healthy and one fainted agent still refuses the healthy one.
-- Storage banks open on demand (`addAgent` in `client/src/game/state.ts` appends a
-  new bank rather than releasing an overflow capture) up to `MAX_BOXES × BOX_SIZE`
-  = 240 slots. Before this existed, a full party meant every capture was announced
-  as "transferred to STORAGE" and then unreachable forever.
+- Storage banks are pre-allocated by `newSave` and topped up on load, and
+  `addAgent` in `client/src/game/state.ts` appends one rather than releasing an
+  overflow capture — `BOX_COUNT × BOX_SIZE` = 240 slots. Before this existed, a
+  full party meant every capture was announced as "transferred to STORAGE" and
+  then unreachable forever.
 
 ## Accounts and cloud saves
 
