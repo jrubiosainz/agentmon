@@ -72,37 +72,51 @@ VIEWS = {
 CHARACTERS = {
     "player_m": "A young male AI engineer, age 15, short dark tousled hair, a white hoodie with a glowing cyan circuit trim, dark cargo shorts, cyan sneakers, a small utility backpack and AR glasses pushed up on his forehead",
     "player_f": "A young female AI engineer, age 15, shoulder-length teal hair in a short ponytail, a white and magenta techwear jacket with glowing trim, black leggings, magenta sneakers, a small utility backpack and AR glasses on her forehead",
-    "rival": "A confident teenage AI engineer rival, spiky orange hair, a black and orange bomber jacket with circuit-pattern trim, dark jeans, orange high-top sneakers, arms crossed attitude, a tablet clipped to his belt",
+    "rival": "A confident teenage AI engineer rival, spiky bright orange hair, a vivid orange and white bomber jacket with cyan circuit-pattern trim, light grey jeans, white high-top sneakers, arms crossed attitude, a tablet clipped to his belt, bright even daylight, high contrast, no dark shadows",
     "professor": "A friendly professor of robotics, mid-forties, short grey beard, round glasses, a long white lab coat over a navy turtleneck, holding a tablet, kind expression",
     "npc_engineer": "An adult AI engineer NPC, casual grey hoodie with a laptop-sticker pattern, jeans, sneakers, a lanyard badge around the neck, holding a coffee cup",
-    "npc_technician": "A datacenter technician NPC, navy blue work coveralls with reflective yellow safety stripes, a hard hat, thick gloves, a tool belt",
+    "npc_technician": "A datacenter technician NPC, light sky-blue work coveralls with bright yellow reflective stripes, a white hard hat, tan gloves, a tool belt, bright even daylight, high contrast, no dark shadows",
     "npc_kid": "A short cheerful junior apprentice character, bright yellow t-shirt with a cartoon robot print, blue shorts, red cap worn backwards, sneakers, energetic bouncy stance",
     "npc_medic": "A robot-clinic nurse NPC, mint-green medical uniform with a white cross emblem, short pink hair, a headset, friendly welcoming pose",
     "npc_clerk": "A shop clerk NPC, crisp teal store uniform apron over a white shirt, neat brown hair, a handheld scanner device, cheerful pose",
-    "npc_guard": "A datacenter security guard NPC, black tactical uniform with cyan glowing shoulder trim, mirrored visor helmet, arms at sides, imposing",
+    "npc_guard": "A datacenter security guard NPC, light steel-grey uniform jacket with bright cyan glowing shoulder trim and chest stripe, pale grey trousers, white helmet with a clear blue visor, arms at sides, standing at attention, bright even daylight, high contrast, no dark shadows",
+    "mom": "A warm friendly mother character, late thirties, dark hair in a loose bun, a soft lavender cardigan over a cream blouse, a long teal skirt, gentle smile, hands clasped, bright even daylight, high contrast",
+    "leader_volt": "A cheerful gym leader, a young woman with bright yellow twin-tail hair, an electric-blue technician jumpsuit with glowing yellow cable trim, welding goggles pushed up on her head, yellow boots, confident stance, bright even daylight, high contrast, no dark shadows",
+    "leader_cryo": "A stoic gym leader, a tall man in a frost-white parka over a chrome exosuit with glowing pale-blue coolant lines, white boots, arms at his sides, calm imposing stance, bright even daylight, high contrast, no dark shadows",
+    "leader_thermal": "An intense gym leader, a woman in a violet and white hooded techwear coat with orange glowing seams, a bright violet visor over her eyes, white boots, commanding stance, bright even daylight, high contrast, no dark shadows",
+    "champion": "The world champion AI engineer, a poised adult in a long white and gold coat with glowing cyan data trim, silver hair swept back, a high collar, gold trimmed boots, regal confident stance, bright even daylight, high contrast, no dark shadows",
 }
 
 # Full-body trainer battle portraits (shown when a trainer battle starts)
 TRAINERS = {
-    "trainer_rival": ("A confident young AI engineer character with spiky orange hair, black and orange "
-                      "bomber jacket with circuit-pattern trim, one arm extended forward holding a "
-                      "glowing deployment capsule, dynamic heroic stance"),
+    "trainer_rival": ("A confident young AI engineer character with spiky bright orange hair, a vivid "
+                      "orange and white bomber jacket with cyan circuit-pattern trim, light grey jeans, "
+                      "white high-top sneakers, one arm extended forward holding a "
+                      "glowing deployment capsule, dynamic heroic stance, bright even daylight, "
+                      "high contrast, no dark shadows"),
     "trainer_gym1": ("A cheerful gym leader: a young woman with bright yellow twin-tail hair, an electric-"
                      "blue technician jumpsuit with glowing yellow cable trim, welding goggles on her head, "
                      "one hand sparking with static, dynamic confident pose"),
     "trainer_gym2": ("A stoic gym leader: a tall man in a heavy frost-white parka over a chrome exosuit "
                      "with glowing pale-blue coolant lines, breath fogging, arms folded, calm intimidating pose"),
-    "trainer_gym3": ("An intense gym leader: a woman in a black and violet hooded techwear coat with "
-                     "cascading holographic code projected around her, glowing violet visor over her eyes, "
-                     "one arm raised commanding, mysterious powerful pose"),
-    "trainer_engineer": ("An adult AI engineer opponent in a grey hoodie and jeans with a lanyard badge, "
-                         "confidently holding up a glowing capsule"),
-    "trainer_technician": ("A datacenter technician opponent in navy coveralls with yellow safety stripes "
-                           "and a hard hat, gripping a wrench, ready to battle"),
-    "trainer_kid": ("An energetic child opponent, age 8, yellow robot-print t-shirt, backwards red cap, "
-                    "excitedly holding out a capsule"),
-    "trainer_guard": ("A datacenter security guard opponent in a black tactical uniform with cyan glowing "
-                      "trim and a mirrored visor helmet, one arm extended commandingly"),
+    "trainer_gym3": ("An intense gym leader: a woman in a violet and white hooded techwear coat with "
+                     "glowing orange seams and cascading holographic code projected around her, a bright "
+                     "violet visor over her eyes, white boots, "
+                     "one arm raised commanding, mysterious powerful pose, bright even daylight, "
+                     "high contrast, no dark shadows"),
+    "trainer_engineer": ("An adult AI engineer opponent in a light grey hoodie and blue jeans with a "
+                         "lanyard badge, confidently holding up a glowing capsule, bright even daylight, "
+                         "high contrast, no dark shadows"),
+    "trainer_technician": ("A datacenter technician opponent in light sky-blue coveralls with bright "
+                           "yellow safety stripes and a white hard hat, gripping a wrench, ready to "
+                           "battle, bright even daylight, high contrast, no dark shadows"),
+    "trainer_kid": ("An energetic short junior apprentice opponent, bright yellow robot-print t-shirt, "
+                    "blue shorts, backwards red cap, excitedly holding out a capsule, bright even "
+                    "daylight, high contrast, no dark shadows"),
+    "trainer_guard": ("A datacenter security guard opponent in a light steel-grey uniform jacket with "
+                      "bright cyan glowing shoulder trim and chest stripe, pale grey trousers, a white "
+                      "helmet with a clear blue visor, one arm extended commandingly, bright even "
+                      "daylight, high contrast, no dark shadows"),
 }
 
 BUILDINGS = {

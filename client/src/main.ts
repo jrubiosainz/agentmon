@@ -8,6 +8,8 @@ import './style.css';
 import { audio } from './engine/audio.ts';
 import { Loop } from './engine/loop.ts';
 import { Game } from './game/game.ts';
+import * as agent from './game/data/agent.ts';
+import { saves } from './game/save.ts';
 import { BootScene } from './game/scenes/boot.ts';
 import { installAuthStyles } from './game/ui/authoverlay.ts';
 
@@ -65,7 +67,8 @@ function boot(): void {
   loop.start();
 
   // Handy for debugging from the console; harmless in production.
-  (window as unknown as { agentmon?: Game }).agentmon = game;
+  (window as unknown as { agentmon?: Game & { saves?: unknown; agent?: unknown } }).agentmon =
+    Object.assign(game, { saves, agent });
 }
 
 try {

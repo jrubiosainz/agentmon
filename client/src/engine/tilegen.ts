@@ -314,35 +314,46 @@ function indoorFloor(px: Px, seed: number): void {
  */
 function bedTile(px: Px, hx: 0 | 1, row: 0 | 1): void {
   indoorFloor(px, 3);
+  const quilt = '#5c4ca4';
+  const quiltLite = '#7c6cc8';
+  const quiltDark = '#3c3074';
   const L = hx === 0 ? 1 : 0;            // outer frame edge on the left tile
   const R = hx === 1 ? TILE - 2 : TILE - 1;
   const w = R - L + 1;
+  // Frame rails first, then the bedding inset inside them.
   rect(px, L, 0, w, TILE, C.metalLite);
+  const iL = hx === 0 ? L + 2 : L;       // bedding inset from the outer rails
+  const iR = hx === 1 ? R - 2 : R;
+  const iw = iR - iL + 1;
   if (row === 0) {
-    rect(px, L, 0, w, 2, C.metalMid);            // headboard
+    rect(px, L, 0, w, 3, C.metalMid);            // headboard
     hline(px, L, R, 0, C.metalHi);
-    rect(px, L, 2, w, 6, C.white);               // pillow
-    hline(px, L, R, 2, '#ffffff');
-    hline(px, L, R, 7, '#c8d4ec');
-    rect(px, L, 8, w, 8, C.glassMid);            // blanket
-    hline(px, L, R, 8, C.glassLite);
-    hline(px, L, R, 9, '#4a90bc');
+    hline(px, L, R, 2, C.metalDark);
+    rect(px, iL, 4, iw, 6, C.white);             // pillow
+    hline(px, iL, iR, 4, '#ffffff');
+    hline(px, iL, iR, 9, '#b8c0d8');
+    rect(px, iL, 10, iw, 6, quilt);              // quilt starts below the pillow
+    hline(px, iL, iR, 10, quiltLite);
+    hline(px, iL, iR, 11, quiltDark);
+    hline(px, iL, iR, 14, quiltLite);
   } else {
-    rect(px, L, 0, w, 14, C.glassMid);
-    hline(px, L, R, 13, C.glassDark);
-    rect(px, L, 14, w, 2, C.metalMid);           // footboard
+    rect(px, iL, 0, iw, 13, quilt);
+    hline(px, iL, iR, 2, quiltLite);             // stitched quilt seams
+    hline(px, iL, iR, 3, quiltDark);
+    hline(px, iL, iR, 7, quiltLite);
+    hline(px, iL, iR, 8, quiltDark);
+    hline(px, iL, iR, 12, quiltDark);
+    rect(px, L, 13, w, 3, C.metalMid);           // footboard
+    hline(px, L, R, 13, C.metalHi);
     hline(px, L, R, 15, C.metalDark);
   }
-  // Soft diagonal fold across the blanket so it doesn't read as a flat slab.
-  if (row === 1) {
-    for (let i = 0; i < 6; i++) {
-      const x = hx === 0 ? L + 3 + i : L + 1 + i;
-      px(x, 3 + i, C.glassLite);
-      px(x, 9 - i, '#2f6c92');
-    }
+  if (hx === 0) {
+    vline(px, L, 0, TILE - 1, C.metalHi);
+    vline(px, L + 1, 0, TILE - 1, C.metalMid);
+  } else {
+    vline(px, R, 0, TILE - 1, C.metalDark);
+    vline(px, R - 1, 0, TILE - 1, C.metalMid);
   }
-  if (hx === 0) vline(px, L, 0, TILE - 1, C.metalHi);
-  else vline(px, R, 0, TILE - 1, C.metalDark);
 }
 
 const bedTopL = (px: Px, _s: number) => bedTile(px, 0, 0);
@@ -445,18 +456,19 @@ function coolUnit(px: Px, _seed: number): void {
 
 function rugTile(px: Px, seed: number): void {
   indoorFloor(px, seed);
-  // A woven mat: muted border, soft weave inside, no hard checkerboard.
-  fill(px, C.carpetMid);
-  rect(px, 1, 1, 14, 14, C.carpetLite);
-  for (let y = 2; y < 14; y++) {
-    for (let x = 2; x < 14; x++) {
-      if ((x + y) % 4 === 0) px(x, y, C.carpetMid);
+  // A woven mat. No per-tile border: the weave repeats every 4px so a multi
+  // tile rug reads as one continuous mat rather than a grid of squares.
+  const matMid = '#4c7c4c';
+  const matLite = '#68986a';
+  const matDark = '#3a5e3a';
+  fill(px, matMid);
+  for (let y = 0; y < TILE; y++) {
+    for (let x = 0; x < TILE; x++) {
+      const m = (x + y) % 4;
+      if (m === 0) px(x, y, matLite);
+      else if (m === 2) px(x, y, matDark);
     }
   }
-  hline(px, 0, TILE - 1, 0, C.carpetDark);
-  vline(px, 0, 0, TILE - 1, C.carpetDark);
-  hline(px, 0, TILE - 1, TILE - 1, C.carpetDark);
-  vline(px, TILE - 1, 0, TILE - 1, C.carpetDark);
 }
 
 function indoorWindow(px: Px, seed: number): void {
@@ -471,17 +483,19 @@ function indoorWindow(px: Px, seed: number): void {
 }
 
 function indoorWall(px: Px, seed: number): void {
+  // Clean composite wall panels: one 16x16 panel per tile with a lit top edge
+  // and a shaded bottom/right, which tiles into a calm regular grid instead of
+  // the busy stripe pattern a repeating motif produces.
   fill(px, C.wallMid);
-  // Soft vertical wallpaper pinstripes plus a shadow line where the wall meets
-  // whatever is below it. Low contrast so the room reads calm.
-  for (let x = 2; x < TILE; x += 6) {
-    vline(px, x, 0, TILE - 1, C.wallLite);
-    vline(px, x + 1, 0, TILE - 1, '#6a7290');
-  }
-  for (let y = 3; y < TILE; y += 6) hline(px, 0, TILE - 1, y, '#565e76');
+  hline(px, 0, TILE - 1, 0, C.wallLite);
+  hline(px, 1, TILE - 2, 1, '#767e9c');
+  vline(px, 0, 0, TILE - 1, C.wallLite);
   hline(px, 0, TILE - 1, TILE - 1, C.wallDark);
-  for (let i = 0; i < 2; i++) {
-    px(Math.floor(hash2(i, 4, seed) * TILE), Math.floor(hash2(i, 6, seed) * TILE), C.wallLite);
+  vline(px, TILE - 1, 0, TILE - 1, '#565e76');
+  for (let i = 0; i < 3; i++) {
+    px(2 + Math.floor(hash2(i, 4, seed) * (TILE - 4)),
+      3 + Math.floor(hash2(i, 6, seed) * (TILE - 6)),
+      hash2(i, 9, seed) > 0.5 ? C.wallLite : '#666e8c');
   }
 }
 

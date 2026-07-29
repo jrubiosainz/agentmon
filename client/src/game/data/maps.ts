@@ -70,7 +70,7 @@ export const HOME_GROUND: MapDef = {
   ],
   npcs: [
     {
-      id: 'mom', x: 3, y: 4, facing: 'down', sprite: 'npc_engineer', name: 'MOM',
+      id: 'mom', x: 3, y: 4, facing: 'down', sprite: 'mom', name: 'MOM',
       movement: 'look', script: 'mom',
       text: [
         'MOM: There you are! PROF. ADA called - she has something for you.',
@@ -523,7 +523,7 @@ export const GYM_VOLT: MapDef = {
       text: ['ENGINEER KAI: Amps up! Let us see your throughput.'],
     },
     {
-      id: 'gv_leader', x: 8, y: 3, facing: 'down', sprite: 'npc_engineer', movement: 'static',
+      id: 'gv_leader', x: 8, y: 3, facing: 'down', sprite: 'leader_volt', movement: 'static',
       trainer: 'gym1_leader', name: 'LEADER NOVA', script: 'gym1_leader',
       text: ['LEADER NOVA: Welcome to my datacenter. Mind the voltage.'],
     },
@@ -871,7 +871,7 @@ export const GYM_DATA: MapDef = {
       text: ['ENGINEER MAE: Freeze first, ask questions later.'],
     },
     {
-      id: 'gd_leader', x: 8, y: 3, facing: 'down', sprite: 'npc_technician', movement: 'static',
+      id: 'gd_leader', x: 8, y: 3, facing: 'down', sprite: 'leader_cryo', movement: 'static',
       trainer: 'gym2_leader', name: 'LEADER FROST', script: 'gym2_leader',
       text: ['LEADER FROST: Four degrees. Perfect operating temperature.'],
     },
@@ -1127,7 +1127,7 @@ export const GYM_THERMAL: MapDef = {
       text: ['ENGINEER SIRA: My units thrive at ninety degrees.'],
     },
     {
-      id: 'gt_leader', x: 9, y: 3, facing: 'down', sprite: 'npc_engineer', movement: 'static',
+      id: 'gt_leader', x: 9, y: 3, facing: 'down', sprite: 'leader_thermal', movement: 'static',
       trainer: 'gym3_leader', name: 'LEADER PYRA', script: 'gym3_leader',
       text: ['LEADER PYRA: You are hotter than you look. Let us see if you can take the heat.'],
     },
@@ -1207,7 +1207,7 @@ export const CITADEL: MapDef = {
       text: ['REX: I have been waiting my whole life for this battle.'],
     },
     {
-      id: 'ct_champ', x: 12, y: 4, facing: 'down', sprite: 'professor', movement: 'static',
+      id: 'ct_champ', x: 12, y: 4, facing: 'down', sprite: 'champion', movement: 'static',
       trainer: 'champion', name: 'CHAMPION ADA', script: 'champion',
       text: ['PROF. ADA: I did wonder which of you would arrive first.'],
     },

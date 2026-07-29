@@ -43,6 +43,16 @@ const FOE_Y = 68;
 const PLAYER_X = 62;
 const PLAYER_Y = 114;
 
+/** Battle pads are tinted to sit naturally inside each backdrop. [light, dark] */
+const PLATFORM_COLORS: Record<string, [string, string]> = {
+  bg_grass: ['#88c078', '#4c7c4c'],
+  bg_road: ['#c8b88c', '#8c7c58'],
+  bg_city: ['#a8b4c8', '#68748c'],
+  bg_night: ['#5c7088', '#2c3c50'],
+  bg_cave: ['#9c8c78', '#5c5040'],
+  bg_datacenter: ['#7c94b8', '#3c4c68'],
+};
+
 type Mode = 'script' | 'command' | 'moves' | 'wait';
 
 interface SpriteState {
@@ -624,8 +634,9 @@ export class BattleScene extends Scene {
       g.ellipse(cx, cy - 2, rx - 2, rx * 0.26, 0, 0, Math.PI * 2);
       g.fill();
     };
-    drawPad(FOE_X, FOE_Y + 4, 40, '#88c078', '#4c7c4c');
-    drawPad(PLAYER_X, PLAYER_Y + 4, 52, '#88c078', '#4c7c4c');
+    const [light, dark] = PLATFORM_COLORS[this.payload.backdrop ?? 'bg_grass'] ?? PLATFORM_COLORS.bg_grass;
+    drawPad(FOE_X, FOE_Y + 4, 40, light, dark);
+    drawPad(PLAYER_X, PLAYER_Y + 4, 52, light, dark);
   }
 
   private drawCreature(g: CanvasRenderingContext2D, side: Side): void {

@@ -630,8 +630,8 @@ export class DexScene extends Scene {
       font.drawCentered(g, td.name.toUpperCase().slice(0, 6), tx + 20, 40, 'shadow');
       tx += 44;
     }
-    font.draw(g, `HT ${(sp.height / 10).toFixed(1)} m`, 100, 56, 'shadow', false);
-    font.draw(g, `WT ${(sp.weight / 10).toFixed(1)} kg`, 100, 68, 'shadow', false);
+    font.draw(g, `HT ${sp.height.toFixed(1)} m`, 100, 56, 'shadow', false);
+    font.draw(g, `WT ${sp.weight.toFixed(1)} kg`, 100, 68, 'shadow', false);
     const lines = font.wrap(sp.dexEntry, 216);
     for (const [i, l] of lines.slice(0, 4).entries()) font.draw(g, l, 14, 110 + i * 11, 'shadow', false);
   }

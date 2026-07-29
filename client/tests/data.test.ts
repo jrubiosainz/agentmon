@@ -11,6 +11,9 @@ import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { buildTileset, type TileSetResult } from '../src/engine/tilegen.ts';
+import {
+  BACKDROP_KEYS, BUILDING_KEYS, CHARACTER_KEYS, TRAINER_KEYS,
+} from '../src/game/data/artkeys.ts';
 import { DEX, setDex, move as moveDef, species as speciesDef } from '../src/game/data/dex.ts';
 import { ITEMS } from '../src/game/data/items.ts';
 import { ALL_MAPS, mapExists } from '../src/game/data/maps.ts';
@@ -36,15 +39,9 @@ function stubContext(): unknown {
   });
 }
 
-const CHARACTER_SPRITES = new Set([
-  'player_m', 'player_f', 'rival', 'professor', 'npc_engineer', 'npc_technician',
-  'npc_kid', 'npc_medic', 'npc_clerk', 'npc_guard',
-]);
-const BUILDING_SPRITES = new Set([
-  'house_small', 'house_large', 'lab', 'clinic', 'shop', 'gym_datacenter',
-  'tower_server', 'sign_post',
-]);
-const BACKDROPS = new Set(['bg_grass', 'bg_city', 'bg_cave', 'bg_datacenter', 'bg_road', 'bg_night']);
+const CHARACTER_SPRITES = new Set(CHARACTER_KEYS);
+const BUILDING_SPRITES = new Set(BUILDING_KEYS);
+const BACKDROPS = new Set(BACKDROP_KEYS);
 const MUSIC = new Set([
   'title', 'town', 'city', 'route', 'forest', 'gym', 'gymleader', 'lab', 'citadel',
   'center', 'mart', 'rival', 'battleWild', 'battleTrainer', 'victory', 'champion',
@@ -175,10 +172,7 @@ describe('items', () => {
 });
 
 describe('trainers', () => {
-  const TRAINER_SPRITES = new Set([
-    'trainer_rival', 'trainer_gym1', 'trainer_gym2', 'trainer_gym3',
-    'trainer_engineer', 'trainer_technician', 'trainer_kid', 'trainer_guard',
-  ]);
+  const TRAINER_SPRITES = new Set(TRAINER_KEYS);
 
   it('every trainer has a legal party', () => {
     const problems: string[] = [];

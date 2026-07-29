@@ -1,0 +1,23 @@
+{
+  "frameWidth": 20,
+  "frameHeight": 28,
+  "animations": {
+    "walk_down": {
+      "row": 0,
+      "frames": 4
+    },
+    "walk_up": {
+      "row": 1,
+      "frames": 4
+    },
+    "walk_left": {
+      "row": 2,
+      "frames": 4
+    },
+    "walk_right": {
+      "row": 3,
+      "frames": 4
+    }
+  },
+  "character": "leader_thermal"
+}
