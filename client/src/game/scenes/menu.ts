@@ -6,7 +6,7 @@ import { Scene } from '../../engine/scene.ts';
 import { SCREEN_H, SCREEN_W } from '../../engine/screen.ts';
 import {
   drawExpBar, drawHpBar, drawPanel, drawWindow, hpColors, Menu, TEXTBOX_H, TEXTBOX_Y,
-  Typewriter, type MenuItem,
+  Typewriter, drawCaptureCore, type MenuItem,
 } from '../../engine/ui.ts';
 import {
   displayName, expToNextLevel, healFully, isFainted, maxHp, stats,
@@ -367,6 +367,7 @@ export class SummaryScene extends Scene {
 export class BagScene extends Scene {
   private mode: 'overworld' | 'battle' = 'overworld';
   private catIndex = 0;
+  private tick = 0;
   private menu = new Menu([], 1, 6);
   private message = '';
   private messageTimer = 0;
@@ -405,6 +406,7 @@ export class BagScene extends Scene {
   }
 
   update(): void {
+    this.tick++;
     if (this.messageTimer > 0) this.messageTimer--;
     const inp = this.game.input;
     if (inp.repeat('up') && this.menu.move(0, -1)) audio.sfx('cursor');
@@ -527,7 +529,15 @@ export class BagScene extends Scene {
   }
 
   private drawItemIcon(g: CanvasRenderingContext2D, cat: ItemCategory, cx: number, cy: number): void {
-    // [shell top, shell bottom, lens]. Capture CORES read as alloy + energy cell.
+    // CORES show the actual capture core the player throws, at 2x.
+    if (cat === 'ball') {
+      g.save();
+      g.translate(cx, cy);
+      g.scale(2, 2);
+      drawCaptureCore(g, 0, 0, -1, this.tick);
+      g.restore();
+      return;
+    }
     const colors: Record<ItemCategory, [string, string, string]> = {
       ball: ['#7c94c4', '#28344c', '#40e0f0'],
       medicine: ['#58c060', '#f8f8f8', '#f8f8f8'],

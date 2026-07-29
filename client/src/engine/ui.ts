@@ -351,3 +351,36 @@ export function drawHatchBackdrop(g: CanvasRenderingContext2D, phase: number, a 
     g.fill();
   }
 }
+
+/**
+ * The capture core: an octagonal alloy shell around a pulsing energy cell.
+ * Drawn scanline by scanline so it stays hard-edged at 240x160.
+ * Pass spin >= 0 to add the orbiting spark that sells the throw.
+ */
+export function drawCaptureCore(
+  g: CanvasRenderingContext2D, cx: number, cy: number, spin: number, glow: number,
+): void {
+  const half = [3, 5, 6, 6, 6, 6, 6, 6, 5, 3];
+  const top = cy - 5;
+  for (let i = 0; i < half.length; i++) {
+    g.fillStyle = '#0c1424';
+    g.fillRect(cx - half[i], top + i, half[i] * 2, 1);
+  }
+  for (let i = 1; i < half.length - 1; i++) {
+    const w = half[i] - 1;
+    g.fillStyle = i < 3 ? '#7c94c4' : i < 5 ? '#546c98' : i < 7 ? '#3c4c70' : '#28344c';
+    g.fillRect(cx - w, top + i, w * 2, 1);
+  }
+  g.fillStyle = '#0c1424';
+  g.fillRect(cx - 5, top + 4, 10, 1);
+  g.fillStyle = ['#40e0f0', '#78f0ff', '#40e0f0', '#20b8d8'][Math.floor(glow / 4) % 4];
+  g.fillRect(cx - 2, top + 3, 4, 3);
+  g.fillStyle = '#e8ffff';
+  g.fillRect(cx - 1, top + 4, 2, 1);
+  if (spin >= 0) {
+    const orbit = [[-9, 4], [-1, -3], [7, 4], [-1, 10]][spin % 4]!;
+    g.fillStyle = '#c8fcff';
+    g.fillRect(cx + orbit[0]!, top + orbit[1]!, 2, 1);
+  }
+}
+
