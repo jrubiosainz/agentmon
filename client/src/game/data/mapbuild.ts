@@ -121,4 +121,18 @@ export const LEGEND: Record<string, string> = {
   'p': 'puddle',
   'X': 'staticfield',
   'x': 'void',
+  // Interior furniture
+  'y': 'window',
+  'B': 'bedtopl',
+  'D': 'bedtopr',
+  'E': 'bedbotl',
+  'H': 'bedbotr',
+  'd': 'desk',
+  'P': 'terminal',
+  'k': 'shelf',
+  'v': 'tv',
+  'e': 'table',
+  'q': 'plant',
+  'j': 'fridge',
+  'u': 'rug',
 };

@@ -47,6 +47,7 @@ const C = {
   treeDark: '#105818', treeMid: '#1c7828', treeLite: '#309838', treeHi: '#50b850',
   trunkDark: '#583018', trunkMid: '#784830',
   woodDark: '#785038', woodMid: '#a07048', woodLite: '#c09060',
+  floorDark: '#a8794c', floorMid: '#c39a6b', floorLite: '#d9b489', floorHi: '#e8caa4',
   tileDark: '#7080a0', tileMid: '#98a8c0', tileLite: '#c0cde0',
   wallDark: '#404860', wallMid: '#606880', wallLite: '#8890a8',
   metalDark: '#303848', metalMid: '#485068', metalLite: '#687088', metalHi: '#98a0b8',
@@ -285,23 +286,201 @@ function sign(px: Px, seed: number): void {
 }
 
 function indoorFloor(px: Px, seed: number): void {
-  fill(px, C.woodMid);
-  for (let y = 0; y < TILE; y++) {
+  fill(px, C.floorMid);
+  // Long continuous planks: a soft seam every 4 rows and no vertical break, so
+  // the floor never reads as brickwork.
+  for (let y = 0; y < TILE; y += 8) {
+    hline(px, 0, TILE - 1, y, C.floorDark);
+    hline(px, 0, TILE - 1, y + 1, C.floorLite);
+  }
+  // Fine grain: sparse dashes inside each plank.
+  for (let y = 2; y < TILE; y++) {
+    if (y % 8 <= 1) continue;
     for (let x = 0; x < TILE; x++) {
-      if (hash2(x, y, seed + 5) > 0.9) px(x, y, C.woodLite);
+      const h = hash2(x, y, seed + 5);
+      if (h > 0.965) px(x, y, C.floorLite);
+      else if (h < 0.035) px(x, y, C.floorDark);
     }
   }
-  hline(px, 0, TILE - 1, 0, C.woodDark);
-  hline(px, 0, TILE - 1, 8, C.woodDark);
-  vline(px, 0, 0, 7, C.woodDark);
-  vline(px, 8, 8, 15, C.woodDark);
+}
+
+// --------------------------------------------------------------------------- //
+// Interior furniture. Everything is painted over the floor so props drop into
+// any room without needing a second layer.
+// --------------------------------------------------------------------------- //
+/**
+ * A 2x2 bed. `hx` is 0 for the left half and 1 for the right so the frame,
+ * pillow and blanket run continuously across both tiles.
+ */
+function bedTile(px: Px, hx: 0 | 1, row: 0 | 1): void {
+  indoorFloor(px, 3);
+  const L = hx === 0 ? 1 : 0;            // outer frame edge on the left tile
+  const R = hx === 1 ? TILE - 2 : TILE - 1;
+  const w = R - L + 1;
+  rect(px, L, 0, w, TILE, C.metalLite);
+  if (row === 0) {
+    rect(px, L, 0, w, 2, C.metalMid);            // headboard
+    hline(px, L, R, 0, C.metalHi);
+    rect(px, L, 2, w, 6, C.white);               // pillow
+    hline(px, L, R, 2, '#ffffff');
+    hline(px, L, R, 7, '#c8d4ec');
+    rect(px, L, 8, w, 8, C.glassMid);            // blanket
+    hline(px, L, R, 8, C.glassLite);
+    hline(px, L, R, 9, '#4a90bc');
+  } else {
+    rect(px, L, 0, w, 14, C.glassMid);
+    hline(px, L, R, 13, C.glassDark);
+    rect(px, L, 14, w, 2, C.metalMid);           // footboard
+    hline(px, L, R, 15, C.metalDark);
+  }
+  // Soft diagonal fold across the blanket so it doesn't read as a flat slab.
+  if (row === 1) {
+    for (let i = 0; i < 6; i++) {
+      const x = hx === 0 ? L + 3 + i : L + 1 + i;
+      px(x, 3 + i, C.glassLite);
+      px(x, 9 - i, '#2f6c92');
+    }
+  }
+  if (hx === 0) vline(px, L, 0, TILE - 1, C.metalHi);
+  else vline(px, R, 0, TILE - 1, C.metalDark);
+}
+
+const bedTopL = (px: Px, _s: number) => bedTile(px, 0, 0);
+const bedTopR = (px: Px, _s: number) => bedTile(px, 1, 0);
+const bedBotL = (px: Px, _s: number) => bedTile(px, 0, 1);
+const bedBotR = (px: Px, _s: number) => bedTile(px, 1, 1);
+
+function desk(px: Px, _seed: number): void {
+  indoorFloor(px, 7);
+  rect(px, 0, 2, 16, 12, C.woodLite);
+  hline(px, 0, 15, 2, C.woodDark);
+  hline(px, 0, 15, 3, '#e0c8a0');
+  rect(px, 1, 6, 6, 7, C.woodMid);
+  hline(px, 2, 5, 8, C.woodDark);
+  hline(px, 2, 5, 11, C.woodDark);
+  rect(px, 9, 6, 6, 7, C.woodMid);
+  hline(px, 10, 13, 8, C.woodDark);
+  hline(px, 10, 13, 11, C.woodDark);
+  hline(px, 0, 15, 13, C.woodDark);
+}
+
+function pcTerminal(px: Px, _seed: number, frame = 0): void {
+  desk(px, 7);
+  rect(px, 3, 0, 10, 10, C.metalDark);
+  rect(px, 4, 1, 8, 7, frame === 0 ? C.glassMid : '#3f83ad');
+  for (let y = 1; y < 8; y += 2) hline(px, 4, 11, y, C.ledBlue);
+  px(5, 2 + (frame % 2), C.white);
+  px(9, 5 - (frame % 2), C.ledOn);
+  rect(px, 6, 10, 4, 2, C.metalLite);
+}
+
+function bookShelf(px: Px, seed: number): void {
+  fill(px, C.woodDark);
+  rect(px, 1, 0, 14, 16, C.woodMid);
+  for (const y of [4, 9, 14]) hline(px, 1, 14, y, C.woodDark);
+  const cols = [C.ledRed, C.ledOn, C.ledAmber, C.ledBlue, C.flowerD];
+  for (let s = 0; s < 3; s++) {
+    for (let i = 0; i < 5; i++) {
+      if (hash2(i, s, seed) > 0.78) continue;
+      rect(px, 2 + i * 3, s * 5 + 1, 2, 3, cols[(i + s) % 5]!);
+    }
+  }
+  vline(px, 1, 0, 15, C.woodLite);
+}
+
+function tvSet(px: Px, _seed: number, frame = 0): void {
+  indoorFloor(px, 9);
+  rect(px, 5, 13, 6, 2, C.metalDark);        // stand
+  hline(px, 4, 11, 15, C.metalDark);
+  rect(px, 0, 1, 16, 13, C.metalDark);       // bezel
+  hline(px, 0, 15, 1, C.metalLite);
+  rect(px, 2, 3, 12, 9, C.black);
+  const cols = [C.ledBlue, C.white, C.glassMid];
+  for (let y = 3; y < 12; y++) {
+    for (let x = 2; x < 14; x++) {
+      if ((x * 5 + y * 3 + frame * 7) % 11 < 3) px(x, y, cols[(x + y + frame) % 3]!);
+    }
+  }
+  hline(px, 2, 13, 3, C.glassLite);
+  px(14, 12, C.ledOn);
+}
+
+function lowTable(px: Px, _seed: number): void {
+  indoorFloor(px, 11);
+  rect(px, 1, 3, 14, 9, C.woodLite);
+  hline(px, 1, 14, 3, C.woodDark);
+  hline(px, 1, 14, 11, C.woodDark);
+  rect(px, 3, 12, 2, 3, C.woodDark);
+  rect(px, 11, 12, 2, 3, C.woodDark);
+}
+
+function pottedPlant(px: Px, seed: number): void {
+  indoorFloor(px, 13);
+  rect(px, 5, 10, 6, 5, C.dirtDark);
+  hline(px, 5, 10, 10, C.dirtLite);
+  hline(px, 5, 10, 15, '#603820');
+  for (let i = 0; i < 30; i++) {
+    const a = hash2(i, 1, seed) * Math.PI * 2;
+    const r = 2 + hash2(i, 2, seed) * 5.5;
+    const x = Math.round(8 + Math.cos(a) * r);
+    const y = Math.round(6 + Math.sin(a) * r * 0.8);
+    if (x < 1 || x > 14 || y < 0 || y > 9) continue;
+    px(x, y, hash2(i, 3, seed) > 0.5 ? C.treeLite : C.treeMid);
+    px(x, y + 1, C.treeDark);
+  }
+  vline(px, 8, 7, 10, C.treeDark);
+}
+
+function coolUnit(px: Px, _seed: number): void {
+  fill(px, C.wallMid);
+  rect(px, 1, 0, 14, 16, C.tileLite);
+  vline(px, 1, 0, 15, C.white);
+  vline(px, 14, 0, 15, C.tileDark);
+  hline(px, 1, 14, 7, C.tileDark);
+  rect(px, 11, 3, 2, 3, C.metalDark);
+  rect(px, 11, 10, 2, 3, C.metalDark);
+  rect(px, 3, 10, 5, 3, C.ledBlue);
+  hline(px, 3, 7, 10, C.white);
+}
+
+function rugTile(px: Px, seed: number): void {
+  indoorFloor(px, seed);
+  // A woven mat: muted border, soft weave inside, no hard checkerboard.
+  fill(px, C.carpetMid);
+  rect(px, 1, 1, 14, 14, C.carpetLite);
+  for (let y = 2; y < 14; y++) {
+    for (let x = 2; x < 14; x++) {
+      if ((x + y) % 4 === 0) px(x, y, C.carpetMid);
+    }
+  }
+  hline(px, 0, TILE - 1, 0, C.carpetDark);
+  vline(px, 0, 0, TILE - 1, C.carpetDark);
+  hline(px, 0, TILE - 1, TILE - 1, C.carpetDark);
+  vline(px, TILE - 1, 0, TILE - 1, C.carpetDark);
+}
+
+function indoorWindow(px: Px, seed: number): void {
+  indoorWall(px, seed);
+  rect(px, 2, 3, 12, 10, C.metalDark);
+  rect(px, 3, 4, 10, 8, '#a8d8f8');
+  for (let y = 8; y < 12; y++) hline(px, 3, 12, y, C.glassLite);
+  hline(px, 3, 12, 7, C.metalDark);
+  vline(px, 8, 4, 11, C.metalDark);
+  px(4, 5, C.white);
+  px(5, 5, C.white);
 }
 
 function indoorWall(px: Px, seed: number): void {
   fill(px, C.wallMid);
-  for (let y = 0; y < TILE; y += 4) hline(px, 0, TILE - 1, y, C.wallDark);
-  for (let y = 0; y < TILE; y += 4) hline(px, 0, TILE - 1, y + 1, C.wallLite);
-  for (let i = 0; i < 3; i++) {
+  // Soft vertical wallpaper pinstripes plus a shadow line where the wall meets
+  // whatever is below it. Low contrast so the room reads calm.
+  for (let x = 2; x < TILE; x += 6) {
+    vline(px, x, 0, TILE - 1, C.wallLite);
+    vline(px, x + 1, 0, TILE - 1, '#6a7290');
+  }
+  for (let y = 3; y < TILE; y += 6) hline(px, 0, TILE - 1, y, '#565e76');
+  hline(px, 0, TILE - 1, TILE - 1, C.wallDark);
+  for (let i = 0; i < 2; i++) {
     px(Math.floor(hash2(i, 4, seed) * TILE), Math.floor(hash2(i, 6, seed) * TILE), C.wallLite);
   }
 }
@@ -537,6 +716,29 @@ const TILES: TileDef[] = [
   },
   { name: 'floor', draw: indoorFloor },
   { name: 'wall', draw: indoorWall, solid: true },
+  { name: 'window', draw: indoorWindow, solid: true },
+  { name: 'bedtopl', draw: bedTopL, solid: true },
+  { name: 'bedtopr', draw: bedTopR, solid: true },
+  { name: 'bedbotl', draw: bedBotL, solid: true },
+  { name: 'bedbotr', draw: bedBotR, solid: true },
+  { name: 'desk', draw: desk, solid: true },
+  {
+    name: 'terminal',
+    draw: (px, s) => pcTerminal(px, s, 0),
+    frames: [(px, s) => pcTerminal(px, s, 1)],
+    solid: true,
+  },
+  { name: 'shelf', draw: bookShelf, solid: true },
+  {
+    name: 'tv',
+    draw: (px, s) => tvSet(px, s, 0),
+    frames: [(px, s) => tvSet(px, s, 1), (px, s) => tvSet(px, s, 2)],
+    solid: true,
+  },
+  { name: 'table', draw: lowTable, solid: true },
+  { name: 'plant', draw: pottedPlant, solid: true },
+  { name: 'fridge', draw: coolUnit, solid: true },
+  { name: 'rug', draw: rugTile },
   { name: 'labfloor', draw: labFloor },
   { name: 'carpet', draw: carpet },
   { name: 'counter', draw: counter, solid: true },

@@ -25,6 +25,8 @@ export class Input {
   private keys = new Set<Button>();
   /** Buttons held via on-screen touch controls. */
   private touch = new Set<Button>();
+  /** Taps that began since the last poll - so a sub-frame tap is never lost. */
+  private tapped = new Set<Button>();
   /** Merged state for the current and previous frame. */
   private now = new Set<Button>();
   private prev = new Set<Button>();
@@ -57,6 +59,7 @@ export class Input {
     if (isDown) {
       this.markInteraction();
       this.keys.add(btn);
+      this.tapped.add(btn);
     } else {
       this.keys.delete(btn);
     }
@@ -73,6 +76,7 @@ export class Input {
         e.preventDefault();
         this.markInteraction();
         this.touch.add(btn);
+        this.tapped.add(btn);
         el.classList.add('is-down');
       };
       const release = (e: Event) => {
@@ -112,6 +116,9 @@ export class Input {
     const merged = new Set<Button>(this.keys);
     for (const b of this.touch) merged.add(b);
     this.readGamepad(merged);
+    // A tap that started and ended between two polls still counts for one frame.
+    for (const b of this.tapped) merged.add(b);
+    this.tapped.clear();
     this.now = merged;
 
     for (const b of BUTTONS) {
@@ -157,6 +164,7 @@ export class Input {
   clear(): void {
     this.keys.clear();
     this.touch.clear();
+    this.tapped.clear();
     this.now = new Set();
     this.prev = new Set();
     this.heldFrames.clear();

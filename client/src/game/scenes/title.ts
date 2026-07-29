@@ -178,7 +178,7 @@ export class TitleScene extends Scene {
         font.drawCentered(g, 'PRESS  START', SCREEN_W / 2, 116, 'white');
       }
       font.drawCentered(g, saves.online ? 'NETWORK ONLINE' : 'OFFLINE MODE', SCREEN_W / 2, 143, 'dim');
-      font.drawCentered(g, '\u00a9 AGENTMON PROJECT', SCREEN_W / 2, 152, 'dim');
+      font.drawCentered(g, '\u00a9 AG\u00c9NTMON PROJECT', SCREEN_W / 2, 152, 'dim');
       return;
     }
 
@@ -254,7 +254,7 @@ export class TitleScene extends Scene {
 
   /** The wordmark, drawn as chunky pixel letters with a bevel. */
   private logo(g: CanvasRenderingContext2D, y: number): void {
-    const text = 'AGENTMON';
+    const text = 'AG\u00c9NTMON';
     const scale = 3;
     const w = font.measure(text) * scale;
     const x = Math.round((SCREEN_W - w) / 2);

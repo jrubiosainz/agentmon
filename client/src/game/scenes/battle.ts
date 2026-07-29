@@ -41,7 +41,7 @@ type Step = number | (() => boolean);
 const FOE_X = 174;
 const FOE_Y = 68;
 const PLAYER_X = 62;
-const PLAYER_Y = 124;
+const PLAYER_Y = 114;
 
 type Mode = 'script' | 'command' | 'moves' | 'wait';
 

@@ -17,3 +17,6 @@ coverage/
 .vscode/
 .idea/
 *.zip
+client/public/agentdex.json
+
+client/tools/shots/

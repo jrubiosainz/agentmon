@@ -189,7 +189,7 @@ export class IntroScene extends Scene {
     if (this.phase === 'name') { this.renderNameEntry(g); return; }
     if (this.phase === 'gender') { this.renderGender(g); return; }
 
-    this.drawProfessor(g, 120, 84);
+    this.drawProfessor(g, 120, 104);
     this.tw.draw(g, Math.floor(this.tick / 20) % 2 === 0);
   }
 
@@ -197,7 +197,7 @@ export class IntroScene extends Scene {
     const sheet = this.game.sheet('ch:professor');
     const bob = Math.sin(this.tick / 34) * 1.5;
     if (sheet) {
-      sheet.drawFrame(g, sheet.has('idleDown') ? 'idleDown' : 'walkDown', 0, cx, baseY + bob, { scale: 3 });
+      sheet.drawFrame(g, 'walk_down', 0, cx, baseY + bob, { scale: 3 });
       return;
     }
     const img = assets.image('tr:trainer_gym1');
@@ -220,7 +220,7 @@ export class IntroScene extends Scene {
         g.fillRect(x - 34, 34, 68, 84);
       }
       if (sheet) {
-        sheet.drawFrame(g, sheet.has('walkDown') ? 'walkDown' : 'idleDown', 0, x, 108, { scale: 3 });
+        sheet.drawFrame(g, 'walk_down', 0, x, 108, { scale: 3 });
       } else {
         g.fillStyle = i === 0 ? '#4878d8' : '#d85888';
         g.fillRect(x - 12, 66, 24, 40);
@@ -239,7 +239,7 @@ export class IntroScene extends Scene {
     const sheet = this.namingRival
       ? this.game.sheet('ch:rival')
       : this.game.sheet(this.game.save.gender === 'm' ? 'ch:player_m' : 'ch:player_f');
-    if (sheet) sheet.drawFrame(g, sheet.has('walkDown') ? 'walkDown' : 'idleDown', 0, 32, 52, { scale: 2 });
+    if (sheet) sheet.drawFrame(g, 'walk_down', 0, 32, 52, { scale: 2 });
 
     // Name field.
     drawWindow(g, 56, 20, 172, 28);

@@ -31,9 +31,13 @@ export function makeRepairBay(o: RepairBayOpts): MapDef {
   const h = 11;
   const g = interiorShell(w, h, 'l', 7);
   g.rect(1, 2, w - 2, 2, 'C');          // reception counter
-  g.rect(1, 4, 3, 1, 'c');
-  g.rect(10, 6, 4, 3, 'c');             // waiting rug
-  g.rect(1, 6, 3, 3, 'c');
+  g.set(2, 1, 'y').set(12, 1, 'y');     // windows either side
+  g.rect(1, 5, 3, 1, 'k');              // supply shelving
+  g.set(1, 4, 'q');
+  g.set(13, 4, 'q');
+  g.rect(10, 6, 4, 3, 'u');             // waiting rug
+  g.rect(1, 7, 3, 2, 'u');
+  g.set(11, 5, 'e');                    // waiting table
   const warps: WarpDef[] = [
     { x: 7, y: h - 1, to: o.backTo, tx: o.backX, ty: o.backY, facing: 'down', kind: 'door' },
     { x: 6, y: h - 1, to: o.backTo, tx: o.backX, ty: o.backY, facing: 'down', kind: 'door' },
@@ -76,7 +80,10 @@ export function makeMart(o: MartOpts): MapDef {
   const h = 10;
   const g = interiorShell(w, h, 'l', 6);
   g.rect(1, 2, 5, 2, 'C');
-  g.rect(8, 3, 4, 4, 'c');
+  g.set(9, 1, 'y');
+  g.rect(8, 3, 4, 2, 'k');    // stock shelving
+  g.rect(8, 6, 4, 2, 'u');    // browsing rug
+  g.set(1, 6, 'q');
   return {
     id: o.id,
     name: o.name,
@@ -113,9 +120,14 @@ export function makeHouse(o: HouseOpts): MapDef {
   const w = 11;
   const h = 9;
   const g = interiorShell(w, h, 'w', 5);
-  g.rect(1, 2, 2, 1, 'C');      // kitchen counter
-  g.rect(7, 2, 3, 1, 'C');      // bookshelf run
-  g.rect(4, 5, 3, 3, 'c');      // rug
+  g.set(2, 1, 'y').set(8, 1, 'y');   // back-wall windows
+  g.set(1, 2, 'j');                  // cooler unit
+  g.rect(2, 2, 2, 1, 'e');           // kitchen table
+  g.rect(7, 2, 2, 1, 'k');           // shelving
+  g.set(9, 2, 'q');                  // potted plant
+  g.set(1, 5, 'v');                  // wall screen
+  g.rect(4, 5, 3, 3, 'u');           // rug
+  g.set(9, 6, 'q');
   return {
     id: o.id,
     name: o.name,

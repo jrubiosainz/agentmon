@@ -109,6 +109,8 @@ const G: Record<string, string[]> = {
   '~': ['.....', '.....', '.##.#', '#..#.', '.....', '.....', '.....'],
   // Game-specific glyphs
   '\u00e9': ['..#..', '.#...', '.###.', '#...#', '#####', '#....', '.###.'], // e-acute
+  '\u00c9': ['..##.', '#####', '#....', '####.', '#....', '#....', '#####'], // E-acute
+  '\u00d1': ['.##.#', '#..#.', '#...#', '##..#', '#.#.#', '#..##', '#...#'], // N-tilde
   '\u25b6': ['.....', '#....', '##...', '###..', '##...', '#....', '.....'], // menu cursor
   '\u25bc': ['.....', '.....', '#####', '.###.', '..#..', '.....', '.....'], // "more text"
   '\u2191': ['..#..', '.###.', '#.#.#', '..#..', '..#..', '..#..', '.....'],
@@ -122,11 +124,24 @@ const G: Record<string, string[]> = {
 /** Glyphs that hang below the baseline. */
 const DESCENDERS = new Set(['g', 'j', 'p', 'q', 'y', ',', ';']);
 
-/** Narrow glyphs get tighter advance, like a real variable-width font. */
-const NARROW: Record<string, number> = {
-  ' ': 3, i: 3, l: 3, '.': 2, ',': 2, ':': 2, ';': 2, '!': 2, "'": 2, '|': 2, I: 4, '1': 4,
-  '(': 3, ')': 3, '[': 3, ']': 3, '{': 3, '}': 3,
-};
+/** Blank-glyph width; every other advance is derived from the glyph's own ink. */
+const SPACE_W = 3;
+
+/** Ink bounds of a glyph, so the font is genuinely proportional. */
+interface Metric { left: number; width: number }
+
+function metricOf(rows: string[]): Metric {
+  let lo = GLYPH_W;
+  let hi = -1;
+  for (const row of rows) {
+    for (let x = 0; x < GLYPH_W; x++) {
+      if (row[x] !== '#') continue;
+      if (x < lo) lo = x;
+      if (x > hi) hi = x;
+    }
+  }
+  return hi < 0 ? { left: 0, width: SPACE_W } : { left: lo, width: hi - lo + 1 };
+}
 
 export type FontVariant = 'normal' | 'white' | 'dim' | 'red' | 'green' | 'blue' | 'gold' | 'shadow';
 
@@ -145,10 +160,14 @@ export class BitmapFont {
   private atlases = new Map<FontVariant, HTMLCanvasElement>();
   private order: string[];
   private index = new Map<string, number>();
+  private metrics = new Map<string, Metric>();
 
   constructor() {
     this.order = Object.keys(G);
-    this.order.forEach((ch, i) => this.index.set(ch, i));
+    this.order.forEach((ch, i) => {
+      this.index.set(ch, i);
+      this.metrics.set(ch, metricOf(G[ch]!));
+    });
     for (const v of Object.keys(VARIANT_COLORS) as FontVariant[]) this.bake(v);
   }
 
@@ -171,7 +190,7 @@ export class BitmapFont {
   }
 
   advance(ch: string): number {
-    return (NARROW[ch] ?? GLYPH_W) + 1;
+    return (this.metrics.get(ch)?.width ?? GLYPH_W) + 1;
   }
 
   measure(text: string): number {
@@ -207,9 +226,14 @@ export class BitmapFont {
     const cy = Math.round(y);
     for (const ch of text) {
       const i = this.index.get(ch);
-      if (i !== undefined && ch !== ' ') {
+      const m = this.metrics.get(ch);
+      if (i !== undefined && m && ch !== ' ') {
         const dy = DESCENDERS.has(ch) ? 1 : 0;
-        g.drawImage(atlas, i * GLYPH_W, 0, GLYPH_W, GLYPH_H, cx, cy + dy, GLYPH_W, GLYPH_H);
+        // Blit only the inked columns so punctuation never eats the next space.
+        g.drawImage(
+          atlas, i * GLYPH_W + m.left, 0, m.width, GLYPH_H,
+          cx, cy + dy, m.width, GLYPH_H,
+        );
       }
       cx += this.advance(ch);
     }

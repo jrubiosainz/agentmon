@@ -76,7 +76,7 @@ CHARACTERS = {
     "professor": "A friendly professor of robotics, mid-forties, short grey beard, round glasses, a long white lab coat over a navy turtleneck, holding a tablet, kind expression",
     "npc_engineer": "An adult AI engineer NPC, casual grey hoodie with a laptop-sticker pattern, jeans, sneakers, a lanyard badge around the neck, holding a coffee cup",
     "npc_technician": "A datacenter technician NPC, navy blue work coveralls with reflective yellow safety stripes, a hard hat, thick gloves, a tool belt",
-    "npc_kid": "A small child NPC, age 8, bright yellow t-shirt with a robot print, blue shorts, red cap worn backwards, sneakers, energetic pose",
+    "npc_kid": "A short cheerful junior apprentice character, bright yellow t-shirt with a cartoon robot print, blue shorts, red cap worn backwards, sneakers, energetic bouncy stance",
     "npc_medic": "A robot-clinic nurse NPC, mint-green medical uniform with a white cross emblem, short pink hair, a headset, friendly welcoming pose",
     "npc_clerk": "A shop clerk NPC, crisp teal store uniform apron over a white shirt, neat brown hair, a handheld scanner device, cheerful pose",
     "npc_guard": "A datacenter security guard NPC, black tactical uniform with cyan glowing shoulder trim, mirrored visor helmet, arms at sides, imposing",
@@ -84,8 +84,9 @@ CHARACTERS = {
 
 # Full-body trainer battle portraits (shown when a trainer battle starts)
 TRAINERS = {
-    "trainer_rival": ("A confident teenage AI engineer rival with spiky orange hair, black and orange "
-                      "bomber jacket with circuit trim, throwing a capsule forward dramatically"),
+    "trainer_rival": ("A confident young AI engineer character with spiky orange hair, black and orange "
+                      "bomber jacket with circuit-pattern trim, one arm extended forward holding a "
+                      "glowing deployment capsule, dynamic heroic stance"),
     "trainer_gym1": ("A cheerful gym leader: a young woman with bright yellow twin-tail hair, an electric-"
                      "blue technician jumpsuit with glowing yellow cable trim, welding goggles on her head, "
                      "one hand sparking with static, dynamic confident pose"),

@@ -95,7 +95,7 @@ export class BootScene extends Scene {
     g.fillStyle = 'rgba(72,120,168,0.10)';
     for (let y = (this.phase / 2) % 4; y < SCREEN_H; y += 4) g.fillRect(0, y, SCREEN_W, 1);
 
-    font.drawCentered(g, 'AGENTMON', SCREEN_W / 2, 52, 'gold');
+    font.drawCentered(g, 'AG\u00c9NTMON', SCREEN_W / 2, 52, 'gold');
     font.drawCentered(g, 'SYSTEM BOOT', SCREEN_W / 2, 66, 'dim');
 
     if (this.error) {

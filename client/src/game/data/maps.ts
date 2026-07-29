@@ -19,10 +19,15 @@ function building(
 // 1. Player's house
 // =========================================================================== //
 const bedroomGrid = interiorShell(9, 9, 'w', 4);
-bedroomGrid.rect(1, 2, 2, 2, 'C');   // bed
-bedroomGrid.rect(6, 2, 2, 1, 'C');   // desk with rig
-bedroomGrid.rect(3, 5, 3, 2, 'c');   // rug
-bedroomGrid.set(7, 5, 'C');          // shelf
+bedroomGrid.set(2, 1, 'y').set(6, 1, 'y');   // windows
+bedroomGrid.set(1, 2, 'B').set(2, 2, 'D');   // bed head
+bedroomGrid.set(1, 3, 'E').set(2, 3, 'H');   // bed foot
+bedroomGrid.set(6, 2, 'd');                  // desk
+bedroomGrid.set(7, 2, 'P');                  // dev rig
+bedroomGrid.set(1, 5, 'v');                  // wall screen
+bedroomGrid.rect(3, 5, 3, 2, 'u');           // rug
+bedroomGrid.set(7, 4, 'k');                  // shelf
+bedroomGrid.set(7, 6, 'q');                  // plant
 
 export const HOME_BEDROOM: MapDef = {
   id: 'home_bedroom',
@@ -33,17 +38,24 @@ export const HOME_BEDROOM: MapDef = {
   outdoor: false,
   warps: [{ x: 4, y: 8, to: 'home_ground', tx: 8, ty: 2, facing: 'down', kind: 'stairs' }],
   signs: [
-    { x: 6, y: 2, text: ['A dev rig with three monitors.', 'Your half-finished agent framework is still compiling.'] },
+    { x: 7, y: 2, text: ['A dev rig with three monitors.', 'Your half-finished agent framework is still compiling.'] },
+    { x: 6, y: 2, text: ['Your desk. Solder, spare servos and cold coffee.'] },
     { x: 1, y: 2, text: ['Your bed.', 'You slept well. Time to get moving!'] },
-    { x: 7, y: 5, text: ['A shelf of robotics manuals and a dusty trophy.'] },
+    { x: 2, y: 2, text: ['Your bed.', 'You slept well. Time to get moving!'] },
+    { x: 7, y: 4, text: ['A shelf of robotics manuals and a dusty trophy.'] },
+    { x: 1, y: 5, text: ['The wall screen is paused on an AGENTMON LEAGUE final.'] },
   ],
 };
 
 const homeGroundGrid = interiorShell(11, 9, 'w', 5);
-homeGroundGrid.rect(1, 2, 3, 1, 'C');
-homeGroundGrid.rect(7, 2, 3, 1, 'C');
-homeGroundGrid.rect(3, 5, 4, 2, 'c');
-homeGroundGrid.rect(8, 2, 1, 5, 't');    // stairs up
+homeGroundGrid.set(2, 1, 'y').set(6, 1, 'y');
+homeGroundGrid.set(1, 2, 'j');            // cooler
+homeGroundGrid.rect(2, 2, 2, 1, 'k');     // shelving
+homeGroundGrid.set(7, 2, 'v');            // wall screen
+homeGroundGrid.rect(3, 5, 3, 1, 'e');     // dining table
+homeGroundGrid.rect(3, 6, 4, 1, 'u');     // rug
+homeGroundGrid.set(1, 6, 'q');
+homeGroundGrid.rect(8, 2, 1, 5, 't');     // stairs up
 
 export const HOME_GROUND: MapDef = {
   id: 'home_ground',
@@ -171,11 +183,20 @@ export const RIVAL_HOUSE = makeHouse({
 // =========================================================================== //
 function labGrid(): Grid {
   const g = interiorShell(13, 11, 'l', 6);
-  g.rect(1, 2, 3, 2, 'C');
-  g.rect(9, 2, 3, 2, 'C');
-  g.rect(1, 6, 2, 3, 'C');
-  g.rect(10, 6, 2, 3, 'C');
-  g.rect(5, 4, 3, 2, 'c');
+  g.set(2, 1, 'y').set(10, 1, 'y');
+  g.rect(1, 2, 3, 1, 'P');   // bank of terminals
+  g.rect(1, 3, 3, 1, 'd');
+  g.rect(9, 2, 3, 1, 'P');
+  g.rect(9, 3, 3, 1, 'd');
+  g.rect(1, 6, 2, 2, 'k');   // archive shelving
+  g.set(1, 8, 'C');
+  g.set(2, 8, 'C');
+  g.rect(10, 6, 2, 2, 'k');
+  g.set(10, 8, 'C');
+  g.set(11, 8, 'C');
+  g.set(1, 5, 'q');
+  g.set(11, 5, 'q');
+  g.rect(5, 4, 3, 2, 'u');
   g.rect(4, 8, 5, 1, 'C');   // starter table
   return g;
 }
@@ -300,12 +321,12 @@ export const ROUTE1: MapDef = {
     },
   ],
   encounters: [
-    { species: 'voltling', min: 2, max: 5, weight: 24 },
-    { species: 'chassik', min: 2, max: 5, weight: 24 },
-    { species: 'pupboot', min: 3, max: 6, weight: 18 },
-    { species: 'dronelet', min: 3, max: 6, weight: 14 },
-    { species: 'roombit', min: 3, max: 6, weight: 12 },
-    { species: 'stackbit', min: 4, max: 6, weight: 8 },
+    { species: 'voltling', min: 2, max: 4, weight: 24 },
+    { species: 'chassik', min: 2, max: 4, weight: 24 },
+    { species: 'pupboot', min: 2, max: 4, weight: 18 },
+    { species: 'dronelet', min: 3, max: 5, weight: 14 },
+    { species: 'roombit', min: 3, max: 5, weight: 12 },
+    { species: 'stackbit', min: 3, max: 5, weight: 8 },
   ],
 };
 

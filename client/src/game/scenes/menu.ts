@@ -700,6 +700,7 @@ export class TrainerCardScene extends Scene {
 // Save
 // =========================================================================== //
 export class SaveScene extends Scene {
+  override transparent = true;
   private state: 'confirm' | 'saving' | 'done' | 'failed' = 'confirm';
   private pick = 0;
   private tw = new Typewriter();
