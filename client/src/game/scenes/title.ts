@@ -222,8 +222,8 @@ export class TitleScene extends Scene {
       : saves.user ? `CLOUD: ${saves.user.email}` : 'SAVES STORED ON THIS DEVICE';
     const sw = font.measure(status);
     g.fillStyle = 'rgba(16,18,32,0.72)';
-    g.fillRect((SCREEN_W - sw) / 2 - 4, 150, sw + 8, 11);
-    font.drawCentered(g, status, SCREEN_W / 2, 152, this.noticeTimer > 0 ? 'gold' : 'white');
+    g.fillRect((SCREEN_W - sw) / 2 - 4, 147, sw + 8, 12);
+    font.drawCentered(g, status, SCREEN_W / 2, 150, this.noticeTimer > 0 ? 'gold' : 'white');
   }
 
   private proceduralSky(g: CanvasRenderingContext2D): void {

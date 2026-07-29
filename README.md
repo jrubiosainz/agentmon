@@ -99,6 +99,44 @@ Stages:
 Character sheets come out as 80×112 = 4 columns × 4 rows of 20×28 cells, one row
 per facing (`walk_down`, `walk_up`, `walk_left`, `walk_right`).
 
+### Why the chroma key needs a second pass
+
+`gpt-image-2` is asked for a subject on a flat magenta backdrop, and `keyout()`
+strips it with a flood fill seeded from the image border. That handles the
+backdrop *around* the subject, but not backdrop *enclosed* by it — the gap
+between a robot's legs, the hole through a ring, the slot inside a claw. Those
+pockets are never reached by a border-seeded fill, so they survived as opaque
+magenta blobs stamped across the sprite.
+
+The obvious fix — key out every magenta pixel globally — is wrong here, because
+several species are *designed* magenta: ROOTKRAKEN's eye, QUBITTO's core,
+ENTANGL's glow. A global key deletes them.
+
+The separator that does work is measured, not assumed. Label the leftover
+pockets as connected components, then compare each one's **mean colour distance
+to the backdrop reference** (the median of a 3px border ring, typically around
+`(246, 2, 249)` rather than a clean `#FF00FF`). Across the whole dex:
+
+| component kind    | mean distance to backdrop |
+| ----------------- | ------------------------- |
+| leftover backdrop | 4 – 13                    |
+| designed magenta  | 45 – 78                   |
+
+That is a wide, unambiguous margin, so `keyout()` removes only components that
+are both large (`>= max(24, 0.0002 · h · w)` px) and closer than `22.0`. Per
+component *standard deviation* was also tried and rejected — 6–8 vs 18–20, which
+overlaps and misclassifies.
+
+One numpy trap worth recording: computing that distance as
+`(arr.astype(np.int16) - bg) ** 2` overflows, because 255² = 65025 exceeds
+int16's range, and the resulting negatives turn into NaN under `sqrt`. Cast to
+float64. `pixelize.py` is safe because `np.median` already returns float64 and
+promotes the subtraction, but any ad-hoc diagnostic must cast explicitly.
+
+Re-running the key costs nothing: `tools/.cache` holds every generated PNG, so
+`python tools/generate_assets.py --creatures --trainers --buildings --backdrops
+--title` re-post-processes the cached art without calling Azure at all.
+
 ### Why the overworld cast is drawn in code, not generated
 
 The 15 walking characters go through a different path — `agentmon_art/chibi.py`,

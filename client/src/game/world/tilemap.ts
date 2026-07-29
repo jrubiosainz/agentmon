@@ -113,6 +113,8 @@ export class TileMap {
   private over: Int16Array;
   private top: Int16Array;
   private solidMask: Uint8Array;
+  /** Tile blitted outside the map bounds so small rooms fill the screen. */
+  private surroundId = -1;
 
   constructor(readonly def: MapDef, private readonly tiles: TileSetResult) {
     this.height = def.ground.length;
@@ -141,6 +143,26 @@ export class TileMap {
     for (const w of def.warps ?? []) {
       if (this.inBounds(w.x, w.y)) this.solidMask[w.y * this.width + w.x] = 0;
     }
+
+    // Interiors are often smaller than the 15x10 tile viewport. Rather than
+    // letting the room float in a flat void, extend the room's own border
+    // material outwards so it reads as the rest of the building.
+    if (!def.outdoor) this.surroundId = this.modalBorderTile();
+  }
+
+  /** Most common ground tile on the map's border ring - i.e. the wall. */
+  private modalBorderTile(): number {
+    const tally = new Map<number, number>();
+    const add = (x: number, y: number): void => {
+      const id = this.ground[y * this.width + x]!;
+      if (id >= 0) tally.set(id, (tally.get(id) ?? 0) + 1);
+    };
+    for (let x = 0; x < this.width; x++) { add(x, 0); add(x, this.height - 1); }
+    for (let y = 0; y < this.height; y++) { add(0, y); add(this.width - 1, y); }
+    let best = -1;
+    let bestN = 0;
+    for (const [id, n] of tally) if (n > bestN) { best = id; bestN = n; }
+    return best;
   }
 
   private loadLayer(rows: string[], out: Int16Array, affectsCollision: boolean): void {
@@ -222,6 +244,7 @@ export class TileMap {
   render(
     g: CanvasRenderingContext2D, camX: number, camY: number, animTick: number,
   ): void {
+    if (this.surroundId >= 0) this.renderSurround(g, camX, camY, animTick);
     const x0 = Math.max(0, Math.floor(camX / TILE));
     const y0 = Math.max(0, Math.floor(camY / TILE));
     const x1 = Math.min(this.width - 1, Math.floor((camX + SCREEN_W) / TILE));
@@ -234,6 +257,23 @@ export class TileMap {
         if (gid >= 0) this.blit(g, this.frameOf(gid, animTick), dx, dy);
         const oid = this.over[y * this.width + x]!;
         if (oid >= 0) this.blit(g, this.frameOf(oid, animTick), dx, dy);
+      }
+    }
+  }
+
+  /** Fill everything outside the map with the border tile. */
+  private renderSurround(
+    g: CanvasRenderingContext2D, camX: number, camY: number, animTick: number,
+  ): void {
+    const id = this.frameOf(this.surroundId, animTick);
+    const x0 = Math.floor(camX / TILE);
+    const y0 = Math.floor(camY / TILE);
+    const x1 = Math.floor((camX + SCREEN_W) / TILE);
+    const y1 = Math.floor((camY + SCREEN_H) / TILE);
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        if (x >= 0 && y >= 0 && x < this.width && y < this.height) continue;
+        this.blit(g, id, x * TILE - camX, y * TILE - camY);
       }
     }
   }
