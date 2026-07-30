@@ -225,7 +225,7 @@ export const LAB_ADA: MapDef = {
     {
       id: 'rival_lab', x: 8, y: 6, facing: 'left', sprite: 'rival', name: 'REX',
       movement: 'static', script: 'rival_lab', showIfFlag: 'labRivalWaiting',
-      hideIfFlag: 'gotStarter',
+      hideIfFlag: 'rivalLabDone',
       text: ['REX: Took you long enough.'],
     },
   ],

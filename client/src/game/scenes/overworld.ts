@@ -12,6 +12,7 @@ import { species } from '../data/dex.ts';
 import { item as itemDef } from '../data/items.ts';
 import { getMap } from '../data/maps.ts';
 import { trackExists } from '../data/music.ts';
+import { rivalStarterFor, STARTER_KEYS } from '../data/starters.ts';
 import { BADGE_INFO, trainer as trainerDef, type TrainerDef } from '../data/trainers.ts';
 import {
   bagAdd, catchSpecies, flag, seeSpecies, setFlag, type Facing,
@@ -22,6 +23,7 @@ import { BattleScene } from './battle.ts';
 import { EvolutionScene } from './evolution.ts';
 import { StartMenuScene, StorageScene } from './menu.ts';
 import { ShopScene } from './shop.ts';
+import { StarterScene, type StarterResult } from './starter.ts';
 
 const WALK_FRAMES = 15;
 const RUN_FRAMES = 8;
@@ -653,7 +655,7 @@ export class OverworldScene extends Scene {
         return;
       }
       case 'ada': return this.scriptAda();
-      case 'rival_lab': return npc ? this.scriptRivalLab(npc) : undefined;
+      case 'rival_lab': return npc ? this.scriptRivalLab() : undefined;
       case 'storage': return this.scriptStorage();
       case 'rival_r3': return this.scriptRivalFight('rival_r3', 'rivalR3Done');
       case 'rival_final': return this.scriptRivalFight('rival_final', 'rivalFinalDone');
@@ -701,19 +703,8 @@ export class OverworldScene extends Scene {
       'PROF. ADA: I have three prototype cores here. Each holds a partially trained AGÉNTMON.',
       'PROF. ADA: Choose the one you feel drawn to. It will be your partner.',
     );
-    const starters = ['stackbit', 'reachlet', 'boltkin'];
-    let picked: string | null = null;
-    let index = 0;
-    while (!picked) {
-      const s = species(starters[index]!);
-      await this.say(
-        `PROF. ADA: This is ${s.name}, a ${s.types.map((t) => t.toUpperCase()).join('/')} type.`,
-        s.dexEntry ?? 'A remarkable little machine.',
-      );
-      const yes = await this.ask(`Take ${s.name}?`);
-      if (yes) picked = starters[index]!;
-      else index = (index + 1) % starters.length;
-    }
+    const starters = [...STARTER_KEYS];
+    const picked = await this.chooseStarter(starters);
 
     const starter = createAgent(picked, {
       level: 5, otName: save.playerName, otId: save.trainerId, metMap: 'ADA RESEARCH LAB',
@@ -728,19 +719,47 @@ export class OverworldScene extends Scene {
     );
 
     // The rival always takes the type that beats yours.
-    const counter: Record<string, string> = {
-      stackbit: 'boltkin', reachlet: 'stackbit', boltkin: 'reachlet',
-    };
-    save.rivalStarter = counter[picked] ?? 'boltkin';
-    setFlag(save, 'labRivalWaiting', 0);
+    save.rivalStarter = rivalStarterFor(picked);
     bagAdd(save, 'nanocore', 5);
     await this.say(
       'PROF. ADA: Oh, and take these NANOCORES. You will need them to catch new agents.',
       'PROF. ADA: Head north on ROUTE 1 when you are ready. VOLTSPIRE CITY has the first GYM.',
     );
+    // REX is waiting to challenge you the moment you have a partner, so he has
+    // to be re-evaluated here rather than on the next map load.
+    this.rebuildNpcs();
   }
 
-  private async scriptRivalLab(npc: Actor): Promise<void> {
+  /**
+   * Opens the core bay so the player can see all three prototypes before
+   * committing. The bay is modal and only pops on a confirmed pick, so the
+   * retry loop exists purely for the crash-recovery path (a scene torn down
+   * mid-flight resumes us with `undefined`); the text picker below is the last
+   * resort, so a broken bay can never leave the player without a partner.
+   */
+  private async chooseStarter(starters: string[]): Promise<string> {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const result = await this.pushAndWait<StarterResult>(new StarterScene(), { keys: starters });
+      if (result?.key) return result.key;
+      await this.say('PROF. ADA: Take your time. Look them over properly.');
+    }
+    return this.chooseStarterByText(starters);
+  }
+
+  private async chooseStarterByText(starters: string[]): Promise<string> {
+    let index = 0;
+    for (;;) {
+      const s = species(starters[index]!);
+      await this.say(
+        `PROF. ADA: This is ${s.name}, a ${s.types.map((t) => t.toUpperCase()).join('/')} type.`,
+        s.dexEntry ?? 'A remarkable little machine.',
+      );
+      if (await this.ask(`Take ${s.name}?`)) return starters[index]!;
+      index = (index + 1) % starters.length;
+    }
+  }
+
+  private async scriptRivalLab(): Promise<void> {
     const save = this.game.save;
     if (!flag(save, 'gotStarter')) {
       await this.say(
@@ -762,6 +781,7 @@ export class OverworldScene extends Scene {
     const key = save.rivalStarter ?? 'boltkin';
     if (!this.canFight()) return;
     const foes = [createAgent(key, { level: 5 })];
+    for (const f of foes) seeSpecies(save, f.speciesKey);
     audio.sfx('encounter');
     await this.game.transitions.out('battleSplit', 46);
     const result = await this.pushAndWait<BattleResult>(new BattleScene(), {
@@ -772,6 +792,7 @@ export class OverworldScene extends Scene {
         kind: 'trainer',
         playerName: save.playerName,
         trainerName: save.rivalName,
+        trainerSprite: 'trainer_rival',
         trainerAi: 1,
         payout: 30,
         canRun: false,
@@ -784,13 +805,15 @@ export class OverworldScene extends Scene {
     if (!result || result.outcome === 'lose') {
       await this.say(`${save.rivalName}: Told you. Go train, then find me.`);
       for (const a of save.party) healFully(a);
+      this.rebuildNpcs();
       return;
     }
     await this.say(
       `${save.rivalName}: ...Lucky start. That is all that was.`,
       `${save.rivalName}: Next time I will be ready. Smell you later!`,
     );
-    npc.def!.hideIfFlag = 'rivalLabDone';
+    // `hideIfFlag` already points at `rivalLabDone` in the map data, so the
+    // rebuild is all that is needed to walk him off screen.
     this.rebuildNpcs();
     await this.handleEvolutions();
   }

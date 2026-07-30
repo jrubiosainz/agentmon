@@ -72,6 +72,8 @@ export interface BattleConfig {
   playerName: string;
   trainerName?: string;
   trainerKey?: string;
+  /** Portrait override for trainers that have no static `TrainerDef` (the lab rival). */
+  trainerSprite?: string;
   trainerAi?: 0 | 1 | 2;
   payout?: number;
   canRun: boolean;

@@ -703,7 +703,8 @@ export class BattleScene extends Scene {
   private drawTrainerIntro(g: CanvasRenderingContext2D): void {
     const key = this.payload.config.trainerKey;
     const t = key ? trainerDef(key) : null;
-    const img = t ? assets.image(`tr:${t.sprite}`) : null;
+    const sprite = t?.sprite ?? this.payload.config.trainerSprite;
+    const img = sprite ? assets.image(`tr:${sprite}`) : null;
     const x = SCREEN_W - 60 + (1 - this.trainerSlide) * 120;
     if (img) {
       g.drawImage(img, x - img.width / 2, 96 - img.height);

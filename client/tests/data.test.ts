@@ -6,7 +6,7 @@
  * the same logic the game runs, not a copy of it.
  */
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
@@ -20,6 +20,7 @@ import { DEX, setDex, move as moveDef, species as speciesDef } from '../src/game
 import { ITEMS } from '../src/game/data/items.ts';
 import { ALL_MAPS, mapExists } from '../src/game/data/maps.ts';
 import { ALL_TRACKS, trackExists } from '../src/game/data/music.ts';
+import { rivalStarterFor, STARTER_KEYS } from '../src/game/data/starters.ts';
 import { TRAINERS } from '../src/game/data/trainers.ts';
 import { addAgent, newSave } from '../src/game/state.ts';
 import { TileMap, type MapDef } from '../src/game/world/tilemap.ts';
@@ -461,6 +462,53 @@ describe('music', () => {
           expect(t, `${name}/${ch.wave}`).toMatch(/^(-|[A-G][#b]?-?\d):\d*\.?\d+$/);
         }
       }
+    }
+  });
+});
+
+describe('starters', () => {
+  it('offers three distinct, known species', () => {
+    expect(STARTER_KEYS.length).toBe(3);
+    expect(new Set(STARTER_KEYS).size).toBe(STARTER_KEYS.length);
+    for (const key of STARTER_KEYS) expect(speciesDef(key).key, key).toBe(key);
+  });
+
+  it('each core has the art the bay draws, front and back', () => {
+    // The selection screen shows all three at once, so a missing sheet would
+    // leave the player choosing from empty pedestals.
+    const missing: string[] = [];
+    for (const key of STARTER_KEYS) {
+      for (const file of [`${key}.png`, `${key}.json`, `${key}_back.png`, `${key}_back.json`]) {
+        if (!existsSync(new URL(`../public/assets/creatures/${file}`, import.meta.url))) {
+          missing.push(file);
+        }
+      }
+      const meta = JSON.parse(
+        readFileSync(new URL(`../public/assets/creatures/${key}.json`, import.meta.url), 'utf8'),
+      ) as { animations?: Record<string, { frames: number }> };
+      expect(meta.animations?.idle?.frames, `${key} idle`).toBeGreaterThan(0);
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it('shows a dossier the card has room for', () => {
+    for (const key of STARTER_KEYS) {
+      const s = speciesDef(key);
+      expect(s.name.length, `${key} name`).toBeLessThanOrEqual(10);
+      expect(s.genus.length, `${key} genus`).toBeLessThanOrEqual(14);
+      expect(s.types.length, `${key} types`).toBeGreaterThan(0);
+      expect(s.dexEntry.length, `${key} entry`).toBeGreaterThan(0);
+      // Three lines of roughly 36 characters is all the card window holds.
+      expect(s.dexEntry.length, `${key} entry`).toBeLessThanOrEqual(108);
+    }
+  });
+
+  it('the rival answers every pick with a counter it can actually use', () => {
+    for (const key of STARTER_KEYS) {
+      const answer = rivalStarterFor(key);
+      expect(answer, key).not.toBe(key);
+      expect(STARTER_KEYS as readonly string[], key).toContain(answer);
+      expect(speciesDef(answer).key).toBe(answer);
     }
   });
 });
