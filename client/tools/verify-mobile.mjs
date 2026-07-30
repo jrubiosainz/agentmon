@@ -104,8 +104,13 @@ check('AudioContext exists after a touch', after.hasCtx);
 check('AudioContext is running after a touch', after.state === 'running', `state=${after.state}`);
 check('clock advances (notes can be scheduled)', (after.currentTime ?? 0) > 0, `t=${after.currentTime}`);
 
-// Give the scheduler a beat, then confirm voices are actually queued.
-await page.waitForTimeout(1500);
+// Give the scheduler a beat, then confirm voices are actually queued. Boot is
+// slower against the real backend, so wait for the track rather than guess.
+await page.waitForFunction(
+  () => !!window.agentmon?.audio?.currentTrack && window.agentmon.audio.scheduled.length > 0,
+  null,
+  { timeout: 15000 },
+).catch(() => {});
 after = await audioState();
 console.log('  settled audio:', JSON.stringify(after));
 check('a track is playing', !!after.track, `track=${after.track}`);
