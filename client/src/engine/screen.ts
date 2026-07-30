@@ -32,6 +32,20 @@ export class Screen {
     this.resize();
     window.addEventListener('resize', () => this.resize());
     window.addEventListener('orientationchange', () => setTimeout(() => this.resize(), 120));
+
+    // The shell keeps changing shape after construction - the touch class lands
+    // later, phone browsers slide their URL bar away without firing `resize`,
+    // and rotating swaps the whole layout. Watch the frame instead of guessing.
+    const frame = canvas.parentElement;
+    if (frame && typeof ResizeObserver === 'function') {
+      let last = '';
+      new ResizeObserver(() => {
+        const key = `${frame.clientWidth}x${frame.clientHeight}`;
+        if (key === last) return;
+        last = key;
+        this.resize();
+      }).observe(frame);
+    }
   }
 
   resize(): void {
@@ -40,10 +54,12 @@ export class Screen {
     const availH = frame ? frame.clientHeight : window.innerHeight;
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
 
-    // Largest integer scale that still fits, with a fractional fallback for
-    // very small viewports so the screen is never cropped.
-    let scale = Math.floor(Math.min(availW / SCREEN_W, availH / SCREEN_H));
-    if (scale < 1) scale = Math.min(availW / SCREEN_W, availH / SCREEN_H);
+    const fit = Math.min(availW / SCREEN_W, availH / SCREEN_H);
+    // Desktops get crisp integer scaling; phones get every pixel of a screen
+    // they cannot afford to waste - at 2-3x device pixel ratio the fractional
+    // CSS scale still lands on near-whole device pixels, so it stays sharp.
+    let scale = this.fillsViewport() ? fit : Math.floor(fit);
+    if (scale < 1) scale = fit;
     this.scale = Math.max(scale, 0.5);
 
     const cssW = Math.round(SCREEN_W * this.scale);
@@ -53,6 +69,15 @@ export class Screen {
     this.canvas.width = Math.round(cssW * dpr);
     this.canvas.height = Math.round(cssH * dpr);
     this.ctx.imageSmoothingEnabled = false;
+  }
+
+  /**
+   * Checked per-resize rather than cached: the Screen is built before the shell
+   * has tagged the body as touch, and a 2-in-1 can gain a touch pointer later.
+   */
+  private fillsViewport(): boolean {
+    return typeof matchMedia === 'function'
+      && matchMedia('(hover: none) and (pointer: coarse)').matches;
   }
 
   /** Blit the native-resolution buffer to the visible canvas. */

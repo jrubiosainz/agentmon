@@ -5,13 +5,44 @@
  */
 
 import './style.css';
-import { audio } from './engine/audio.ts';
+import { audio, loadMutePreference } from './engine/audio.ts';
 import { Loop } from './engine/loop.ts';
 import { Game } from './game/game.ts';
 import * as agent from './game/data/agent.ts';
 import { saves } from './game/save.ts';
 import { BootScene } from './game/scenes/boot.ts';
+import { DEFAULT_OPTIONS } from './game/state.ts';
 import { installAuthStyles } from './game/ui/authoverlay.ts';
+
+/**
+ * The on-screen sound switch. Phones are where audio most often fails to start,
+ * and they are also where the in-game OPTIONS menu is furthest away, so the
+ * toggle lives in the shell where it is always one tap from the title screen.
+ */
+function installSoundToggle(game: Game): void {
+  const btn = document.getElementById('sound-toggle');
+  if (!btn) return;
+  const label = btn.querySelector('.lbl');
+  const icon = btn.querySelector('.ico');
+
+  const paint = (muted: boolean) => {
+    btn.classList.toggle('is-off', muted);
+    btn.setAttribute('aria-pressed', muted ? 'false' : 'true');
+    btn.setAttribute('aria-label', muted ? 'Sound off' : 'Sound on');
+    if (label) label.textContent = muted ? 'SOUND OFF' : 'SOUND ON';
+    if (icon) icon.textContent = muted ? '\u2715' : '\u266b';
+  };
+
+  game.onMuteChanged = paint;
+  paint(audio.muted);
+
+  btn.addEventListener('click', () => {
+    // The tap is a user gesture, so it is also the most reliable moment to
+    // start (or revive) the audio graph on a phone.
+    audio.unlock();
+    game.setMuted(!audio.muted);
+  });
+}
 
 function fatal(err: unknown): void {
   console.error(err);
@@ -34,6 +65,10 @@ function boot(): void {
 
   installAuthStyles();
 
+  // The device-level mute choice outranks whatever a save file remembers, so a
+  // player who silenced the game finds it silent on the next visit too.
+  DEFAULT_OPTIONS.muted = loadMutePreference();
+
   const game = new Game(canvas);
   const loop = new Loop(() => game.update(), () => game.render());
   // A bug in one scene should cost that scene, not the whole session.
@@ -45,12 +80,24 @@ function boot(): void {
     game.applyOptions();
   };
 
+  // Mobile browsers hand back a suspended AudioContext and re-suspend it on
+  // every app switch, notification or screen lock. `unlock()` is cheap when the
+  // graph is already awake, so try on any gesture rather than only the first.
+  const wake = () => audio.unlock();
+  for (const ev of ['pointerdown', 'touchend', 'keydown'] as const) {
+    document.addEventListener(ev, wake, { capture: true, passive: true });
+  }
+
+  installSoundToggle(game);
+
   // Touch controls only make sense on touch devices.
   const touch = document.getElementById('touch-controls');
   const isTouch = matchMedia('(hover: none) and (pointer: coarse)').matches;
   if (touch && isTouch) {
     touch.hidden = false;
     document.body.classList.add('touch');
+    // The shell just changed shape; re-fit before the first frame is presented.
+    game.screen.resize();
   }
   document.getElementById('hint')?.toggleAttribute('hidden', isTouch);
 
@@ -59,9 +106,13 @@ function boot(): void {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       game.snapshotLocal();
-      audio.setMuted(true);
+      audio.setDucked(true);
     } else {
+      audio.setDucked(false);
       game.applyOptions();
+      // Coming back from the app switcher leaves the context suspended; without
+      // this the soundtrack would stay dead for the rest of the session.
+      audio.unlock();
     }
   });
 

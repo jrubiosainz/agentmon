@@ -122,6 +122,20 @@ export class Game {
     audio.setMuted(o.muted);
     audio.setMusicVolume(o.musicVolume);
     audio.setSfxVolume(o.sfxVolume);
+    this.onMuteChanged?.(o.muted);
+  }
+
+  /** Notified whenever the mute state changes, so the on-screen toggle agrees. */
+  onMuteChanged: ((muted: boolean) => void) | null = null;
+
+  /**
+   * Single entry point for muting, used by both the on-screen button and the
+   * OPTIONS menu so the two can never disagree.
+   */
+  setMuted(muted: boolean): void {
+    if (this.save.options) this.save.options.muted = muted;
+    audio.setMuted(muted);
+    this.onMuteChanged?.(muted);
   }
 
   /** Frames-per-character for the typewriter, from the options menu. */

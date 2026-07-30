@@ -43,6 +43,21 @@ export interface TrackDef {
   channels: { wave: Wave; gain: number; pattern: string; octaveShift?: number }[];
 }
 
+/**
+ * The mute choice is a property of the device, not of a save file: a player who
+ * silences the game on the bus expects it to stay silent after a reload, before
+ * any save has been read.
+ */
+const MUTE_KEY = 'agentmon.muted';
+
+export function loadMutePreference(): boolean {
+  try { return localStorage.getItem(MUTE_KEY) === '1'; } catch { return false; }
+}
+
+function storeMutePreference(muted: boolean): void {
+  try { localStorage.setItem(MUTE_KEY, muted ? '1' : '0'); } catch { /* private mode */ }
+}
+
 // --------------------------------------------------------------------------- //
 // Periodic waves for the pulse channels
 // --------------------------------------------------------------------------- //
@@ -81,25 +96,44 @@ export class AudioEngine {
   private scheduled: AudioScheduledSourceNode[] = [];
   private currentTrack: string | null = null;
   private loopTimer: number | null = null;
+  /** Set whenever a track was asked for while the graph could not play it. */
+  private pendingStart = false;
+  /** Backgrounded, as opposed to muted on purpose. */
+  private ducked = false;
 
   musicVolume = 0.34;
   sfxVolume = 0.42;
-  muted = false;
+  muted = loadMutePreference();
 
   private tracks = new Map<string, TrackDef>();
 
-  /** Must be called from a user gesture. */
+  /**
+   * Start or revive audio. Safe (and expected) to call on every user gesture:
+   * mobile browsers hand back a context in the `suspended` state and suspend it
+   * again on every app switch, notification or screen lock, so a one-shot
+   * unlock leaves the player in silence for the rest of the session.
+   */
   unlock(): void {
-    if (this.ctx) {
-      void this.ctx.resume();
+    if (!this.ctx) this.createContext();
+    const ctx = this.ctx;
+    if (!ctx) return;
+    if (ctx.state === 'running') {
+      if (this.pendingStart) this.restartCurrent();
       return;
     }
+    // `resume()` only settles after the gesture returns, and until then
+    // `currentTime` is frozen - so re-arm the track on the far side of it
+    // rather than scheduling notes that would all land in the past.
+    void ctx.resume().then(() => this.restartCurrent()).catch(() => { /* blocked */ });
+  }
+
+  private createContext(): void {
     const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!Ctor) return;
     const ctx = new Ctor();
     this.ctx = ctx;
     this.master = ctx.createGain();
-    this.master.gain.value = this.muted ? 0 : 1;
+    this.master.gain.value = this.muted || this.ducked ? 0 : 1;
     this.master.connect(ctx.destination);
     this.musicGain = ctx.createGain();
     this.musicGain.gain.value = this.musicVolume;
@@ -113,11 +147,27 @@ export class AudioEngine {
     this.waves.set('pulse50', makePulseWave(ctx, 0.5));
     this.noiseBuffer = makeNoiseBuffer(ctx);
 
-    if (this.currentTrack) this.playMusic(this.currentTrack, true);
+    // The browser can flip the state on its own; pick the music back up.
+    ctx.addEventListener('statechange', () => {
+      if (ctx.state === 'running') this.restartCurrent();
+    });
+
+    if (ctx.state === 'running') this.restartCurrent();
+    else this.pendingStart = this.currentTrack !== null;
+  }
+
+  /** Re-schedule the current track from the top. No-op unless we can play. */
+  private restartCurrent(): void {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const def = this.currentTrack ? this.tracks.get(this.currentTrack) : null;
+    this.pendingStart = false;
+    if (!def) return;
+    this.stopMusic(false);
+    this.scheduleTrack(def);
   }
 
   get ready(): boolean {
-    return this.ctx !== null;
+    return this.ctx !== null && this.ctx.state === 'running';
   }
 
   registerTrack(name: string, def: TrackDef): void {
@@ -126,7 +176,21 @@ export class AudioEngine {
 
   setMuted(muted: boolean): void {
     this.muted = muted;
-    if (this.master) this.master.gain.value = muted ? 0 : 1;
+    storeMutePreference(muted);
+    this.applyGain();
+  }
+
+  /**
+   * Temporary silence while the tab is in the background. Kept apart from
+   * `muted` so backgrounding the app never rewrites the player's own choice.
+   */
+  setDucked(ducked: boolean): void {
+    this.ducked = ducked;
+    this.applyGain();
+  }
+
+  private applyGain(): void {
+    if (this.master) this.master.gain.value = this.muted || this.ducked ? 0 : 1;
   }
 
   setMusicVolume(v: number): void {
@@ -145,12 +209,18 @@ export class AudioEngine {
     this.currentTrack = name;
     this.stopMusic(false);
     const def = this.tracks.get(name);
-    if (!def || !this.ctx || !this.musicGain) return;
+    if (!def) return;
+    // Remember the request even when the graph is asleep, so the next gesture
+    // (or the browser waking the context back up) starts the right track.
+    if (!this.ctx || this.ctx.state !== 'running') { this.pendingStart = true; return; }
     this.scheduleTrack(def);
   }
 
   private scheduleTrack(def: TrackDef): void {
-    const ctx = this.ctx!;
+    const ctx = this.ctx;
+    // A suspended context freezes `currentTime`, so every note we queued would
+    // be stamped in the past and silently dropped once it resumes.
+    if (!ctx || ctx.state !== 'running') { this.pendingStart = true; return; }
     const beat = 60 / def.bpm;
     const start = ctx.currentTime + 0.06;
     let longest = 0;
@@ -234,6 +304,9 @@ export class AudioEngine {
   /** Play a short procedural sound effect. */
   sfx(name: SfxName): void {
     if (!this.ctx || !this.sfxGain) return;
+    // A sound effect always follows a button press, so it doubles as a chance
+    // to wake a context the OS put to sleep behind our back.
+    if (this.ctx.state !== 'running') { this.unlock(); return; }
     const t = this.ctx.currentTime;
     const P = SFX[name];
     if (!P) return;
