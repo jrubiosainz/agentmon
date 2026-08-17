@@ -353,6 +353,130 @@ describe('battle damage attribution', () => {
   });
 });
 
+describe('turn order', () => {
+  /**
+   * The order is settled *before* the player is asked to choose, so the menu
+   * only ever opens when it is genuinely the player's moment to act. Nothing
+   * the foe does may land between the choice and its execution - that was the
+   * old behaviour and it made every decision a guess.
+   */
+  function duel(seed: number, myLevel: number, foeLevel: number, myMoves = ['tackle']): Battle {
+    const mine = createAgent('stackbit', { level: myLevel, moves: myMoves });
+    const theirs = createAgent('boltkin', { level: foeLevel, moves: ['tackle'] });
+    return new Battle([mine], [theirs], {
+      kind: 'wild', playerName: 'AAA', canRun: true, seed,
+    });
+  }
+
+  const firstUseMove = (ev: readonly { t: string }[], side: 'player' | 'foe'): number =>
+    ev.findIndex((e) => e.t === 'useMove' && (e as { side: string }).side === side);
+
+  it('the foe never acts between the choice and its execution', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const b = duel(seed, 25, 25);
+      const opening = b.openTurn();
+      if (!opening.playerActs) continue;
+      const closing = b.closeTurn({ kind: 'move', index: 0 });
+      const iPlayer = firstUseMove(closing, 'player');
+      const iFoe = firstUseMove(closing, 'foe');
+      expect(iPlayer, `seed ${seed}: the player never acted`).toBeGreaterThanOrEqual(0);
+      if (iFoe >= 0) {
+        expect(iFoe, `seed ${seed}: the foe cut in front of the chosen move`).toBeGreaterThan(iPlayer);
+      }
+    }
+  });
+
+  it('a foe that wins the order has already acted when the player is asked', () => {
+    let wentFirst = 0;
+    for (let seed = 1; seed <= 40; seed++) {
+      const b = duel(seed, 25, 25);
+      const opening = b.openTurn();
+      if (!opening.foeWentFirst) {
+        expect(firstUseMove(opening.events, 'foe'), `seed ${seed}: foe moved out of turn`).toBe(-1);
+        continue;
+      }
+      wentFirst++;
+      expect(firstUseMove(opening.events, 'foe'), `seed ${seed}: opening has no foe move`).toBeGreaterThanOrEqual(0);
+      if (!opening.playerActs) continue;
+      const closing = b.closeTurn({ kind: 'move', index: 0 });
+      expect(firstUseMove(closing, 'foe'), `seed ${seed}: the foe acted twice`).toBe(-1);
+    }
+    expect(wentFirst, 'the foe never won the order in 40 seeds').toBeGreaterThan(0);
+  });
+
+  it('each side acts at most once per turn', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const b = duel(seed, 25, 25);
+      const opening = b.openTurn();
+      const ev = opening.playerActs
+        ? [...opening.events, ...b.closeTurn({ kind: 'move', index: 0 })]
+        : opening.events;
+      for (const side of ['player', 'foe'] as const) {
+        const used = ev.filter((e) => e.t === 'useMove' && e.side === side);
+        expect(used.length, `seed ${seed}: ${side} acted ${used.length} times`).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+
+  it('speed decides who opens the turn', () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      expect(duel(seed, 5, 60).openTurn().foeWentFirst, `seed ${seed}: the fast foe did not open`).toBe(true);
+      expect(duel(seed, 60, 5).openTurn().foeWentFirst, `seed ${seed}: the slow foe opened`).toBe(false);
+    }
+  });
+
+  it('a first-strike move earns the opening slot however slow you are', () => {
+    // The order is fixed before the choice, so "always strikes first" has to
+    // mean the bearer takes the opening slot - QUICK JAB would be dead weight
+    // otherwise.
+    expect(moveDef('quick_jab').priority).toBeGreaterThan(0);
+    for (let seed = 1; seed <= 20; seed++) {
+      const b = duel(seed, 5, 60, ['quick_jab']);
+      const opening = b.openTurn();
+      expect(opening.foeWentFirst, `seed ${seed}: QUICK JAB lost the opening slot`).toBe(false);
+      expect(opening.playerActs, `seed ${seed}: the player was skipped`).toBe(true);
+    }
+  });
+
+  it('closeTurn without an opening still resolves a whole turn', () => {
+    // The scene always opens first, but nothing may desync if it ever does not.
+    const b = duel(7, 25, 25);
+    const ev = b.closeTurn({ kind: 'move', index: 0 });
+    expect(firstUseMove(ev, 'player'), 'the player never acted').toBeGreaterThanOrEqual(0);
+    expect(b.turn, 'the turn counter did not advance').toBe(1);
+  });
+
+  it('a knockout in the opening skips the choice and asks for a replacement', () => {
+    const mine = createAgent('stackbit', { level: 5, moves: ['tackle'] });
+    const spare = createAgent('stackbit', { level: 5, moves: ['tackle'] });
+    const theirs = createAgent('boltkin', { level: 60, moves: ['tackle'] });
+    const b = new Battle([mine, spare], [theirs], {
+      kind: 'wild', playerName: 'AAA', canRun: true, seed: 3,
+    });
+    const opening = b.openTurn();
+    expect(opening.foeWentFirst, 'the fast foe did not open').toBe(true);
+    expect(opening.playerActs, 'a downed agent was still asked to act').toBe(false);
+    // Exactly one announcement: a turn runs checkFaints more than once.
+    const faints = opening.events.filter((e) => e.t === 'faint' && e.side === 'player');
+    expect(faints.length, 'the KO was announced twice').toBe(1);
+    expect(opening.events.some((e) => e.t === 'requestSwitch'), 'no replacement asked for').toBe(true);
+    expect(b.outcome, 'the battle ended with a healthy agent on the bench').toBe(null);
+    b.replaceFainted(1);
+    expect(() => b.openTurn(), 'the next turn could not open').not.toThrow();
+  });
+
+  it('a wipe in the opening ends the battle', () => {
+    const mine = createAgent('stackbit', { level: 5, moves: ['tackle'] });
+    const theirs = createAgent('boltkin', { level: 60, moves: ['tackle'] });
+    const b = new Battle([mine], [theirs], {
+      kind: 'wild', playerName: 'AAA', canRun: true, seed: 4,
+    });
+    const opening = b.openTurn();
+    expect(opening.playerActs).toBe(false);
+    expect(b.outcome).toBe('lose');
+  });
+});
+
 describe('storage', () => {
   it('every repair bay exposes a reachable storage terminal', () => {
     const bays = ALL_MAPS.filter((m) => m.id.startsWith('repairbay_'));

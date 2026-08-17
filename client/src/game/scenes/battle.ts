@@ -215,7 +215,7 @@ export class BattleScene extends Scene {
     yield* this.say(`Go! ${displayName(this.battle.playerC.agent)}!`, false);
     this.play('player', 'idle', true);
     this.syncBars(true);
-    this.openCommandMenu();
+    yield* this.beginTurn();
   }
 
   // ---------------------------------------------------------------- menus
@@ -305,8 +305,20 @@ export class BattleScene extends Scene {
   }
 
   // ------------------------------------------------------------------ turns
+  /**
+   * Start a turn. The order is settled before the player is asked, so when the
+   * foe is faster its move plays out first and only then does the menu open —
+   * you always choose knowing what you are answering.
+   */
+  private *beginTurn(): Generator<Step, void, void> {
+    const opening = this.battle.openTurn();
+    yield* this.playEvents(opening.events);
+    if (opening.playerActs) this.openCommandMenu();
+    else yield* this.postTurn();
+  }
+
   private *turnSequence(action: PlayerAction): Generator<Step, void, void> {
-    const events = this.battle.takeTurn(action);
+    const events = this.battle.closeTurn(action);
     yield* this.playEvents(events);
     yield* this.postTurn();
   }
@@ -331,7 +343,7 @@ export class BattleScene extends Scene {
       yield* this.playEvents(events);
     }
     if (this.battle.outcome) { yield* this.finish(); return; }
-    this.openCommandMenu();
+    yield* this.beginTurn();
   }
 
   private *finish(): Generator<Step, void, void> {

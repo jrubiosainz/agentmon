@@ -27,6 +27,8 @@ export interface Combatant {
   turnsOut: number;
   /** Set once the unit has acted at least once - blocks first-turn switch abuse. */
   hasActed: boolean;
+  /** A turn checks for faints more than once; each KO is only announced once. */
+  faintAnnounced: boolean;
 }
 
 export type Side = 'player' | 'foe';
@@ -67,6 +69,16 @@ export type PlayerAction =
   | { kind: 'item'; key: string; targetIndex?: number; moveIndex?: number }
   | { kind: 'run' };
 
+/** What `Battle.openTurn` tells the scene about the turn it just started. */
+export interface TurnOpening {
+  /** Anything that happened before the player was asked to choose. */
+  events: BattleEvent[];
+  /** False when the player never gets to act: it fainted, or the battle ended. */
+  playerActs: boolean;
+  /** True when the foe's action resolved ahead of the player's choice. */
+  foeWentFirst: boolean;
+}
+
 export interface BattleConfig {
   kind: 'wild' | 'trainer';
   playerName: string;
@@ -98,6 +110,7 @@ export function makeCombatant(agent: AgentInstance): Combatant {
     mustRecharge: false,
     turnsOut: 0,
     hasActed: false,
+    faintAnnounced: false,
   };
 }
 
@@ -130,6 +143,12 @@ export class Battle {
   /** Successful escape attempts scale with tries, like the originals. */
   private runAttempts = 0;
   private participants = new Set<string>();
+  /** True between `openTurn` and `closeTurn`. */
+  private turnOpen = false;
+  /** The foe's action for the turn in progress, locked in by `openTurn`. */
+  private pendingFoe: PlayerAction | null = null;
+  /** True once `pendingFoe` has been resolved this turn. */
+  private foeResolved = false;
 
   constructor(
     playerTeam: AgentInstance[],
@@ -168,72 +187,133 @@ export class Battle {
   }
 
   // ------------------------------------------------------------------- turn
-  /** Run one full turn. Returns the events to animate. */
-  takeTurn(action: PlayerAction, forcedFoeAction?: PlayerAction): BattleEvent[] {
+  /**
+   * Phase 1 of a turn. Locks in the foe's action, works out the order and — when
+   * the foe wins it — resolves the foe's action straight away, so the player is
+   * only ever asked to choose when it is genuinely their moment to act.
+   *
+   * The player has not chosen yet, so the order cannot depend on the move they
+   * are about to pick; it is settled by SPEED, plus any priority the foe's move
+   * has and the best priority the player *could* bring to bear.
+   */
+  openTurn(forcedFoeAction?: PlayerAction): TurnOpening {
     const ev: BattleEvent[] = [];
     this.turn++;
+    this.turnOpen = true;
+    this.foeResolved = false;
     this.playerC.flinched = false;
     this.foeC.flinched = false;
 
-    // Item / switch / run happen before any move.
+    const foeAction = forcedFoeAction ?? this.chooseFoeAction();
+    this.pendingFoe = foeAction;
+
+    // A foe switch always resolves up front: the player must see what came in
+    // before deciding how to answer it.
+    if (foeAction.kind !== 'move') {
+      if (foeAction.kind === 'switch') this.doSwitch(ev, 'foe', foeAction.index);
+      this.foeResolved = true;
+      return { events: ev, playerActs: true, foeWentFirst: true };
+    }
+
+    if (!this.foeMovesFirst(foeAction.index)) {
+      return { events: ev, playerActs: true, foeWentFirst: false };
+    }
+
+    this.foeResolved = true;
+    let stop = false;
+    if (this.bothStanding()) {
+      this.performMove(ev, 'foe', foeAction.index);
+      stop = this.checkFaints(ev);
+    }
+    if (!stop && !this.outcome) return { events: ev, playerActs: true, foeWentFirst: true };
+
+    // The opening ended the player's turn for them; close the books here.
+    this.finishTurn(ev);
+    return { events: ev, playerActs: false, foeWentFirst: true };
+  }
+
+  /**
+   * Phase 2 of a turn. Resolves the player's action, then the foe's if it is
+   * still pending. Safe to call without `openTurn` — it opens the turn itself.
+   */
+  closeTurn(action: PlayerAction): BattleEvent[] {
+    if (!this.turnOpen) return this.takeTurn(action);
+    const ev: BattleEvent[] = [];
+    const foeAction = this.pendingFoe;
+
+    // Item / switch / run resolve before the player's move, as they always did.
     if (action.kind === 'run') {
-      if (this.tryRun(ev)) return ev;
+      if (this.tryRun(ev)) { this.finishTurn(ev); return ev; }
     } else if (action.kind === 'item') {
       this.applyItem(ev, action);
-      if (this.outcome) return ev;
+      if (this.outcome) { this.finishTurn(ev); return ev; }
     } else if (action.kind === 'switch') {
       this.doSwitch(ev, 'player', action.index);
     }
 
-    const foeAction = forcedFoeAction ?? this.chooseFoeAction();
-    if (foeAction.kind === 'switch') this.doSwitch(ev, 'foe', foeAction.index);
+    let stop = false;
+    if (action.kind === 'move' && this.bothStanding()) {
+      this.performMove(ev, 'player', action.index);
+      stop = this.checkFaints(ev);
+    }
 
-    // Determine move order.
-    const playerMoves = action.kind === 'move';
-    const foeMoves = foeAction.kind === 'move';
-    const order: { side: Side; moveIndex: number }[] = [];
-    if (playerMoves && foeMoves) {
-      const pm = this.moveOf(this.playerC, action.index);
-      const fm = this.moveOf(this.foeC, foeAction.index);
-      const pPrio = pm?.priority ?? 0;
-      const fPrio = fm?.priority ?? 0;
-      let playerFirst: boolean;
-      if (pPrio !== fPrio) playerFirst = pPrio > fPrio;
-      else {
-        const ps = this.effStat(this.playerC, 'spe');
-        const fs = this.effStat(this.foeC, 'spe');
-        playerFirst = ps === fs ? this.rng.chance(0.5) : ps > fs;
+    if (!stop && !this.outcome && !this.foeResolved && foeAction && foeAction.kind === 'move') {
+      this.foeResolved = true;
+      if (this.bothStanding()) {
+        this.performMove(ev, 'foe', foeAction.index);
+        this.checkFaints(ev);
       }
-      order.push(
-        playerFirst
-          ? { side: 'player', moveIndex: action.index }
-          : { side: 'foe', moveIndex: foeAction.index },
-      );
-      order.push(
-        playerFirst
-          ? { side: 'foe', moveIndex: foeAction.index }
-          : { side: 'player', moveIndex: action.index },
-      );
-    } else if (playerMoves) {
-      order.push({ side: 'player', moveIndex: action.index });
-    } else if (foeMoves) {
-      order.push({ side: 'foe', moveIndex: foeAction.index });
     }
 
-    for (const step of order) {
-      const attacker = this.side(step.side);
-      if (isFainted(attacker.agent)) continue;
-      if (isFainted(this.side(this.foeOf(step.side)).agent)) continue;
-      this.performMove(ev, step.side, step.moveIndex);
-      if (this.checkFaints(ev)) break;
-    }
+    this.finishTurn(ev);
+    return ev;
+  }
 
+  /** Run one full turn in a single call. Used by tests and as a safety net. */
+  takeTurn(action: PlayerAction, forcedFoeAction?: PlayerAction): BattleEvent[] {
+    const open = this.openTurn(forcedFoeAction);
+    if (!open.playerActs) return open.events;
+    return [...open.events, ...this.closeTurn(action)];
+  }
+
+  /** Nobody may act once either combatant is down. */
+  private bothStanding(): boolean {
+    return !isFainted(this.playerC.agent) && !isFainted(this.foeC.agent);
+  }
+
+  private foeMovesFirst(foeMoveIndex: number): boolean {
+    const fPrio = this.moveOf(this.foeC, foeMoveIndex)?.priority ?? 0;
+    const pPrio = this.bestPlayerPriority();
+    if (fPrio !== pPrio) return fPrio > pPrio;
+    const ps = this.effStat(this.playerC, 'spe');
+    const fs = this.effStat(this.foeC, 'spe');
+    return ps === fs ? this.rng.chance(0.5) : fs > ps;
+  }
+
+  /**
+   * The highest priority the player could still play. Carrying a first-strike
+   * move earns the opening slot, which is what "always strikes first" has to
+   * mean once the order is fixed before the choice.
+   */
+  private bestPlayerPriority(): number {
+    let best = 0;
+    for (const slot of this.playerC.agent.moves) {
+      if (slot.pp <= 0) continue;
+      const prio = move(slot.key)?.priority ?? 0;
+      if (prio > best) best = prio;
+    }
+    return best;
+  }
+
+  /** End-of-turn bookkeeping. Every path out of a turn goes through here. */
+  private finishTurn(ev: BattleEvent[]): void {
     if (!this.outcome) this.endOfTurn(ev);
     if (!this.outcome) this.checkFaints(ev);
-
     this.playerC.turnsOut++;
     this.foeC.turnsOut++;
-    return ev;
+    this.turnOpen = false;
+    this.pendingFoe = null;
+    this.foeResolved = false;
   }
 
   private moveOf(c: Combatant, index: number): MoveDef | null {
@@ -542,24 +622,30 @@ export class Battle {
   private checkFaints(ev: BattleEvent[]): boolean {
     let stop = false;
     if (isFainted(this.foeC.agent)) {
-      ev.push({ t: 'faint', side: 'foe' });
-      ev.push({ t: 'text', text: `${this.label('foe')} was scrapped!`, wait: true });
-      this.awardExp(ev);
-      const next = this.foe.members.findIndex((a) => !isFainted(a));
-      if (next < 0) {
-        this.finish(ev, 'win');
-      } else {
-        this.doSwitch(ev, 'foe', next);
-      }
       stop = true;
+      if (!this.foeC.faintAnnounced) {
+        this.foeC.faintAnnounced = true;
+        ev.push({ t: 'faint', side: 'foe' });
+        ev.push({ t: 'text', text: `${this.label('foe')} was scrapped!`, wait: true });
+        this.awardExp(ev);
+        const next = this.foe.members.findIndex((a) => !isFainted(a));
+        if (next < 0) {
+          this.finish(ev, 'win');
+        } else {
+          this.doSwitch(ev, 'foe', next);
+        }
+      }
     }
     if (isFainted(this.playerC.agent)) {
-      ev.push({ t: 'faint', side: 'player' });
-      ev.push({ t: 'text', text: `${this.label('player')} was scrapped!`, wait: true });
-      const next = this.player.members.findIndex((a) => !isFainted(a));
-      if (next < 0) this.finish(ev, 'lose');
-      else ev.push({ t: 'requestSwitch', side: 'player' });
       stop = true;
+      if (!this.playerC.faintAnnounced) {
+        this.playerC.faintAnnounced = true;
+        ev.push({ t: 'faint', side: 'player' });
+        ev.push({ t: 'text', text: `${this.label('player')} was scrapped!`, wait: true });
+        const next = this.player.members.findIndex((a) => !isFainted(a));
+        if (next < 0) this.finish(ev, 'lose');
+        else ev.push({ t: 'requestSwitch', side: 'player' });
+      }
     }
     return stop;
   }
