@@ -11,12 +11,12 @@ import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { buildTileset, type TileSetResult } from '../src/engine/tilegen.ts';
-import { Battle } from '../src/game/battle/engine.ts';
+import { Battle, type PlayerAction } from '../src/game/battle/engine.ts';
 import {
   BACKDROP_KEYS, BUILDING_KEYS, CHARACTER_KEYS, TRAINER_KEYS,
 } from '../src/game/data/artkeys.ts';
 import { createAgent } from '../src/game/data/agent.ts';
-import { DEX, setDex, move as moveDef, species as speciesDef } from '../src/game/data/dex.ts';
+import { DEX, setDex, move as moveDef, species as speciesDef, typeEffect } from '../src/game/data/dex.ts';
 import { ITEMS } from '../src/game/data/items.ts';
 import { ALL_MAPS, mapExists } from '../src/game/data/maps.ts';
 import { ALL_TRACKS, trackExists } from '../src/game/data/music.ts';
@@ -232,6 +232,124 @@ describe('battle items', () => {
     b.takeTurn({ kind: 'item', key: 'masterkey' });
     expect(b.outcome).toBe('caught');
     expect(b.caught?.otName).toBe('AAA');
+  });
+});
+
+describe('battle damage attribution', () => {
+  /**
+   * The scene animates the event log *after* the engine has resolved the whole
+   * turn, so an attack that quietly moved the wrong HP - or moved HP without
+   * saying so - shows up as both bars draining on a single attack. These tests
+   * pin the invariant that animation depends on.
+   */
+  // RAM: 100% accuracy, no recoil, no drain, non-zero against both species.
+  function stage(seed: number): Battle {
+    const mine = createAgent('stackbit', { level: 25, moves: ['tackle'] });
+    const theirs = createAgent('boltkin', { level: 25, moves: ['tackle'] });
+    return new Battle([mine], [theirs], {
+      kind: 'wild', playerName: 'AAA', canRun: true, seed,
+    });
+  }
+
+  /** Foe "does nothing": switching to the slot it already occupies is a no-op. */
+  const IDLE: PlayerAction = { kind: 'switch', index: 0 };
+
+  it('a player attack never touches the player', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const b = stage(seed);
+      const before = b.playerC.agent.hp;
+      const foeBefore = b.foeC.agent.hp;
+      b.takeTurn({ kind: 'move', index: 0 }, IDLE);
+      expect(b.playerC.agent.hp, `seed ${seed}: attacker lost HP`).toBe(before);
+      expect(b.foeC.agent.hp, `seed ${seed}: foe took no damage`).toBeLessThan(foeBefore);
+    }
+  });
+
+  it('a foe attack never touches the foe', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const b = stage(seed);
+      const before = b.foeC.agent.hp;
+      const playerBefore = b.playerC.agent.hp;
+      // The player "switches" into the slot it already occupies, so only the foe moves.
+      b.takeTurn(IDLE, { kind: 'move', index: 0 });
+      expect(b.foeC.agent.hp, `seed ${seed}: attacker lost HP`).toBe(before);
+      expect(b.playerC.agent.hp, `seed ${seed}: player took no damage`).toBeLessThan(playerBefore);
+    }
+  });
+
+  it('damage events name the side that actually lost the HP', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const b = stage(seed);
+      const ev = b.takeTurn({ kind: 'move', index: 0 }, IDLE);
+      const hits = ev.filter((e) => e.t === 'damage');
+      expect(hits.length, `seed ${seed}: no damage event`).toBeGreaterThan(0);
+      for (const e of hits) {
+        if (e.t !== 'damage') continue;
+        expect(e.side, `seed ${seed}: player damaged by its own attack`).toBe('foe');
+        expect(e.to).toBeLessThan(e.from);
+      }
+    }
+  });
+
+  it('HP only ever moves through an event, on the side the event names', () => {
+    // Replaying the log against a mirror of the HP must reproduce the engine
+    // exactly - this is what the scene does to drive the bars, so any silent
+    // write or misattributed side shows up here as a desync.
+    for (let seed = 1; seed <= 30; seed++) {
+      const b = stage(seed);
+      const shown: Record<'player' | 'foe', number> = {
+        player: b.playerC.agent.hp,
+        foe: b.foeC.agent.hp,
+      };
+      for (let turn = 0; turn < 12 && !b.outcome; turn++) {
+        for (const e of b.takeTurn({ kind: 'move', index: 0 })) {
+          if (e.t === 'damage' || e.t === 'heal') {
+            expect(shown[e.side], `seed ${seed} turn ${turn}: bar desynced`).toBe(e.from);
+            shown[e.side] = e.to;
+          } else if (e.t === 'sendOut') {
+            shown[e.side] = b.side(e.side).agent.hp;
+          }
+        }
+        expect(shown.player, `seed ${seed} turn ${turn}: player HP moved silently`).toBe(b.playerC.agent.hp);
+        expect(shown.foe, `seed ${seed} turn ${turn}: foe HP moved silently`).toBe(b.foeC.agent.hp);
+      }
+    }
+  });
+
+  it('only recoil and drain may move the attacker\'s own HP', () => {
+    // These are the sole legitimate reasons an attacker's bar moves on its own
+    // turn, so they must stay explicit rather than excuse stray writes.
+    const specials = Object.values(DEX().moves)
+      .filter((m) => m.effect === 'recoil_third' || m.effect === 'drain_half');
+    expect(specials.length).toBeGreaterThan(0);
+
+    for (const m of specials) {
+      // Pick a defender the move can actually reach; an immune type would make
+      // the whole thing a no-op and prove nothing.
+      const victim = Object.values(DEX().species)
+        .find((sp) => typeEffect(m.type, sp.types) > 0);
+      expect(victim, `nothing is hittable by ${m.key}`).toBeTruthy();
+      let landed = 0;
+      for (let seed = 1; seed <= 12; seed++) {
+        const mine = createAgent('stackbit', { level: 40, moves: [m.key] });
+        const theirs = createAgent(victim!.key, { level: 40, moves: ['tackle'] });
+        const b = new Battle([mine], [theirs], {
+          kind: 'wild', playerName: 'AAA', canRun: true, seed,
+        });
+        // Drain heals the user, so start it hurt or the heal is clamped away.
+        if (m.effect === 'drain_half') mine.hp = Math.max(1, Math.floor(mine.hp / 2));
+        const ev = b.takeTurn({ kind: 'move', index: 0 }, IDLE);
+        if (!ev.some((e) => e.t === 'damage' && e.side === 'foe')) continue;
+        landed++;
+        const onSelf = ev.filter((e) => (e.t === 'damage' || e.t === 'heal') && e.side === 'player');
+        for (const e of onSelf) {
+          const kind = e.t === 'damage' ? 'recoil_third' : 'drain_half';
+          expect(kind, `${m.key} moved the attacker's HP the wrong way`).toBe(m.effect);
+        }
+        expect(onSelf.length, `${m.key} did not apply its own effect`).toBe(1);
+      }
+      expect(landed, `${m.key} never connected`).toBeGreaterThan(0);
+    }
   });
 });
 

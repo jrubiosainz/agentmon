@@ -90,10 +90,19 @@ export class BattleScene extends Scene {
 
   private pSprite = newSpriteState();
   private fSprite = newSpriteState();
-  /** Displayed HP values, tweened toward the real ones. */
+  /**
+   * Displayed HP, tweened toward `*HpTarget`. The engine resolves a whole turn
+   * up front, so the model already holds the end-of-turn HP for *both* sides
+   * before a single frame is drawn. Chasing the model would drain the player's
+   * bar while their own attack is still playing; the bars must only ever follow
+   * the event currently being narrated.
+   */
   private pHpShown = 0;
   private fHpShown = 0;
+  private pHpTarget = 0;
+  private fHpTarget = 0;
   private expShown = 0;
+  private expTarget = 0;
   private ballAnim: { t: number; shakes: number; caught: boolean; total: number } | null = null;
   private trainerSlide = 0;
   private result: BattleResult | null = null;
@@ -111,9 +120,7 @@ export class BattleScene extends Scene {
     if (!save.party.length) throw new Error('BattleScene: the player has no agents');
     this.payload = p;
     this.battle = new Battle(save.party, p.foes, p.config);
-    this.pHpShown = this.battle.playerC.agent.hp;
-    this.fHpShown = this.battle.foeC.agent.hp;
-    this.expShown = this.expRatio();
+    this.syncBars(true);
     audio.playMusic(p.music ?? 'battleWild', true);
     this.game.transitions.cover();
     void this.game.transitions.in('fade', 26);
@@ -381,18 +388,15 @@ export class BattleScene extends Scene {
           this.play(ev.side, 'hit');
           s.flash = 20;
           audio.sfx(ev.effectiveness > 1 ? 'hitSuper' : ev.effectiveness < 1 ? 'hitWeak' : 'hitNormal');
-          if (ev.side === 'player') this.pHpShown = ev.from; else this.fHpShown = ev.from;
-          yield () => (ev.side === 'player'
-            ? Math.abs(this.pHpShown - this.battle.playerC.agent.hp) < 0.6
-            : Math.abs(this.fHpShown - this.battle.foeC.agent.hp) < 0.6);
+          this.setHpTarget(ev.side, ev.to);
+          yield () => this.hpArrived(ev.side);
           this.play(ev.side, 'idle', true);
           break;
         }
         case 'heal': {
           audio.sfx('heal');
-          yield () => (ev.side === 'player'
-            ? Math.abs(this.pHpShown - this.battle.playerC.agent.hp) < 0.6
-            : Math.abs(this.fHpShown - this.battle.foeC.agent.hp) < 0.6);
+          this.setHpTarget(ev.side, ev.to);
+          yield () => this.hpArrived(ev.side);
           break;
         }
         case 'faint': {
@@ -425,12 +429,16 @@ export class BattleScene extends Scene {
           s.offX = 0;
           s.offY = 0;
           this.play(ev.side, 'appear');
-          if (ev.side === 'player') this.pHpShown = this.battle.playerC.agent.hp;
-          else {
-            this.fHpShown = this.battle.foeC.agent.hp;
+          if (ev.side === 'player') {
+            this.pHpTarget = this.battle.playerC.agent.hp;
+            this.pHpShown = this.pHpTarget;
+            this.expTarget = this.expRatio();
+            this.expShown = this.expTarget;
+          } else {
+            this.fHpTarget = this.battle.foeC.agent.hp;
+            this.fHpShown = this.fHpTarget;
             seeSpecies(this.game.save, this.battle.foeC.agent.speciesKey);
           }
-          this.expShown = this.expRatio();
           yield 24;
           this.play(ev.side, 'idle', true);
           break;
@@ -485,7 +493,10 @@ export class BattleScene extends Scene {
           if (!target) break;
           if (ev.index === this.battle.player.activeIndex) {
             audio.sfx('charge');
-            yield () => Math.abs(this.expShown - this.expRatio()) < 0.01;
+            // A level-up tops the bar out first; the leftover is animated by
+            // the levelUp events that follow this one.
+            this.expTarget = ev.result.levels.length > 0 ? 1 : this.expRatio();
+            yield () => Math.abs(this.expShown - this.expTarget) < 0.01;
           }
           break;
         }
@@ -493,7 +504,12 @@ export class BattleScene extends Scene {
           audio.sfx('levelUp');
           const agent = this.game.save.party[ev.index];
           if (agent) this.levelPanel = { agent, timer: 110 };
-          this.expShown = 0;
+          if (ev.index === this.battle.player.activeIndex) {
+            this.expShown = 0;
+            // Only the last level of the batch keeps the remainder; any level
+            // before it fills the bar all over again.
+            this.expTarget = agent && ev.level >= agent.level ? this.expRatio() : 1;
+          }
           yield 40;
           break;
         }
@@ -561,26 +577,37 @@ export class BattleScene extends Scene {
 
   private syncBars(snap: boolean): void {
     if (!snap) return;
-    this.pHpShown = this.battle.playerC.agent.hp;
-    this.fHpShown = this.battle.foeC.agent.hp;
-    this.expShown = this.expRatio();
+    this.pHpTarget = this.battle.playerC.agent.hp;
+    this.fHpTarget = this.battle.foeC.agent.hp;
+    this.expTarget = this.expRatio();
+    this.pHpShown = this.pHpTarget;
+    this.fHpShown = this.fHpTarget;
+    this.expShown = this.expTarget;
+  }
+
+  /** Point a bar at a new value; `playEvents` is the only caller. */
+  private setHpTarget(side: Side, to: number): void {
+    if (side === 'player') this.pHpTarget = to; else this.fHpTarget = to;
+  }
+
+  private hpArrived(side: Side): boolean {
+    return side === 'player'
+      ? Math.abs(this.pHpShown - this.pHpTarget) < 0.6
+      : Math.abs(this.fHpShown - this.fHpTarget) < 0.6;
   }
 
   private tweenBars(): void {
-    const pTarget = this.battle.playerC.agent.hp;
-    const fTarget = this.battle.foeC.agent.hp;
     const pMax = maxHp(this.battle.playerC.agent);
     const fMax = maxHp(this.battle.foeC.agent);
     const pStep = Math.max(0.35, pMax / 90);
     const fStep = Math.max(0.35, fMax / 90);
-    if (this.pHpShown > pTarget) this.pHpShown = Math.max(pTarget, this.pHpShown - pStep);
-    else if (this.pHpShown < pTarget) this.pHpShown = Math.min(pTarget, this.pHpShown + pStep);
-    if (this.fHpShown > fTarget) this.fHpShown = Math.max(fTarget, this.fHpShown - fStep);
-    else if (this.fHpShown < fTarget) this.fHpShown = Math.min(fTarget, this.fHpShown + fStep);
+    if (this.pHpShown > this.pHpTarget) this.pHpShown = Math.max(this.pHpTarget, this.pHpShown - pStep);
+    else if (this.pHpShown < this.pHpTarget) this.pHpShown = Math.min(this.pHpTarget, this.pHpShown + pStep);
+    if (this.fHpShown > this.fHpTarget) this.fHpShown = Math.max(this.fHpTarget, this.fHpShown - fStep);
+    else if (this.fHpShown < this.fHpTarget) this.fHpShown = Math.min(this.fHpTarget, this.fHpShown + fStep);
 
-    const eTarget = this.expRatio();
-    if (this.expShown < eTarget) this.expShown = Math.min(eTarget, this.expShown + 0.012);
-    else if (this.expShown > eTarget) this.expShown = Math.max(eTarget, this.expShown - 0.03);
+    if (this.expShown < this.expTarget) this.expShown = Math.min(this.expTarget, this.expShown + 0.012);
+    else if (this.expShown > this.expTarget) this.expShown = Math.max(this.expTarget, this.expShown - 0.03);
   }
 
   private updateSprites(): void {
