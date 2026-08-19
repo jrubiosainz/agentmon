@@ -7,13 +7,14 @@ import { Scene } from '../../engine/scene.ts';
 import { SCREEN_H, SCREEN_W } from '../../engine/screen.ts';
 import { drawWindow, fillScreen, Menu, PALETTE, type MenuItem } from '../../engine/ui.ts';
 import type { SaveMeta } from '../../net/api.ts';
+import { getLang, LANGS, t, tUpper, type Lang } from '../i18n.ts';
 import { saves } from '../save.ts';
 import { formatPlaytime, newSave } from '../state.ts';
 import { openAuthOverlay } from '../ui/authoverlay.ts';
 import { IntroScene } from './intro.ts';
 import { OverworldScene } from './overworld.ts';
 
-type Mode = 'splash' | 'main' | 'slots' | 'confirmNew';
+type Mode = 'splash' | 'main' | 'slots' | 'language';
 
 export class TitleScene extends Scene {
   private mode: Mode = 'splash';
@@ -25,6 +26,7 @@ export class TitleScene extends Scene {
   private notice = '';
   private noticeTimer = 0;
   private slotAction: 'load' | 'new' = 'load';
+  private langMenu = new Menu([]);
 
   override async enter(): Promise<void> {
     audio.playMusic('title');
@@ -38,13 +40,31 @@ export class TitleScene extends Scene {
 
   private rebuildMenu(): void {
     const items: MenuItem[] = [];
-    if (this.slots.length) items.push({ label: 'CONTINUE', value: 'continue' });
-    items.push({ label: 'NEW GAME', value: 'new' });
+    if (this.slots.length) items.push({ label: tUpper('CONTINUE'), value: 'continue' });
+    items.push({ label: tUpper('NEW GAME'), value: 'new' });
     items.push({
-      label: saves.user ? `ACCOUNT: ${saves.user.displayName.toUpperCase()}` : 'LINK ACCOUNT',
+      label: saves.user
+        ? `${tUpper('ACCOUNT')}: ${saves.user.displayName.toUpperCase()}`
+        : tUpper('LINK ACCOUNT'),
       value: 'account',
     });
+    // Native name, never translated - a player who cannot read the current
+    // language still has to recognise their own on this row.
+    items.push({ label: LANGS.find((l) => l.code === getLang())!.native, value: 'language' });
     this.menu.setItems(items);
+  }
+
+  private buildLangMenu(): void {
+    this.langMenu.setItems(LANGS.map((l) => ({ label: l.native, value: l.code })));
+    this.langMenu.index = Math.max(0, LANGS.findIndex((l) => l.code === getLang()));
+  }
+
+  private pickLanguage(code: Lang): void {
+    this.game.setLanguage(code);
+    // Every cached label was built in the old language.
+    this.rebuildMenu();
+    this.buildLangMenu();
+    if (this.slotMenu.items.length) this.buildSlotMenu();
   }
 
   private buildSlotMenu(): void {
@@ -52,13 +72,13 @@ export class TitleScene extends Scene {
     for (const slot of [1, 2, 3]) {
       const meta = this.slots.find((s) => s.slot === slot);
       items.push({
-        label: `FILE ${slot}`,
+        label: `${tUpper('FILE')} ${slot}`,
         value: String(slot),
-        detail: meta ? `${meta.summary.playerName}` : 'NEW',
+        detail: meta ? `${meta.summary.playerName}` : tUpper('NEW'),
         disabled: this.slotAction === 'load' && !meta,
       });
     }
-    items.push({ label: 'BACK', value: 'back' });
+    items.push({ label: tUpper('BACK'), value: 'back' });
     this.slotMenu.setItems(items);
     this.slotMenu.index = 0;
   }
@@ -93,7 +113,22 @@ export class TitleScene extends Scene {
         const value = this.menu.current?.value;
         if (value === 'continue') { this.slotAction = 'load'; this.buildSlotMenu(); this.mode = 'slots'; }
         else if (value === 'new') { this.slotAction = 'new'; this.buildSlotMenu(); this.mode = 'slots'; }
+        else if (value === 'language') { this.buildLangMenu(); this.mode = 'language'; }
         else if (value === 'account') void this.doAccount();
+      }
+      return;
+    }
+
+    if (this.mode === 'language') {
+      if (inp.repeat('up') && this.langMenu.move(0, -1)) audio.sfx('cursor');
+      if (inp.repeat('down') && this.langMenu.move(0, 1)) audio.sfx('cursor');
+      if (inp.pressed('b')) { audio.sfx('cancel'); this.mode = 'main'; return; }
+      if (inp.pressed('a')) {
+        audio.sfx('select');
+        const code = this.langMenu.current?.value as Lang | undefined;
+        if (code) this.pickLanguage(code);
+        this.toast(t('Language set.'));
+        this.mode = 'main';
       }
       return;
     }
@@ -120,11 +155,11 @@ export class TitleScene extends Scene {
     this.game.input.clear();
     if (saves.user) {
       await saves.logout();
-      this.toast('Signed out. Saves stay on this device.');
+      this.toast(t('Signed out. Saves stay on this device.'));
     } else {
       const ok = await openAuthOverlay(saves.online ? 'login' : 'register');
       const who = saves.user as { displayName?: string } | null;
-      if (ok) this.toast(`Linked as ${who?.displayName ?? ''}.`);
+      if (ok) this.toast(t('Linked as {name}.', { name: who?.displayName ?? '' }));
     }
     await this.refreshSlots();
     this.rebuildMenu();
@@ -136,7 +171,7 @@ export class TitleScene extends Scene {
     this.busy = true;
     const data = await saves.load(slot);
     if (!data) {
-      this.toast('That file is empty.');
+      this.toast(t('That file is empty.'));
       this.busy = false;
       return;
     }
@@ -175,9 +210,9 @@ export class TitleScene extends Scene {
 
     if (this.mode === 'splash') {
       if (Math.floor(this.phase / 30) % 2 === 0) {
-        font.drawCentered(g, 'PRESS  START', SCREEN_W / 2, 116, 'white');
+        font.drawCentered(g, tUpper('PRESS  START'), SCREEN_W / 2, 116, 'white');
       }
-      const net = saves.online ? 'NETWORK ONLINE' : 'OFFLINE MODE';
+      const net = saves.online ? tUpper('NETWORK ONLINE') : tUpper('OFFLINE MODE');
       const copy = '\u00a9 AG\u00c9NTMON PROJECT';
       const fw = Math.max(font.measure(net), font.measure(copy));
       g.fillStyle = 'rgba(16,18,32,0.72)';
@@ -189,11 +224,19 @@ export class TitleScene extends Scene {
 
     if (this.mode === 'main') {
       const h = 18 + this.menu.items.length * 14;
-      drawWindow(g, 62, 92, 116, h);
-      this.menu.draw(g, 78, 101, 14);
+      // Anchored to the bottom of the art, not the top: the row count changes
+      // with the save state, and a fixed top pushed the last row off-screen.
+      const y = 144 - h;
+      drawWindow(g, 62, y, 116, h);
+      this.menu.draw(g, 78, y + 9, 14);
+    } else if (this.mode === 'language') {
+      const h = 18 + LANGS.length * 14;
+      const y = 144 - h;
+      drawWindow(g, 62, y, 116, h);
+      this.langMenu.draw(g, 78, y + 9, 14);
     } else {
       drawWindow(g, 34, 76, 172, 74);
-      font.draw(g, this.slotAction === 'load' ? 'CONTINUE' : 'NEW GAME', 46, 84, 'gold', false);
+      font.draw(g, this.slotAction === 'load' ? tUpper('CONTINUE') : tUpper('NEW GAME'), 46, 84, 'gold', false);
       for (let i = 0; i < 3; i++) {
         const slot = i + 1;
         const meta = this.slots.find((s) => s.slot === slot);
@@ -201,25 +244,25 @@ export class TitleScene extends Scene {
         const selected = this.slotMenu.index === i;
         if (selected) font.draw(g, '\u25b6', 40, y, 'normal', false);
         const variant = !meta && this.slotAction === 'load' ? 'dim' : 'normal';
-        font.draw(g, `FILE ${slot}`, 50, y, variant, false);
+        font.draw(g, `${tUpper('FILE')} ${slot}`, 50, y, variant, false);
         if (meta) {
           font.draw(g, meta.summary.playerName.slice(0, 8), 96, y, variant, false);
           font.draw(g, `${meta.summary.badges}B`, 146, y, variant, false);
           font.drawRight(g, formatPlaytime(meta.playTimeSeconds * 60), 198, y, variant, false);
         } else {
-          font.draw(g, '- EMPTY -', 96, y, 'dim', false);
+          font.draw(g, tUpper('- EMPTY -'), 96, y, 'dim', false);
         }
       }
       const backY = 96 + 3 * 14;
       if (this.slotMenu.index === 3) font.draw(g, '\u25b6', 40, backY, 'normal', false);
-      font.draw(g, 'BACK', 50, backY, 'normal', false);
+      font.draw(g, tUpper('BACK'), 50, backY, 'normal', false);
     }
 
     // The key art runs edge to edge, so the status line needs its own dark
     // strip or it dissolves into the sunset.
     const status = this.noticeTimer > 0
       ? this.notice
-      : saves.user ? `CLOUD: ${saves.user.email}` : 'SAVES STORED ON THIS DEVICE';
+      : saves.user ? `${tUpper('CLOUD')}: ${saves.user.email}` : tUpper('SAVES STORED ON THIS DEVICE');
     const sw = font.measure(status);
     g.fillStyle = 'rgba(16,18,32,0.72)';
     g.fillRect((SCREEN_W - sw) / 2 - 4, 147, sw + 8, 12);
@@ -275,7 +318,7 @@ export class TitleScene extends Scene {
     this.blitScaled(g, text, x, yy, scale, '#ffffff', 0.35);
     g.restore();
 
-    font.drawCentered(g, 'A  ROBOT  MONSTER  ADVENTURE', SCREEN_W / 2, yy + 7 * scale + 8, 'white');
+    font.drawCentered(g, tUpper('A  ROBOT  MONSTER  ADVENTURE'), SCREEN_W / 2, yy + 7 * scale + 8, 'white');
   }
 
   private blitScaled(

@@ -11,7 +11,8 @@ import { font } from '../../engine/font.ts';
 import { Scene } from '../../engine/scene.ts';
 import { SCREEN_H, SCREEN_W } from '../../engine/screen.ts';
 import { drawPanel, drawWindow, PALETTE, TEXTBOX_H, TEXTBOX_Y } from '../../engine/ui.ts';
-import { species, typeDef, type SpeciesDef } from '../data/dex.ts';
+import { dexEntryOf, genusOf, species, typeDef, typeName, type SpeciesDef } from '../data/dex.ts';
+import { t, tUpper, upper } from '../i18n.ts';
 
 export interface StarterPayload {
   keys: string[];
@@ -329,12 +330,12 @@ export class StarterScene extends Scene {
       // legible answer rather than a strobe.
       const pulse = Math.floor(this.tick / 10) % 2 === 0;
       font.drawCentered(
-        g, 'CHOOSE A CORE TO CONTINUE', SCREEN_W / 2, 4,
+        g, tUpper('CHOOSE A CORE TO CONTINUE'), SCREEN_W / 2, 4,
         pulse ? 'red' : 'gold', false,
       );
       return;
     }
-    const title = this.mode === 'reveal' ? 'CORE RELEASED' : 'PROTOTYPE CORE BAY';
+    const title = this.mode === 'reveal' ? tUpper('CORE RELEASED') : tUpper('PROTOTYPE CORE BAY');
     font.drawCentered(g, title, SCREEN_W / 2, 4, 'gold', false);
 
     // Slot pips, so the player can see how many cores are on offer.
@@ -352,29 +353,29 @@ export class StarterScene extends Scene {
     drawWindow(g, 2, TEXTBOX_Y, SCREEN_W - 4, TEXTBOX_H);
 
     const y = TEXTBOX_Y + 3;
-    font.draw(g, `No.${String(sp.id).padStart(3, '0')}`, 8, y, 'dim', false);
+    font.draw(g, t('No.{id}', { id: String(sp.id).padStart(3, '0') }), 8, y, 'dim', false);
     font.draw(g, sp.name, 44, y, 'normal', false);
-    font.draw(g, sp.genus.toUpperCase(), 104, y, 'dim', false);
+    font.draw(g, upper(genusOf(sp)), 104, y, 'dim', false);
 
     let tx = SCREEN_W - 10;
-    for (const t of [...sp.types].reverse()) {
-      const td = typeDef(t);
+    for (const type of [...sp.types].reverse()) {
+      const td = typeDef(type);
       tx -= 40;
       g.fillStyle = td.color;
       g.fillRect(tx, y - 2, 40, 11);
       g.fillStyle = td.dark;
       g.fillRect(tx, y + 7, 40, 2);
-      font.drawCentered(g, td.name.toUpperCase().slice(0, 6), tx + 20, y, 'white', false);
+      font.drawCentered(g, upper(typeName(type)).slice(0, 6), tx + 20, y, 'white', false);
       tx -= 3;
     }
 
     if (this.mode === 'confirm') {
-      font.draw(g, `Take ${sp.name}?`, 8, TEXTBOX_Y + 20, 'normal', false);
+      font.draw(g, t('Take {name}?', { name: sp.name }), 8, TEXTBOX_Y + 20, 'normal', false);
       return;
     }
     const body = this.mode === 'reveal'
-      ? `${sp.name} was released from its core. It is yours now!`
-      : sp.dexEntry;
+      ? t('{name} was released from its core. It is yours now!', { name: sp.name })
+      : dexEntryOf(sp);
     for (const [i, line] of font.wrap(body, 220).slice(0, 3).entries()) {
       font.draw(g, line, 8, TEXTBOX_Y + 14 + i * 10, 'normal', false);
     }
@@ -389,8 +390,8 @@ export class StarterScene extends Scene {
     const x = rightHalf ? 6 : SCREEN_W - w - 6;
     const y = TEXTBOX_Y - h - 2;
     drawWindow(g, x, y, w, h);
-    font.draw(g, 'YES', x + 18, y + 6, 'normal', false);
-    font.draw(g, 'NO', x + 18, y + 18, 'normal', false);
+    font.draw(g, tUpper('YES'), x + 18, y + 6, 'normal', false);
+    font.draw(g, tUpper('NO'), x + 18, y + 18, 'normal', false);
     font.draw(g, '\u25b6', x + 8, y + 6 + this.yesNo * 12, 'normal', false);
   }
 

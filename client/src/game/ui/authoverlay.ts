@@ -5,6 +5,7 @@
  */
 
 import { saves } from '../save.ts';
+import { t } from '../i18n.ts';
 
 let overlay: HTMLDivElement | null = null;
 
@@ -30,17 +31,17 @@ export function openAuthOverlay(mode: 'login' | 'register' = 'login'): Promise<b
     overlay = root;
 
     const card = el('div', 'am-card');
-    const title = el('h2', 'am-title', 'AGÉNTMON NETWORK');
-    const sub = el('p', 'am-sub', 'Sign in to sync your journey to the cloud.');
+    const title = el('h2', 'am-title', t('AGÉNTMON NETWORK'));
+    const sub = el('p', 'am-sub', t('Sign in to sync your journey to the cloud.'));
 
     const tabs = el('div', 'am-tabs');
-    const tabLogin = el('button', 'am-tab', 'LOG IN');
-    const tabRegister = el('button', 'am-tab', 'REGISTER');
+    const tabLogin = el('button', 'am-tab', t('LOG IN'));
+    const tabRegister = el('button', 'am-tab', t('REGISTER'));
     tabs.append(tabLogin, tabRegister);
 
     const form = el('form', 'am-form');
     const nameRow = el('label', 'am-row');
-    nameRow.append(el('span', 'am-label', 'TRAINER NAME'));
+    nameRow.append(el('span', 'am-label', t('TRAINER NAME')));
     const nameInput = el('input', 'am-input');
     nameInput.type = 'text';
     nameInput.maxLength = 20;
@@ -48,7 +49,7 @@ export function openAuthOverlay(mode: 'login' | 'register' = 'login'): Promise<b
     nameRow.append(nameInput);
 
     const emailRow = el('label', 'am-row');
-    emailRow.append(el('span', 'am-label', 'EMAIL'));
+    emailRow.append(el('span', 'am-label', t('EMAIL')));
     const emailInput = el('input', 'am-input');
     emailInput.type = 'email';
     emailInput.autocomplete = 'email';
@@ -56,7 +57,7 @@ export function openAuthOverlay(mode: 'login' | 'register' = 'login'): Promise<b
     emailRow.append(emailInput);
 
     const passRow = el('label', 'am-row');
-    passRow.append(el('span', 'am-label', 'PASSWORD'));
+    passRow.append(el('span', 'am-label', t('PASSWORD')));
     const passInput = el('input', 'am-input');
     passInput.type = 'password';
     passInput.autocomplete = 'current-password';
@@ -66,9 +67,9 @@ export function openAuthOverlay(mode: 'login' | 'register' = 'login'): Promise<b
 
     const msg = el('p', 'am-msg');
     const actions = el('div', 'am-actions');
-    const submit = el('button', 'am-btn am-primary', 'LOG IN');
+    const submit = el('button', 'am-btn am-primary', t('LOG IN'));
     submit.type = 'submit';
-    const skip = el('button', 'am-btn', 'PLAY OFFLINE');
+    const skip = el('button', 'am-btn', t('PLAY OFFLINE'));
     skip.type = 'button';
     actions.append(submit, skip);
 
@@ -84,10 +85,10 @@ export function openAuthOverlay(mode: 'login' | 'register' = 'login'): Promise<b
       tabRegister.classList.toggle('am-active', current === 'register');
       nameRow.style.display = current === 'register' ? '' : 'none';
       passInput.autocomplete = current === 'register' ? 'new-password' : 'current-password';
-      submit.textContent = current === 'register' ? 'CREATE ACCOUNT' : 'LOG IN';
+      submit.textContent = current === 'register' ? t('CREATE ACCOUNT') : t('LOG IN');
       sub.textContent = current === 'register'
-        ? 'Create an account to sync saves across devices.'
-        : 'Sign in to sync your journey to the cloud.';
+        ? t('Create an account to sync saves across devices.')
+        : t('Sign in to sync your journey to the cloud.');
       msg.textContent = '';
     };
     applyMode();
@@ -119,16 +120,16 @@ export function openAuthOverlay(mode: 'login' | 'register' = 'login'): Promise<b
       const password = passInput.value;
       const name = nameInput.value.trim() || email.split('@')[0] || 'AGENT';
       if (!email || !password) {
-        msg.textContent = 'Email and password are required.';
+        msg.textContent = t('Email and password are required.');
         return;
       }
       if (current === 'register' && password.length < 8) {
-        msg.textContent = 'Password must be at least 8 characters.';
+        msg.textContent = t('Password must be at least 8 characters.');
         return;
       }
       submit.disabled = true;
       skip.disabled = true;
-      msg.textContent = 'Connecting...';
+      msg.textContent = t('Connecting...');
       const task = current === 'register'
         ? saves.register(email, password, name)
         : saves.login(email, password);
@@ -136,7 +137,7 @@ export function openAuthOverlay(mode: 'login' | 'register' = 'login'): Promise<b
         submit.disabled = false;
         skip.disabled = false;
         if (ok) close(true);
-        else msg.textContent = saves.lastError ?? 'Sign in failed.';
+        else msg.textContent = saves.lastError ?? t('Sign in failed.');
       });
     });
 

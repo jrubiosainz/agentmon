@@ -4,6 +4,7 @@ import { api, ApiError, type ApiUser, type SaveMeta, type SaveSummary } from '..
 import { localSaves } from '../net/offline.ts';
 import { maxHp } from './data/agent.ts';
 import { getMap, mapExists } from './data/maps.ts';
+import { t } from './i18n.ts';
 import { migrate, type SaveData } from './state.ts';
 
 export const SLOTS = [1, 2, 3];
@@ -50,7 +51,7 @@ export class SaveManager {
       this.lastError = null;
       return true;
     } catch (err) {
-      this.lastError = err instanceof ApiError ? err.message : 'Network unavailable.';
+      this.lastError = err instanceof ApiError ? err.message : t('Network unavailable.');
       return false;
     }
   }
@@ -63,7 +64,7 @@ export class SaveManager {
       this.lastError = null;
       return true;
     } catch (err) {
-      this.lastError = err instanceof ApiError ? err.message : 'Network unavailable.';
+      this.lastError = err instanceof ApiError ? err.message : t('Network unavailable.');
       return false;
     }
   }
@@ -113,7 +114,7 @@ export class SaveManager {
       this.lastError = null;
       return true;
     } catch (err) {
-      this.lastError = err instanceof ApiError ? err.message : 'Cloud save failed.';
+      this.lastError = err instanceof ApiError ? err.message : t('Cloud save failed.');
       return false;
     }
   }

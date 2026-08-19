@@ -6,6 +6,7 @@ import { font } from '../../engine/font.ts';
 import { Scene } from '../../engine/scene.ts';
 import { SCREEN_H, SCREEN_W } from '../../engine/screen.ts';
 import { drawWindow, fillScreen, PALETTE, Typewriter } from '../../engine/ui.ts';
+import { t, tUpper } from '../i18n.ts';
 import { OverworldScene } from './overworld.ts';
 
 const SPEECH = [
@@ -23,6 +24,11 @@ const OUTRO = [
   'A world of dreams and datacenters awaits!',
   'Let\'s go!',
 ];
+
+/** Ada's speech is indexed at runtime, so the source scanner cannot see it. */
+export function introStrings(): string[] {
+  return [...SPEECH, ...OUTRO];
+}
 
 const ROWS = [
   'ABCDEFGHIJ',
@@ -48,7 +54,7 @@ export class IntroScene extends Scene {
   override async enter(): Promise<void> {
     audio.playMusic('intro');
     this.tw.speed = this.game.textDelay;
-    this.tw.setText(SPEECH[0]!);
+    this.tw.setText(t(SPEECH[0]!));
     await this.game.transitions.in('fade', 40);
   }
 
@@ -95,7 +101,7 @@ export class IntroScene extends Scene {
         this.phase = 'gender';
         return;
       }
-      this.tw.setText(SPEECH[this.line]!);
+      this.tw.setText(t(SPEECH[this.line]!));
       return;
     }
     // outro
@@ -104,7 +110,7 @@ export class IntroScene extends Scene {
       void this.finish();
       return;
     }
-    this.tw.setText(OUTRO[this.line]!);
+    this.tw.setText(t(OUTRO[this.line]!));
   }
 
   private async finish(): Promise<void> {
@@ -171,7 +177,9 @@ export class IntroScene extends Scene {
     this.phase = 'outro';
     this.line = 0;
     this.tw.setText(
-      `${this.game.save.playerName}! Your very own AGÉNTMON story is about to unfold.`,
+      t('{player}! Your very own AGÉNTMON story is about to unfold.', {
+        player: this.game.save.playerName,
+      }),
     );
   }
 
@@ -209,8 +217,8 @@ export class IntroScene extends Scene {
   }
 
   private renderGender(g: CanvasRenderingContext2D): void {
-    font.drawCentered(g, 'Are you a boy? Or a girl?', SCREEN_W / 2, 8, 'white');
-    const labels = ['BOY', 'GIRL'];
+    font.drawCentered(g, t('Are you a boy? Or a girl?'), SCREEN_W / 2, 8, 'white');
+    const labels = [tUpper('BOY'), tUpper('GIRL')];
     for (let i = 0; i < 2; i++) {
       const x = 60 + i * 120;
       const selected = i === this.genderIndex;
@@ -235,12 +243,12 @@ export class IntroScene extends Scene {
       font.drawCentered(g, labels[i]!, x, 122, selected ? 'gold' : 'dim');
     }
     drawWindow(g, 2, 132, SCREEN_W - 4, 26);
-    font.draw(g, 'Choose with \u25c0 \u25b6, confirm with A.', 12, 141, 'normal', false);
+    font.draw(g, t('Choose with \u25c0 \u25b6, confirm with A.'), 12, 141, 'normal', false);
   }
 
   private renderNameEntry(g: CanvasRenderingContext2D): void {
-    const who = this.namingRival ? 'YOUR RIVAL' : 'YOURSELF';
-    font.drawCentered(g, `Give a name to ${who}.`, SCREEN_W / 2, 8, 'white');
+    const prompt = this.namingRival ? t('Give a name to YOUR RIVAL.') : t('Give a name to YOURSELF.');
+    font.drawCentered(g, prompt, SCREEN_W / 2, 8, 'white');
 
     // Sprite preview.
     const sheet = this.namingRival
@@ -276,7 +284,7 @@ export class IntroScene extends Scene {
     }
 
     fillScreen(g, '#000000', 0);
-    font.drawCentered(g, 'A: ADD    B: DELETE    START: OK', SCREEN_W / 2, 138, 'dim');
-    font.drawCentered(g, 'Leave blank for the default name.', SCREEN_W / 2, 150, 'dim');
+    font.drawCentered(g, tUpper('A: ADD    B: DELETE    START: OK'), SCREEN_W / 2, 138, 'dim');
+    font.drawCentered(g, t('Leave blank for the default name.'), SCREEN_W / 2, 150, 'dim');
   }
 }

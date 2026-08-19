@@ -8,6 +8,11 @@ import {
 
 export type StatusKey = 'none' | 'poison' | 'burn' | 'freeze' | 'paralysis' | 'sleep' | 'confusion';
 
+/**
+ * Status labels stay English here: this module is evaluated at import time, so a
+ * `t()` call in these literals would freeze the boot language forever. Read
+ * sites wrap them in `tUpper()` instead.
+ */
 export const STATUS_SHORT: Record<StatusKey, string> = {
   none: '', poison: 'CRP', burn: 'OVH', freeze: 'FRZ',
   paralysis: 'SHT', sleep: 'SLP', confusion: 'CNF',
@@ -17,6 +22,11 @@ export const STATUS_NAME: Record<StatusKey, string> = {
   none: '', poison: 'CORRUPTED', burn: 'OVERHEATED', freeze: 'FROZEN',
   paralysis: 'SHORTED', sleep: 'SLEEPING', confusion: 'CONFUSED',
 };
+
+/** Localisable status labels, for the catalogue extractor. */
+export function statusStrings(): string[] {
+  return [...Object.values(STATUS_SHORT), ...Object.values(STATUS_NAME)].filter(Boolean);
+}
 
 export const STATUS_COLOR: Record<StatusKey, string> = {
   none: '#f8f8f8', poison: '#a040a0', burn: '#f08030', freeze: '#68d0f8',

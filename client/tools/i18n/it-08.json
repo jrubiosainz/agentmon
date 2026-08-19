@@ -1,0 +1,14 @@
+{
+  "{name}'s {stat} {change}!": "{stat} di {name} {change}!",
+  "{name}'s {stat} won't go {direction}!": "{stat} di {name} non va oltre {direction}!",
+  "{name}'s attack missed!": "L'attacco di {name} ha mancato!",
+  "{name}'s data was added to the AGÉNTDEX.": "I dati di {name} sono stati aggiunti all'AGÉNTDEX.",
+  "{name}'s energy was drained!": "L'energia di {name} e' stata assorbita!",
+  "{name}'s HP was restored.": "I PS di {name} sono stati ripristinati.",
+  "Can't escape!": "Non puoi fuggire!",
+  "It doesn't affect {name}...": "Non ha effetto su {name}...",
+  "It's not very effective...": "Non e' molto efficace...",
+  "It's super effective!": "E' superefficace!",
+  "There's no running from an engineer battle!": "Non si fugge dalla lotta di un ingegnere!",
+  "You can't capture another engineer's AGÉNTMON!": "Non puoi catturare l'AGÉNTMON di un altro ingegnere!"
+}

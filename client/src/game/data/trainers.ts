@@ -1,5 +1,7 @@
 /** Trainer rosters, prize money and battle dialogue. */
 
+import { t } from '../i18n.ts';
+
 export interface TrainerMon {
   species: string;
   level: number;
@@ -336,3 +338,31 @@ export const BADGE_INFO: Record<string, { name: string; city: string; type: stri
   badge_cryo: { name: 'FROST BADGE', city: 'SILICA TOWN', type: 'cryo' },
   badge_thermal: { name: 'THERMAL BADGE', city: 'TERRAFLUX CITY', type: 'thermal' },
 };
+
+export function trainerLine(text: string): string {
+  return t(text);
+}
+
+export function trainerLines(lines: readonly string[]): string[] {
+  return lines.map((line) => t(line));
+}
+
+export function trainerBadgeName(t0: TrainerDef): string | undefined {
+  return t0.badge ? t(t0.badge.name) : undefined;
+}
+
+export function badgeInfoName(flag: string): string {
+  const info = BADGE_INFO[flag];
+  return info ? t(info.name) : '';
+}
+
+/** Every localisable trainer string, for the catalogue extractor. */
+export function trainerStrings(): string[] {
+  const out: string[] = [];
+  for (const tr of Object.values(TRAINERS)) {
+    out.push(...tr.intro, ...tr.defeat, ...tr.after);
+    if (tr.badge) out.push(tr.badge.name);
+  }
+  for (const b of Object.values(BADGE_INFO)) out.push(b.name);
+  return out;
+}

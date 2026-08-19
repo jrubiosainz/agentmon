@@ -1243,6 +1243,23 @@ export function getMap(id: string): MapDef {
   return m;
 }
 
+/**
+ * Every localisable line in the game's maps, for the catalogue extractor.
+ *
+ * Map data is built at import time, so translating it in place would freeze the
+ * language at boot. The data stays English and the overworld localises it as it
+ * displays it (`localizeLines`, and `t(def.name)` for the banner).
+ */
+export function mapStrings(): string[] {
+  const out: string[] = [];
+  for (const m of ALL_MAPS) {
+    out.push(m.name);
+    for (const s of m.signs ?? []) out.push(...s.text);
+    for (const n of m.npcs ?? []) out.push(...(n.text ?? []));
+  }
+  return out;
+}
+
 export function mapExists(id: string): boolean {
   return BY_ID.has(id);
 }

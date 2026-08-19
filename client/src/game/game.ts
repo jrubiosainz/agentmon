@@ -10,6 +10,7 @@ import { GridAtlas, SpriteSheet } from '../engine/sprite.ts';
 import { buildTileset, type TileSetResult } from '../engine/tilegen.ts';
 import { Transitions } from '../engine/transition.ts';
 import { setDex } from './data/dex.ts';
+import { getLang, setLang, type Lang } from './i18n.ts';
 import { saves } from './save.ts';
 import { DEFAULT_OPTIONS, newSave, type SaveData } from './state.ts';
 
@@ -122,7 +123,16 @@ export class Game {
     audio.setMuted(o.muted);
     audio.setMusicVolume(o.musicVolume);
     audio.setSfxVolume(o.sfxVolume);
+    // The device preference wins: the player chose it on the title screen of
+    // *this* machine, so a save carried over from another one must not undo it.
+    o.language = getLang();
     this.onMuteChanged?.(o.muted);
+  }
+
+  /** Switch language and keep the save in step with the device preference. */
+  setLanguage(next: Lang): void {
+    setLang(next);
+    if (this.save.options) this.save.options.language = next;
   }
 
   /** Notified whenever the mute state changes, so the on-screen toggle agrees. */

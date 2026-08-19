@@ -6,11 +6,19 @@
 
 import './style.css';
 import { audio, loadMutePreference } from './engine/audio.ts';
+import { font } from './engine/font.ts';
 import { Loop } from './engine/loop.ts';
 import { Game } from './game/game.ts';
 import * as agent from './game/data/agent.ts';
+import { battleStrings } from './game/battle/engine.ts';
+import { dexStrings } from './game/data/dex.ts';
+import { itemStrings } from './game/data/items.ts';
+import { mapStrings } from './game/data/maps.ts';
+import { trainerStrings } from './game/data/trainers.ts';
+import * as i18n from './game/i18n.ts';
 import { saves } from './game/save.ts';
 import { BootScene } from './game/scenes/boot.ts';
+import { introStrings } from './game/scenes/intro.ts';
 import { DEFAULT_OPTIONS } from './game/state.ts';
 import { installAuthStyles } from './game/ui/authoverlay.ts';
 
@@ -28,13 +36,15 @@ function installSoundToggle(game: Game): void {
   const paint = (muted: boolean) => {
     btn.classList.toggle('is-off', muted);
     btn.setAttribute('aria-pressed', muted ? 'false' : 'true');
-    btn.setAttribute('aria-label', muted ? 'Sound off' : 'Sound on');
-    if (label) label.textContent = muted ? 'SOUND OFF' : 'SOUND ON';
+    btn.setAttribute('aria-label', muted ? i18n.t('Sound off') : i18n.t('Sound on'));
+    if (label) label.textContent = muted ? i18n.tUpper('SOUND OFF') : i18n.tUpper('SOUND ON');
     if (icon) icon.textContent = muted ? '\u2715' : '\u266b';
   };
 
   game.onMuteChanged = paint;
   paint(audio.muted);
+  // The shell lives outside the canvas, so nothing repaints it on its own.
+  i18n.onLangChange(() => paint(audio.muted));
 
   btn.addEventListener('click', () => {
     // The tap is a user gesture, so it is also the most reliable moment to
@@ -42,6 +52,32 @@ function installSoundToggle(game: Game): void {
     audio.unlock();
     game.setMuted(!audio.muted);
   });
+}
+
+/** Keyboard legend under the console; redrawn whenever the language changes. */
+function installHint(): void {
+  const hint = document.getElementById('hint');
+  if (!hint) return;
+  const paint = () => {
+    const key = (k: string) => `<b>${k}</b>`;
+    hint.innerHTML =
+      `${i18n.t('Arrows / WASD move')} &nbsp;\u00b7&nbsp; ` +
+      `${key('Z')} ${i18n.t('or')} ${key('Enter')} = A &nbsp;\u00b7&nbsp; ` +
+      `${key('X')} ${i18n.t('or')} ${key('Esc')} = B &nbsp;\u00b7&nbsp; ` +
+      `${key('Shift')} = START &nbsp;\u00b7&nbsp; ${key('Tab')} = SELECT`;
+  };
+  paint();
+  i18n.onLangChange(paint);
+}
+
+/**
+ * Every player-visible string that lives in data modules rather than in a
+ * `t(...)` call site. The catalogue extractor reads this from the running game
+ * so it never has to parse TypeScript object literals.
+ */
+function dataStrings(): string[] {
+  return [...mapStrings(), ...itemStrings(), ...trainerStrings(), ...dexStrings(), ...agent.statusStrings(),
+    ...battleStrings(), ...introStrings()];
 }
 
 function fatal(err: unknown): void {
@@ -52,9 +88,9 @@ function fatal(err: unknown): void {
   const box = document.createElement('div');
   box.className = 'fatal';
   box.innerHTML =
-    '<h2>SYSTEM FAULT</h2><p>Agéntmon could not start.</p>' +
+    `<h2>${i18n.tUpper('SYSTEM FAULT')}</h2><p>${i18n.t('Ag\u00e9ntmon could not start.')}</p>` +
     `<pre>${String((err as Error)?.message ?? err)}</pre>` +
-    '<button id="fatal-reload">RESTART</button>';
+    `<button id="fatal-reload">${i18n.tUpper('RESTART')}</button>`;
   overlay.appendChild(box);
   document.getElementById('fatal-reload')?.addEventListener('click', () => location.reload());
 }
@@ -89,6 +125,7 @@ function boot(): void {
   }
 
   installSoundToggle(game);
+  installHint();
 
   // Touch controls only make sense on touch devices.
   const touch = document.getElementById('touch-controls');
@@ -119,13 +156,12 @@ function boot(): void {
   game.push(new BootScene());
   loop.start();
 
-  // Handy for debugging from the console; harmless in production.
-  (window as unknown as { agentmon?: Game & { saves?: unknown; agent?: unknown; audio?: unknown } }).agentmon =
-    Object.assign(game, { saves, agent, audio });
+  // Handy for debugging from the console; harmless in production. The i18n
+  // surface is what the verification harness reads to prove no key is missing.
+  (window as unknown as { agentmon?: unknown }).agentmon =
+    Object.assign(game, { saves, agent, audio, font, i18n, dataStrings });
 }
 
-try {
-  boot();
-} catch (err) {
-  fatal(err);
-}
+// The active language's catalogue is code-split, so wait for it before the
+// first frame — otherwise the title screen would flash English and repaint.
+i18n.whenReady().then(boot, boot).catch(fatal);

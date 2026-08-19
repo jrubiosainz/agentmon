@@ -1,6 +1,7 @@
 /** The complete, serialisable save file. Everything the cloud stores lives here. */
 
 import type { AgentInstance } from './data/agent.ts';
+import { formatNumber, getLang, isLang, type Lang } from './i18n.ts';
 
 export const SAVE_VERSION = 1;
 
@@ -56,6 +57,8 @@ export interface GameOptions {
   sfxVolume: number;
   muted: boolean;
   frame: number;
+  /** Mirrors the device-level choice so a save carries its language to another machine. */
+  language: Lang;
 }
 
 export const DEFAULT_OPTIONS: GameOptions = {
@@ -65,6 +68,7 @@ export const DEFAULT_OPTIONS: GameOptions = {
   sfxVolume: 0.42,
   muted: false,
   frame: 0,
+  language: 'en',
 };
 
 /** Storage banks. `newSave` allocates all of them empty; `addAgent` tops up
@@ -91,7 +95,7 @@ export function newSave(playerName: string, gender: 'm' | 'f', rivalName: string
     rivalStarter: null,
     rivalName,
     repelSteps: 0,
-    options: { ...DEFAULT_OPTIONS },
+    options: { ...DEFAULT_OPTIONS, language: getLang() },
     savedAt: Date.now(),
   };
 }
@@ -182,7 +186,7 @@ export function formatPlaytime(frames: number): string {
 }
 
 export function formatMoney(n: number): string {
-  return n.toLocaleString('en-US');
+  return formatNumber(n);
 }
 
 /** Repair the shape of a save loaded from disk/cloud so old files keep working. */
@@ -201,6 +205,9 @@ export function migrate(raw: unknown): SaveData {
     badges: s.badges ?? [],
     version: SAVE_VERSION,
   };
+  // Saves written before the language selector existed carry no language, and
+  // a save made on another device should not silently reset the one in use.
+  if (!isLang(merged.options.language)) merged.options.language = getLang();
   while (merged.boxes.length < BOX_COUNT) merged.boxes.push([]);
   return merged;
 }

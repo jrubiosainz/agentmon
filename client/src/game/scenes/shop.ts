@@ -8,6 +8,7 @@ import {
   drawPanel, drawWindow, Menu, TEXTBOX_H, TEXTBOX_Y, Typewriter, type MenuItem,
 } from '../../engine/ui.ts';
 import { item as itemDef } from '../data/items.ts';
+import { t, tUpper } from '../i18n.ts';
 import { bagAdd, bagRemove, formatMoney } from '../state.ts';
 
 export interface ShopPayload {
@@ -23,9 +24,9 @@ export class ShopScene extends Scene {
   private mode: Mode = 'greet';
   private returnMode: Mode = 'root';
   private root = new Menu([
-    { label: 'BUY', value: 'buy' },
-    { label: 'SELL', value: 'sell' },
-    { label: 'SEE YA!', value: 'exit' },
+    { label: tUpper('BUY'), value: 'buy' },
+    { label: tUpper('SELL'), value: 'sell' },
+    { label: tUpper('SEE YA!'), value: 'exit' },
   ]);
   private list = new Menu([], 1, 5);
   private tw = new Typewriter();
@@ -39,16 +40,16 @@ export class ShopScene extends Scene {
   override enter(payload?: unknown): void {
     this.stock = ((payload ?? {}) as ShopPayload).stock ?? ['nanocore', 'patch'];
     this.tw.speed = this.game.textDelay;
-    this.tw.setText('Welcome to the AGENT MART! How can I help you?');
+    this.tw.setText(t('Welcome to the AGENT MART! How can I help you?'));
   }
 
   private buildBuy(): void {
     const items = this.stock.map<MenuItem>((key) => ({
-      label: itemDef(key).name,
+      label: t(itemDef(key).name),
       value: key,
       detail: `\u00a5${formatMoney(itemDef(key).price)}`,
     }));
-    items.push({ label: 'CANCEL', value: 'cancel' });
+    items.push({ label: tUpper('CANCEL'), value: 'cancel' });
     this.list = new Menu(items, 1, 5);
   }
 
@@ -56,11 +57,11 @@ export class ShopScene extends Scene {
     const items = this.game.save.bag
       .filter((b) => itemDef(b.key).price > 0 && itemDef(b.key).category !== 'key')
       .map<MenuItem>((b) => ({
-        label: itemDef(b.key).name,
+        label: t(itemDef(b.key).name),
         value: b.key,
         detail: `x${b.count}`,
       }));
-    items.push({ label: 'CANCEL', value: 'cancel' });
+    items.push({ label: tUpper('CANCEL'), value: 'cancel' });
     this.list = new Menu(items, 1, 5);
   }
 
@@ -98,7 +99,7 @@ export class ShopScene extends Scene {
       if (v === 'buy') { this.buildBuy(); this.mode = 'buy'; }
       if (v === 'sell') {
         this.buildSell();
-        if (this.list.items.length <= 1) { this.say('You have nothing I could buy.', 'root'); return; }
+        if (this.list.items.length <= 1) { this.say(t('You have nothing I could buy.'), 'root'); return; }
         this.mode = 'sell';
       }
       return;
@@ -122,7 +123,7 @@ export class ShopScene extends Scene {
       } else {
         this.qtyPrice = def.price;
         this.qtyMax = Math.max(1, Math.min(99, Math.floor(this.game.save.money / Math.max(1, def.price))));
-        if (this.game.save.money < def.price) { this.say('You do not have enough credits.', 'buy'); return; }
+        if (this.game.save.money < def.price) { this.say(t('You do not have enough credits.'), 'buy'); return; }
       }
       this.qty = 1;
       this.mode = 'quantity';
@@ -144,13 +145,13 @@ export class ShopScene extends Scene {
         this.game.save.money = Math.min(999999, this.game.save.money + total);
         audio.sfx('item');
         this.buildSell();
-        this.say(`Turned over ${this.qty} ${def.name}. You got \u00a5${formatMoney(total)}!`, 'sell');
+        this.say(t('Turned over {qty} {item}. You got \u00a5{total}!', { qty: this.qty, item: t(def.name), total: formatMoney(total) }), 'sell');
       } else {
-        if (total > this.game.save.money) { this.say('You do not have enough credits.', 'buy'); return; }
+        if (total > this.game.save.money) { this.say(t('You do not have enough credits.'), 'buy'); return; }
         this.game.save.money -= total;
         bagAdd(this.game.save, this.qtyKey, this.qty);
         audio.sfx('item');
-        this.say(`Here you go! ${this.qty} ${def.name}. Thank you!`, 'buy');
+        this.say(t('Here you go! {qty} {item}. Thank you!', { qty: this.qty, item: t(def.name) }), 'buy');
       }
     }
   }
@@ -192,7 +193,7 @@ export class ShopScene extends Scene {
     drawPanel(g, 0, 100, SCREEN_W, 60, '#c8b088', '#8c7050');
 
     drawWindow(g, 4, 4, 108, 26);
-    font.draw(g, 'MONEY', 14, 8, 'normal', false);
+    font.draw(g, tUpper('MONEY'), 14, 8, 'normal', false);
     font.drawRight(g, `\u00a5${formatMoney(this.game.save.money)}`, 106, 18, 'normal', false);
 
     if (this.mode === 'greet' || this.mode === 'message') {
@@ -205,7 +206,7 @@ export class ShopScene extends Scene {
       drawWindow(g, SCREEN_W - 84, TEXTBOX_Y - h - 2, 80, h);
       this.root.draw(g, SCREEN_W - 68, TEXTBOX_Y - h + 4, 13);
       drawWindow(g, 2, TEXTBOX_Y, SCREEN_W - 4, TEXTBOX_H);
-      font.draw(g, 'How can I help you?', 12, TEXTBOX_Y + 14, 'normal', false);
+      font.draw(g, t('How can I help you?'), 12, TEXTBOX_Y + 14, 'normal', false);
       return;
     }
 
@@ -215,8 +216,8 @@ export class ShopScene extends Scene {
     drawWindow(g, 2, TEXTBOX_Y, SCREEN_W - 4, TEXTBOX_H);
     const cur = this.list.current;
     const desc = cur && cur.value !== 'cancel'
-      ? itemDef(cur.value).desc
-      : this.selling ? 'Nothing else to sell.' : 'Come again!';
+      ? t(itemDef(cur.value).desc)
+      : this.selling ? t('Nothing else to sell.') : t('Come again!');
     for (const [i, line] of font.wrap(desc, 216).slice(0, 3).entries()) {
       font.draw(g, line, 12, TEXTBOX_Y + 8 + i * 12, 'normal', false);
     }

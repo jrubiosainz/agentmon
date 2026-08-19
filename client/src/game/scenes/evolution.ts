@@ -6,7 +6,8 @@ import { Scene } from '../../engine/scene.ts';
 import { SCREEN_H, SCREEN_W } from '../../engine/screen.ts';
 import { TEXTBOX_H, TEXTBOX_Y, drawWindow } from '../../engine/ui.ts';
 import { displayName, learnMove, movesAtLevel, type AgentInstance } from '../data/agent.ts';
-import { move as moveDef, species } from '../data/dex.ts';
+import { moveName, species } from '../data/dex.ts';
+import { t } from '../i18n.ts';
 import { catchSpecies, seeSpecies } from '../state.ts';
 
 export interface EvolutionPayload {
@@ -37,7 +38,7 @@ export class EvolutionScene extends Scene {
     this.target = p.target;
     this.fromKey = p.agent.speciesKey;
     this.cancellable = p.cancellable ?? true;
-    this.message = `What? ${displayName(this.agent)} is evolving!`;
+    this.message = t('What? {name} is evolving!', { name: displayName(this.agent) });
     audio.playMusic('evolution', true);
   }
 
@@ -49,7 +50,7 @@ export class EvolutionScene extends Scene {
     switch (this.phase) {
       case 'intro':
         if (this.t > 90 || inp.pressed('a')) { this.phase = 'morph'; this.t = 0; this.message = ''; }
-        if (this.cancellable && inp.pressed('b')) { this.phase = 'cancel'; this.t = 0; this.message = `Huh? ${displayName(this.agent)} stopped evolving!`; audio.stopMusic(); audio.sfx('cancel'); }
+        if (this.cancellable && inp.pressed('b')) { this.phase = 'cancel'; this.t = 0; this.message = t('Huh? {name} stopped evolving!', { name: displayName(this.agent) }); audio.stopMusic(); audio.sfx('cancel'); }
         break;
 
       case 'morph': {
@@ -62,7 +63,7 @@ export class EvolutionScene extends Scene {
           audio.sfx('cursor');
         }
         if (this.cycles >= 16) { this.phase = 'flash'; this.t = 0; this.showing = 'to'; audio.sfx('levelUp'); }
-        if (this.cancellable && inp.pressed('b')) { this.phase = 'cancel'; this.t = 0; this.message = `Huh? ${displayName(this.agent)} stopped evolving!`; audio.stopMusic(); }
+        if (this.cancellable && inp.pressed('b')) { this.phase = 'cancel'; this.t = 0; this.message = t('Huh? {name} stopped evolving!', { name: displayName(this.agent) }); audio.stopMusic(); }
         break;
       }
 
@@ -81,8 +82,8 @@ export class EvolutionScene extends Scene {
             const key = this.learnQueue.shift()!;
             const res = learnMove(this.agent, key);
             this.message = res
-              ? `${displayName(this.agent)} learned ${moveDef(key).name}!`
-              : `${displayName(this.agent)} is trying to learn ${moveDef(key).name}, but its slots are full.`;
+              ? t('{name} learned {move}!', { name: displayName(this.agent), move: moveName(key) })
+              : t('{name} is trying to learn {move}, but its slots are full.', { name: displayName(this.agent), move: moveName(key) });
             audio.sfx('select');
             this.phase = 'learn';
             this.t = 0;
@@ -108,7 +109,7 @@ export class EvolutionScene extends Scene {
     delete this.agent.pendingEvolution;
     seeSpecies(this.game.save, this.target);
     catchSpecies(this.game.save, this.target);
-    this.message = `Congratulations! Your ${species(this.fromKey).name} evolved into ${species(this.target).name}!`;
+    this.message = t('Congratulations! Your {from} evolved into {to}!', { from: species(this.fromKey).name, to: species(this.target).name });
     // New species may unlock a move at the current level.
     this.learnQueue = movesAtLevel(this.target, this.agent.level)
       .map((m) => m.key)

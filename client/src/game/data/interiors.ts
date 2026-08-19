@@ -64,7 +64,7 @@ export function makeRepairBay(o: RepairBayOpts): MapDef {
       { x: 12, y: 4, text: ['A notice board.', 'REPAIR BAYS are free. Use the STORAGE TERMINAL to swap your team.'] },
       {
         x: 4, y: 4, script: 'storage',
-        text: [`${o.name} STORAGE TERMINAL`, 'Booting AGÉNTMON storage link...'],
+        text: ['STORAGE TERMINAL', 'Booting AGÉNTMON storage link...'],
       },
     ],
   };

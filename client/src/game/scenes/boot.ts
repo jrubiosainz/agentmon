@@ -10,6 +10,7 @@ import {
   BACKDROP_KEYS, BUILDING_KEYS, CHARACTER_KEYS, TRAINER_KEYS,
 } from '../data/artkeys.ts';
 import { registerAllTracks } from '../data/music.ts';
+import { tUpper } from '../i18n.ts';
 import { saves } from '../save.ts';
 import { TitleScene } from './title.ts';
 
@@ -18,7 +19,7 @@ export { BACKDROP_KEYS, BUILDING_KEYS, CHARACTER_KEYS, TRAINER_KEYS };
 export class BootScene extends Scene {
   private done = 0;
   private total = 1;
-  private status = 'BOOTING';
+  private status = tUpper('BOOTING');
   private error: string | null = null;
   private started = false;
   private phase = 0;
@@ -33,15 +34,15 @@ export class BootScene extends Scene {
   }
 
   private async run(): Promise<void> {
-    this.status = 'LOADING AGÉNTDEX';
+    this.status = tUpper('LOADING AGÉNTDEX');
     const res = await fetch(`${assets.base}agentdex.json`);
     if (!res.ok) throw new Error(`agentdex.json ${res.status}`);
     setDex(await res.json());
 
-    this.status = 'CHECKING LINK';
+    this.status = tUpper('CHECKING LINK');
     await saves.init();
 
-    this.status = 'LOADING ASSETS';
+    this.status = tUpper('LOADING ASSETS');
     // Creature battle sheets + icons.
     for (const s of allSpecies()) {
       assets.queueSheet(`cr:${s.key}`, `assets/creatures/${s.key}`, true);
@@ -61,9 +62,9 @@ export class BootScene extends Scene {
     });
 
     // Warm the procedural tileset while the loading bar is still up.
-    this.status = 'BUILDING WORLD';
+    this.status = tUpper('BUILDING WORLD');
     void this.game.tiles;
-    this.status = 'READY';
+    this.status = tUpper('READY');
     this.started = true;
   }
 
@@ -84,10 +85,10 @@ export class BootScene extends Scene {
     for (let y = (this.phase / 2) % 4; y < SCREEN_H; y += 4) g.fillRect(0, y, SCREEN_W, 1);
 
     font.drawCentered(g, 'AG\u00c9NTMON', SCREEN_W / 2, 52, 'gold');
-    font.drawCentered(g, 'SYSTEM BOOT', SCREEN_W / 2, 66, 'dim');
+    font.drawCentered(g, tUpper('SYSTEM BOOT'), SCREEN_W / 2, 66, 'dim');
 
     if (this.error) {
-      font.drawCentered(g, 'BOOT FAILURE', SCREEN_W / 2, 96, 'red');
+      font.drawCentered(g, tUpper('BOOT FAILURE'), SCREEN_W / 2, 96, 'red');
       for (const [i, line] of font.wrap(this.error, 200).slice(0, 3).entries()) {
         font.drawCentered(g, line, SCREEN_W / 2, 110 + i * 10, 'dim');
       }

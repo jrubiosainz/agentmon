@@ -1,0 +1,4 @@
+
+# i18n harness output (chunk files tools/i18n/<lang>-NN.json ARE tracked)
+tools/i18n/*-fix.json
+tools/i18n/overflow.json

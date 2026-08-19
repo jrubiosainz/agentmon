@@ -1,5 +1,7 @@
 /** Items, bag categories and their in-battle / field behaviour. */
 
+import { t } from '../i18n.ts';
+
 export type ItemCategory = 'ball' | 'medicine' | 'battle' | 'key' | 'misc';
 
 export interface ItemDef {
@@ -193,3 +195,23 @@ export const CATEGORY_NAME: Record<ItemCategory, string> = {
   misc: 'ITEMS',
   key: 'KEY',
 };
+
+/**
+ * Item data is built at import time, so it stays English and is localised on
+ * read. Always display items through these, never through `ITEMS[k].name`.
+ */
+export function itemName(key: string): string {
+  return t(item(key).name);
+}
+
+export function itemDesc(key: string): string {
+  return t(item(key).desc);
+}
+
+/** Every localisable item string, for the catalogue extractor. */
+export function itemStrings(): string[] {
+  const out: string[] = [];
+  for (const it of Object.values(ITEMS)) out.push(it.name, it.desc);
+  out.push(...Object.values(CATEGORY_NAME));
+  return out;
+}

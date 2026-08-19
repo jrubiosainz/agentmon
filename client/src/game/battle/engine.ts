@@ -11,8 +11,9 @@ import {
   displayName, gainEvs, gainExp, isFainted, learnMove, maxHp, stats,
   type AgentInstance, type LevelUpResult, type StatusKey,
 } from '../data/agent.ts';
-import { move, species, typeEffect, type MoveDef, type TypeKey } from '../data/dex.ts';
+import { move, moveName, species, typeEffect, type MoveDef, type TypeKey } from '../data/dex.ts';
 import { item, type ItemDef } from '../data/items.ts';
+import { t } from '../i18n.ts';
 
 export type StatKey = 'atk' | 'def' | 'spa' | 'spd' | 'spe' | 'acc' | 'eva';
 
@@ -121,13 +122,21 @@ const STAT_NAME: Record<StatKey, string> = {
 
 const STATUS_MSG: Record<StatusKey, string> = {
   none: '',
-  poison: 'was CORRUPTED!',
-  burn: 'was OVERHEATED!',
-  freeze: 'was FROZEN solid!',
-  paralysis: 'was SHORTED! It may be unable to move!',
-  sleep: 'went to SLEEP!',
-  confusion: 'became CONFUSED!',
+  poison: '{name} was CORRUPTED!',
+  burn: '{name} was OVERHEATED!',
+  freeze: '{name} was FROZEN solid!',
+  paralysis: '{name} was SHORTED! It may be unable to move!',
+  sleep: '{name} went to SLEEP!',
+  confusion: '{name} became CONFUSED!',
 };
+
+/**
+ * These two tables are looked up by key at runtime (`t(STAT_NAME[stat])`), so
+ * the source scanner cannot see them. Hand them to the extractor explicitly.
+ */
+export function battleStrings(): string[] {
+  return [...Object.values(STAT_NAME), ...Object.values(STATUS_MSG)].filter(Boolean);
+}
 
 export class Battle {
   readonly rng: Rng;
@@ -329,7 +338,7 @@ export class Battle {
 
     if (attacker.mustRecharge) {
       attacker.mustRecharge = false;
-      ev.push({ t: 'text', text: `${name} must recharge!`, wait: true });
+      ev.push({ t: 'text', text: t('{name} must recharge!', { name }), wait: true });
       return;
     }
 
@@ -337,9 +346,9 @@ export class Battle {
     if (attacker.agent.status === 'freeze') {
       if (this.rng.chance(0.2)) {
         attacker.agent.status = 'none';
-        ev.push({ t: 'text', text: `${name} thawed out!`, wait: true });
+        ev.push({ t: 'text', text: t('{name} thawed out!', { name }), wait: true });
       } else {
-        ev.push({ t: 'text', text: `${name} is frozen solid!`, wait: true });
+        ev.push({ t: 'text', text: t('{name} is frozen solid!', { name }), wait: true });
         return;
       }
     }
@@ -347,50 +356,50 @@ export class Battle {
       attacker.agent.sleepTurns--;
       if (attacker.agent.sleepTurns <= 0) {
         attacker.agent.status = 'none';
-        ev.push({ t: 'text', text: `${name} woke up!`, wait: true });
+        ev.push({ t: 'text', text: t('{name} woke up!', { name }), wait: true });
       } else {
-        ev.push({ t: 'text', text: `${name} is fast asleep.`, wait: true });
+        ev.push({ t: 'text', text: t('{name} is fast asleep.', { name }), wait: true });
         return;
       }
     }
     if (attacker.flinched) {
-      ev.push({ t: 'text', text: `${name} flinched!`, wait: true });
+      ev.push({ t: 'text', text: t('{name} flinched!', { name }), wait: true });
       return;
     }
     if (attacker.agent.status === 'paralysis' && this.rng.chance(0.25)) {
-      ev.push({ t: 'text', text: `${name} is short-circuited!`, wait: true });
+      ev.push({ t: 'text', text: t('{name} is short-circuited!', { name }), wait: true });
       return;
     }
     if (attacker.confusedTurns > 0) {
       attacker.confusedTurns--;
       if (attacker.confusedTurns === 0) {
-        ev.push({ t: 'text', text: `${name} snapped out of confusion!`, wait: true });
+        ev.push({ t: 'text', text: t('{name} snapped out of confusion!', { name }), wait: true });
       } else if (this.rng.chance(0.33)) {
-        ev.push({ t: 'text', text: `${name} is confused!`, wait: true });
+        ev.push({ t: 'text', text: t('{name} is confused!', { name }), wait: true });
         const dmg = Math.max(1, Math.floor(
           ((2 * attacker.agent.level / 5 + 2) * 40 * this.effStat(attacker, 'atk'))
           / this.effStat(attacker, 'def') / 50 + 2,
         ));
         this.dealDamage(ev, side, dmg, 1, false);
-        ev.push({ t: 'text', text: 'It hurt itself in its confusion!', wait: true });
+        ev.push({ t: 'text', text: t('It hurt itself in its confusion!'), wait: true });
         return;
       }
     }
 
     const slot = attacker.agent.moves[index];
     if (!slot) {
-      ev.push({ t: 'text', text: `${name} has no moves left!`, wait: true });
+      ev.push({ t: 'text', text: t('{name} has no moves left!', { name }), wait: true });
       return;
     }
     if (slot.pp <= 0) {
-      ev.push({ t: 'text', text: `${name} has no PP left for that move!`, wait: true });
+      ev.push({ t: 'text', text: t('{name} has no PP left for that move!', { name }), wait: true });
       return;
     }
     slot.pp--;
     attacker.hasActed = true;
     const m = move(slot.key);
     ev.push({ t: 'useMove', side, move: m });
-    ev.push({ t: 'text', text: `${name} used ${m.name}!`, wait: false });
+    ev.push({ t: 'text', text: t('{name} used {move}!', { name, move: moveName(m) }), wait: false });
 
     // Accuracy.
     if (m.accuracy < 100 || m.category !== 'status') {
@@ -398,7 +407,7 @@ export class Battle {
       const chance = (m.accuracy / 100) * ACC_MULT[accStage + 6]!;
       if (m.accuracy < 999 && !this.rng.chance(Math.min(1, chance))) {
         ev.push({ t: 'miss', side });
-        ev.push({ t: 'text', text: `${name}'s attack missed!`, wait: true });
+        ev.push({ t: 'text', text: t("{name}'s attack missed!", { name }), wait: true });
         return;
       }
     }
@@ -412,7 +421,7 @@ export class Battle {
     const eff = typeEffect(m.type, species(defender.agent.speciesKey).types);
     if (eff === 0) {
       ev.push({ t: 'noEffect', side });
-      ev.push({ t: 'text', text: `It doesn't affect ${this.label(this.foeOf(side))}...`, wait: true });
+      ev.push({ t: 'text', text: t("It doesn't affect {name}...", { name: this.label(this.foeOf(side)) }), wait: true });
       return;
     }
 
@@ -427,11 +436,11 @@ export class Battle {
       if (isFainted(defender.agent)) break;
     }
     if (hits > 1) {
-      ev.push({ t: 'text', text: `Hit ${Math.min(hits, hits)} time(s)!`, wait: true });
+      ev.push({ t: 'text', text: t('Hit {count} time(s)!', { count: Math.min(hits, hits) }), wait: true });
     }
-    if (eff > 1) ev.push({ t: 'text', text: "It's super effective!", wait: true });
-    else if (eff < 1) ev.push({ t: 'text', text: "It's not very effective...", wait: true });
-    if (crit) ev.push({ t: 'text', text: 'A critical hit!', wait: true });
+    if (eff > 1) ev.push({ t: 'text', text: t("It's super effective!"), wait: true });
+    else if (eff < 1) ev.push({ t: 'text', text: t("It's not very effective..."), wait: true });
+    if (crit) ev.push({ t: 'text', text: t('A critical hit!'), wait: true });
 
     // Secondary effects.
     this.applySecondary(ev, side, m, total);
@@ -475,7 +484,7 @@ export class Battle {
   private applyStatusMove(ev: BattleEvent[], side: Side, m: MoveDef): void {
     const selfSide = m.target === 'self' ? side : this.foeOf(side);
     const applied = this.applyEffect(ev, side, selfSide, m.effect, m);
-    if (!applied) ev.push({ t: 'text', text: 'But nothing happened!', wait: true });
+    if (!applied) ev.push({ t: 'text', text: t('But nothing happened!'), wait: true });
   }
 
   private applySecondary(ev: BattleEvent[], side: Side, m: MoveDef, damageDealt: number): void {
@@ -483,14 +492,14 @@ export class Battle {
     switch (m.effect) {
       case 'recoil_third': {
         const recoil = Math.max(1, Math.floor(damageDealt / 3));
-        ev.push({ t: 'text', text: `${this.label(side)} is damaged by recoil!`, wait: true });
+        ev.push({ t: 'text', text: t('{name} is damaged by recoil!', { name: this.label(side) }), wait: true });
         this.dealDamage(ev, side, recoil, 1, false);
         break;
       }
       case 'drain_half': {
         const drain = Math.max(1, Math.floor(damageDealt / 2));
         this.healBy(ev, side, drain);
-        ev.push({ t: 'text', text: `${this.label(foe)}'s energy was drained!`, wait: true });
+        ev.push({ t: 'text', text: t("{name}'s energy was drained!", { name: this.label(foe) }), wait: true });
         break;
       }
       case 'recharge':
@@ -522,7 +531,7 @@ export class Battle {
       c.agent.status = s;
       if (s === 'sleep') c.agent.sleepTurns = this.rng.int(2, 4);
       ev.push({ t: 'status', side: target, status: s });
-      ev.push({ t: 'text', text: `${name} ${STATUS_MSG[s]}`, wait: true });
+      ev.push({ t: 'text', text: t(STATUS_MSG[s], { name }), wait: true });
       return true;
     };
 
@@ -535,7 +544,7 @@ export class Battle {
       case 'conf': {
         if (c.confusedTurns > 0) return false;
         c.confusedTurns = this.rng.int(2, 5);
-        ev.push({ t: 'text', text: `${name} became CONFUSED!`, wait: true });
+        ev.push({ t: 'text', text: t('{name} became CONFUSED!', { name }), wait: true });
         return true;
       }
       case 'flinch': {
@@ -546,7 +555,7 @@ export class Battle {
         const self = this.side(source);
         if (self.agent.hp >= maxHp(self.agent)) return false;
         this.healBy(ev, source, Math.floor(maxHp(self.agent) / 2));
-        ev.push({ t: 'text', text: `${this.label(source)} regained health!`, wait: true });
+        ev.push({ t: 'text', text: t('{name} regained health!', { name: this.label(source) }), wait: true });
         return true;
       }
       case 'cure_status': {
@@ -555,7 +564,7 @@ export class Battle {
         self.agent.status = 'none';
         self.confusedTurns = 0;
         ev.push({ t: 'status', side: source, status: 'none' });
-        ev.push({ t: 'text', text: `${this.label(source)} was fully debugged!`, wait: true });
+        ev.push({ t: 'text', text: t('{name} was fully debugged!', { name: this.label(source) }), wait: true });
         return true;
       }
       case 'atk_up': return this.changeStage(ev, source, 'atk', 1);
@@ -584,9 +593,12 @@ export class Battle {
     const before = c.stages[stat];
     const after = Math.max(-6, Math.min(6, before + delta));
     if (after === before) {
+      const direction = delta > 0 ? t('higher') : t('lower');
       ev.push({
         t: 'text',
-        text: `${this.label(side)}'s ${STAT_NAME[stat]} won't go ${delta > 0 ? 'higher' : 'lower'}!`,
+        text: t("{name}'s {stat} won't go {direction}!", {
+          name: this.label(side), stat: t(STAT_NAME[stat]), direction,
+        }),
         wait: true,
       });
       return false;
@@ -594,9 +606,13 @@ export class Battle {
     c.stages[stat] = after;
     ev.push({ t: 'statChange', side, stat, delta });
     const word = Math.abs(delta) >= 2
-      ? (delta > 0 ? 'sharply rose' : 'harshly fell')
-      : (delta > 0 ? 'rose' : 'fell');
-    ev.push({ t: 'text', text: `${this.label(side)}'s ${STAT_NAME[stat]} ${word}!`, wait: true });
+      ? (delta > 0 ? t('sharply rose') : t('harshly fell'))
+      : (delta > 0 ? t('rose') : t('fell'));
+    ev.push({
+      t: 'text',
+      text: t("{name}'s {stat} {change}!", { name: this.label(side), stat: t(STAT_NAME[stat]), change: word }),
+      wait: true,
+    });
     return true;
   }
 
@@ -607,11 +623,11 @@ export class Battle {
       if (isFainted(c.agent)) continue;
       if (c.agent.status === 'poison') {
         const dmg = Math.max(1, Math.floor(maxHp(c.agent) / 8));
-        ev.push({ t: 'text', text: `${this.label(side)} is hurt by CORRUPTION!`, wait: true });
+        ev.push({ t: 'text', text: t('{name} is hurt by CORRUPTION!', { name: this.label(side) }), wait: true });
         this.dealDamage(ev, side, dmg, 1, false);
       } else if (c.agent.status === 'burn') {
         const dmg = Math.max(1, Math.floor(maxHp(c.agent) / 8));
-        ev.push({ t: 'text', text: `${this.label(side)} is hurt by OVERHEATING!`, wait: true });
+        ev.push({ t: 'text', text: t('{name} is hurt by OVERHEATING!', { name: this.label(side) }), wait: true });
         this.dealDamage(ev, side, dmg, 1, false);
       }
     }
@@ -626,7 +642,7 @@ export class Battle {
       if (!this.foeC.faintAnnounced) {
         this.foeC.faintAnnounced = true;
         ev.push({ t: 'faint', side: 'foe' });
-        ev.push({ t: 'text', text: `${this.label('foe')} was scrapped!`, wait: true });
+        ev.push({ t: 'text', text: t('{name} was scrapped!', { name: this.label('foe') }), wait: true });
         this.awardExp(ev);
         const next = this.foe.members.findIndex((a) => !isFainted(a));
         if (next < 0) {
@@ -641,7 +657,7 @@ export class Battle {
       if (!this.playerC.faintAnnounced) {
         this.playerC.faintAnnounced = true;
         ev.push({ t: 'faint', side: 'player' });
-        ev.push({ t: 'text', text: `${this.label('player')} was scrapped!`, wait: true });
+        ev.push({ t: 'text', text: t('{name} was scrapped!', { name: this.label('player') }), wait: true });
         const next = this.player.members.findIndex((a) => !isFainted(a));
         if (next < 0) this.finish(ev, 'lose');
         else ev.push({ t: 'requestSwitch', side: 'player' });
@@ -694,8 +710,10 @@ export class Battle {
     }
     ev.push({ t: 'sendOut', side, index });
     const who = side === 'player'
-      ? `Go! ${displayName(target)}!`
-      : `${this.config.trainerName ?? 'FOE'} sent out ${displayName(target)}!`;
+      ? t('Go! {name}!', { name: displayName(target) })
+      : t('{trainer} sent out {name}!', {
+        trainer: this.config.trainerName ?? t('FOE'), name: displayName(target),
+      });
     ev.push({ t: 'text', text: who, wait: true });
   }
 
@@ -706,7 +724,7 @@ export class Battle {
     this.playerC = makeCombatant(this.player.members[index]!);
     this.participants.add(this.playerC.agent.uid);
     ev.push({ t: 'sendOut', side: 'player', index });
-    ev.push({ t: 'text', text: `Go! ${displayName(this.playerC.agent)}!`, wait: true });
+    ev.push({ t: 'text', text: t('Go! {name}!', { name: displayName(this.playerC.agent) }), wait: true });
     return ev;
   }
 
@@ -717,7 +735,7 @@ export class Battle {
     if (def.ballRate !== undefined) {
       if (this.config.kind === 'trainer') {
         // Refused, so the ball is never announced and never consumed.
-        ev.push({ t: 'text', text: "You can't capture another engineer's AGÉNTMON!", wait: true });
+        ev.push({ t: 'text', text: t("You can't capture another engineer's AGÉNTMON!"), wait: true });
         return;
       }
       ev.push({ t: 'useItem', itemKey: action.key });
@@ -730,33 +748,33 @@ export class Battle {
     const isActive = targetIndex === this.player.activeIndex;
 
     ev.push({ t: 'useItem', itemKey: action.key });
-    ev.push({ t: 'text', text: `${this.config.playerName} used ${def.name}!`, wait: true });
+    ev.push({ t: 'text', text: t('{name} used {item}!', { name: this.config.playerName, item: t(def.name) }), wait: true });
 
     if (def.revive && isFainted(target)) {
       target.hp = Math.max(1, Math.floor(maxHp(target) * def.revive));
       target.status = 'none';
-      ev.push({ t: 'text', text: `${displayName(target)} was rebooted!`, wait: true });
+      ev.push({ t: 'text', text: t('{name} was rebooted!', { name: displayName(target) }), wait: true });
     } else if (def.heal !== undefined) {
       const amount = def.heal < 0 ? maxHp(target) : def.heal;
       if (isActive) this.healBy(ev, 'player', amount);
       else target.hp = Math.min(maxHp(target), target.hp + amount);
-      ev.push({ t: 'text', text: `${displayName(target)}'s HP was restored.`, wait: true });
+      ev.push({ t: 'text', text: t("{name}'s HP was restored.", { name: displayName(target) }), wait: true });
     } else if (def.cures) {
       target.status = 'none';
       if (isActive) this.playerC.confusedTurns = 0;
       ev.push({ t: 'status', side: 'player', status: 'none' });
-      ev.push({ t: 'text', text: `${displayName(target)} was repaired.`, wait: true });
+      ev.push({ t: 'text', text: t('{name} was repaired.', { name: displayName(target) }), wait: true });
     } else if (def.pp !== undefined && action.moveIndex !== undefined) {
       const slot = target.moves[action.moveIndex];
       if (slot) {
         slot.pp = def.pp < 0 ? slot.maxPp : Math.min(slot.maxPp, slot.pp + def.pp);
-        ev.push({ t: 'text', text: `PP was restored.`, wait: true });
+        ev.push({ t: 'text', text: t('PP was restored.'), wait: true });
       }
     } else if (def.boost) {
       this.changeStage(ev, 'player', def.boost.stat as StatKey, def.boost.stages);
     } else if (def.escape) {
       ev.push({ t: 'flee', success: true });
-      ev.push({ t: 'text', text: 'Got away safely!', wait: true });
+      ev.push({ t: 'text', text: t('Got away safely!'), wait: true });
       this.finish(ev, 'fled');
     }
   }
@@ -767,7 +785,7 @@ export class Battle {
     const max = maxHp(target);
     // Announce the throw before the animation so the text box isn't still
     // showing "What will X do?" while the ball is in the air.
-    ev.push({ t: 'text', text: `${this.config.playerName} used the ${def.name}!`, wait: false });
+    ev.push({ t: 'text', text: t('{name} used the {item}!', { name: this.config.playerName, item: t(def.name) }), wait: false });
     const ballRate = def.key === 'netcore'
       ? (this.foeC.turnsOut >= 6 ? 3 : 1.5)
       : def.ballRate!;
@@ -800,16 +818,16 @@ export class Battle {
       this.captureSucceeded(ev);
     } else {
       const msg = shakes === 0
-        ? 'Oh no! It broke free!'
-        : shakes === 1 ? 'Aww! It appeared to be caught!'
-          : shakes === 2 ? 'Aargh! Almost had it!' : 'Shoot! It was so close, too!';
+        ? t('Oh no! It broke free!')
+        : shakes === 1 ? t('Aww! It appeared to be caught!')
+          : shakes === 2 ? t('Aargh! Almost had it!') : t('Shoot! It was so close, too!');
       ev.push({ t: 'text', text: msg, wait: true });
     }
   }
 
   private captureSucceeded(ev: BattleEvent[]): void {
     const target = this.foeC.agent;
-    ev.push({ t: 'text', text: `Gotcha! ${displayName(target)} was captured!`, wait: true });
+    ev.push({ t: 'text', text: t('Gotcha! {name} was captured!', { name: displayName(target) }), wait: true });
     target.otName = this.config.playerName;
     this.caught = target;
     this.finish(ev, 'caught');
@@ -818,7 +836,7 @@ export class Battle {
   // -------------------------------------------------------------------- flee
   private tryRun(ev: BattleEvent[]): boolean {
     if (!this.config.canRun) {
-      ev.push({ t: 'text', text: "There's no running from an engineer battle!", wait: true });
+      ev.push({ t: 'text', text: t("There's no running from an engineer battle!"), wait: true });
       return false;
     }
     this.runAttempts++;
@@ -828,11 +846,11 @@ export class Battle {
     const success = odds >= 256 || this.rng.int(0, 255) < odds;
     ev.push({ t: 'flee', success });
     if (success) {
-      ev.push({ t: 'text', text: 'Got away safely!', wait: true });
+      ev.push({ t: 'text', text: t('Got away safely!'), wait: true });
       this.finish(ev, 'fled');
       return true;
     }
-    ev.push({ t: 'text', text: "Can't escape!", wait: true });
+    ev.push({ t: 'text', text: t("Can't escape!"), wait: true });
     return false;
   }
 
@@ -898,8 +916,8 @@ export class Battle {
     const c = this.side(side);
     if (side === 'player') return displayName(c.agent);
     return this.config.kind === 'wild'
-      ? `Wild ${displayName(c.agent)}`
-      : `Foe ${displayName(c.agent)}`;
+      ? t('Wild {name}', { name: displayName(c.agent) })
+      : t('Foe {name}', { name: displayName(c.agent) });
   }
 
   /** Prize money for a defeated trainer. */

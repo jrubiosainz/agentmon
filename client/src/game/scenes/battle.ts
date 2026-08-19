@@ -14,9 +14,10 @@ import {
   displayName, expToNextLevel, isFainted, learnMove, maxHp, statAt, STATUS_COLOR, STATUS_SHORT,
   type AgentInstance,
 } from '../data/agent.ts';
-import { move as moveDef, species, typeDef, type Stats } from '../data/dex.ts';
+import { move as moveDef, moveName, species, typeDef, typeName, type Stats } from '../data/dex.ts';
 import { item as itemDef, ITEMS } from '../data/items.ts';
 import { trainer as trainerDef } from '../data/trainers.ts';
+import { t, tUpper, upper } from '../i18n.ts';
 import {
   Battle, type BattleConfig, type BattleEvent, type BattleOutcome, type PlayerAction, type Side,
 } from '../battle/engine.ts';
@@ -194,25 +195,28 @@ export class BattleScene extends Scene {
         this.trainerSlide = Math.min(1, this.trainerSlide + 0.045);
         return this.trainerSlide >= 1;
       };
-      yield* this.say(`${cfg.trainerName ?? 'A CHALLENGER'} wants to battle!`);
+      yield* this.say(t('{name} wants to battle!', { name: cfg.trainerName ?? tUpper('A CHALLENGER') }));
       yield () => {
         this.trainerSlide = Math.max(0, this.trainerSlide - 0.06);
         return this.trainerSlide <= 0;
       };
       this.fSprite.visible = true;
       this.play('foe', 'appear');
-      yield* this.say(`${cfg.trainerName ?? 'FOE'} sent out ${this.battle.foeC.agent ? displayName(this.battle.foeC.agent) : ''}!`, false);
+      yield* this.say(t('{trainer} sent out {name}!', {
+        trainer: cfg.trainerName ?? tUpper('FOE'),
+        name: this.battle.foeC.agent ? displayName(this.battle.foeC.agent) : '',
+      }), false);
     } else {
       this.fSprite.visible = true;
       this.play('foe', 'appear');
       seeSpecies(this.game.save, this.battle.foeC.agent.speciesKey);
-      yield* this.say(`A wild ${displayName(this.battle.foeC.agent)} appeared!`);
+      yield* this.say(t('A wild {name} appeared!', { name: displayName(this.battle.foeC.agent) }));
     }
     this.play('foe', 'idle', true);
 
     this.pSprite.visible = true;
     this.play('player', 'appear');
-    yield* this.say(`Go! ${displayName(this.battle.playerC.agent)}!`, false);
+    yield* this.say(t('Go! {name}!', { name: displayName(this.battle.playerC.agent) }), false);
     this.play('player', 'idle', true);
     this.syncBars(true);
     yield* this.beginTurn();
@@ -222,25 +226,25 @@ export class BattleScene extends Scene {
   private openCommandMenu(): void {
     this.seq = null;
     this.mode = 'command';
-    this.message = `What will ${displayName(this.battle.playerC.agent)} do?`;
+    this.message = t('What will {name} do?', { name: displayName(this.battle.playerC.agent) });
     this.tw.setText(this.message);
     this.tw.skipAll();
     this.cmdMenu.setItems([
-      { label: 'FIGHT', value: 'fight' },
-      { label: 'BAG', value: 'bag' },
-      { label: 'AGENT', value: 'agent' },
-      { label: this.payload.config.kind === 'wild' ? 'RUN' : 'RUN', value: 'run' },
+      { label: tUpper('FIGHT'), value: 'fight' },
+      { label: tUpper('BAG'), value: 'bag' },
+      { label: tUpper('AGENT'), value: 'agent' },
+      { label: this.payload.config.kind === 'wild' ? tUpper('RUN') : tUpper('RUN'), value: 'run' },
     ]);
   }
 
   private openMoveMenu(): void {
     const agent = this.battle.playerC.agent;
     const items: MenuItem[] = agent.moves.map((slot, i) => ({
-      label: moveDef(slot.key).name,
+      label: moveName(moveDef(slot.key)),
       value: String(i),
       disabled: slot.pp <= 0,
     }));
-    if (items.length === 0) items.push({ label: 'STRUGGLE', value: '-1' });
+    if (items.length === 0) items.push({ label: tUpper('STRUGGLE'), value: '-1' });
     this.moveMenu.setItems(items);
     this.mode = 'moves';
   }
@@ -329,7 +333,7 @@ export class BattleScene extends Scene {
     if (isFainted(this.battle.playerC.agent)) {
       const alive = this.game.save.party.some((a) => !isFainted(a));
       if (!alive) { yield* this.finish(); return; }
-      yield* this.say('Choose your next AGÉNTMON!', false);
+      yield* this.say(t('Choose your next AGÉNTMON!'), false);
       let index = -1;
       yield () => {
         if (this.childStack.length) return false;
@@ -350,12 +354,14 @@ export class BattleScene extends Scene {
     const outcome = this.battle.outcome ?? 'lose';
     if (outcome === 'win' && this.payload.config.kind === 'trainer') {
       const key = this.payload.config.trainerKey;
-      const t = key ? trainerDef(key) : null;
+      const tr = key ? trainerDef(key) : null;
       const prize = this.battle.prize();
       this.game.save.money = Math.min(999999, this.game.save.money + prize);
       audio.playMusic('victory', true);
-      yield* this.say(`${this.payload.config.trainerName ?? t?.name ?? 'FOE'} was defeated!`);
-      yield* this.say(`${this.game.save.playerName} got \u00a5${formatMoney(prize)} for winning!`);
+      yield* this.say(t('{name} was defeated!', { name: this.payload.config.trainerName ?? tr?.name ?? tUpper('FOE') }));
+      yield* this.say(t('{name} got \u00a5{amount} for winning!', {
+        name: this.game.save.playerName, amount: formatMoney(prize),
+      }));
     } else if (outcome === 'win') {
       audio.playMusic('victory', true);
     } else if (outcome === 'caught') {
@@ -365,14 +371,14 @@ export class BattleScene extends Scene {
         catchSpecies(this.game.save, caught.speciesKey);
         const where = addAgent(this.game.save, caught);
         audio.playMusic('victory', true);
-        yield* this.say(`Gotcha! ${displayName(caught)} was captured!`);
+        yield* this.say(t('Gotcha! {name} was captured!', { name: displayName(caught) }));
         const sp = species(caught.speciesKey);
-        yield* this.say(`${sp.name}'s data was added to the AGÉNTDEX.`);
-        if (where === 'box') yield* this.say(`${displayName(caught)} was transferred to STORAGE.`);
-        else if (where === 'full') yield* this.say('Your storage is full! It had to be released...');
+        yield* this.say(t("{name}'s data was added to the AGÉNTDEX.", { name: sp.name }));
+        if (where === 'box') yield* this.say(t('{name} was transferred to STORAGE.', { name: displayName(caught) }));
+        else if (where === 'full') yield* this.say(t('Your storage is full! It had to be released...'));
       }
     } else if (outcome === 'fled') {
-      yield* this.say('Got away safely!', false);
+      yield* this.say(t('Got away safely!'), false);
     }
     this.result = { outcome, caught: this.caughtAgent ?? undefined };
     yield 12;
@@ -531,10 +537,10 @@ export class BattleScene extends Scene {
           const md = moveDef(ev.moveKey);
           if (agent.moves.length < 4) {
             learnMove(agent, ev.moveKey);
-            yield* this.say(`${displayName(agent)} learned ${md.name}!`);
+            yield* this.say(t('{name} learned {move}!', { name: displayName(agent), move: moveName(md) }));
           } else {
-            yield* this.say(`${displayName(agent)} wants to learn ${md.name},`);
-            yield* this.say(`but it already knows four moves. It gave up on ${md.name}.`);
+            yield* this.say(t('{name} wants to learn {move},', { name: displayName(agent), move: moveName(md) }));
+            yield* this.say(t('but it already knows four moves. It gave up on {move}.', { move: moveName(md) }));
           }
           break;
         }
@@ -759,13 +765,13 @@ export class BattleScene extends Scene {
     const y = 10;
     drawWindow(g, x, y, 108, 30, 'flat');
     font.draw(g, displayName(a).slice(0, 10), x + 6, y + 4, 'normal', false);
-    font.drawRight(g, `:L${a.level}`, x + 102, y + 4, 'normal', false);
+    font.drawRight(g, t(':L{level}', { level: a.level }), x + 102, y + 4, 'normal', false);
     drawHpTag(g, x + 6, y + 17);
     drawHpBar(g, x + 24, y + 17, 74, this.fHpShown / maxHp(a));
     if (a.status !== 'none') {
       g.fillStyle = STATUS_COLOR[a.status];
       g.fillRect(x + 6, y + 24, 22, 8);
-      font.draw(g, STATUS_SHORT[a.status], x + 8, y + 25, 'white', false);
+      font.draw(g, tUpper(STATUS_SHORT[a.status]), x + 8, y + 25, 'white', false);
     }
     if (this.game.save.dex.caught.includes(a.speciesKey)) {
       g.fillStyle = PALETTE.gold;
@@ -781,15 +787,15 @@ export class BattleScene extends Scene {
     const y = SCREEN_H - TEXTBOX_H - 46;
     drawWindow(g, x, y, 112, 40, 'flat');
     font.draw(g, displayName(a).slice(0, 10), x + 6, y + 3, 'normal', false);
-    font.drawRight(g, `:L${a.level}`, x + 106, y + 3, 'normal', false);
+    font.drawRight(g, t(':L{level}', { level: a.level }), x + 106, y + 3, 'normal', false);
     drawHpTag(g, x + 6, y + 15);
     drawHpBar(g, x + 24, y + 15, 74, this.pHpShown / maxHp(a));
-    font.drawRight(g, `${Math.ceil(this.pHpShown)}/${maxHp(a)}`, x + 106, y + 24, 'normal', false);
+    font.drawRight(g, t('{current}/{max}', { current: Math.ceil(this.pHpShown), max: maxHp(a) }), x + 106, y + 24, 'normal', false);
     drawExpBar(g, x + 6, y + 34, 100, this.expShown);
     if (a.status !== 'none') {
       g.fillStyle = STATUS_COLOR[a.status];
       g.fillRect(x + 6, y + 24, 22, 8);
-      font.draw(g, STATUS_SHORT[a.status], x + 8, y + 25, 'white', false);
+      font.draw(g, tUpper(STATUS_SHORT[a.status]), x + 8, y + 25, 'white', false);
     }
   }
 
@@ -798,22 +804,22 @@ export class BattleScene extends Scene {
     const sp = species(a.speciesKey);
     const prev = Math.max(1, a.level - 1);
     const rows: [string, keyof Stats][] = [
-      ['HP', 'hp'], ['ATTACK', 'atk'], ['DEFENSE', 'def'],
-      ['SP.ATK', 'spa'], ['SP.DEF', 'spd'], ['SPEED', 'spe'],
+      [tUpper('HP'), 'hp'], [tUpper('ATTACK'), 'atk'], [tUpper('DEFENSE'), 'def'],
+      [tUpper('SP.ATK'), 'spa'], [tUpper('SP.DEF'), 'spd'], [tUpper('SPEED'), 'spe'],
     ];
     const x = SCREEN_W - 106;
     const y = 18;
     const h = 26 + rows.length * 11;
     drawWindow(g, x, y, 102, h);
-    font.draw(g, 'LEVEL UP!', x + 8, y + 5, 'gold', false);
-    font.drawRight(g, `Lv${a.level}`, x + 94, y + 5, 'normal', false);
+    font.draw(g, tUpper('LEVEL UP!'), x + 8, y + 5, 'gold', false);
+    font.drawRight(g, t('Lv{level}', { level: a.level }), x + 94, y + 5, 'normal', false);
     for (const [i, [label, key]] of rows.entries()) {
       const ry = y + 20 + i * 11;
       const now = statAt(sp, key, a.level, a.ivs[key], a.evs[key]);
       const gain = now - statAt(sp, key, prev, a.ivs[key], a.evs[key]);
       font.draw(g, label, x + 8, ry, 'normal', false);
-      font.drawRight(g, String(now), x + 70, ry, 'normal', false);
-      if (gain > 0) font.draw(g, `+${gain}`, x + 78, ry, 'green', false);
+      font.drawRight(g, t('{value}', { value: now }), x + 70, ry, 'normal', false);
+      if (gain > 0) font.draw(g, t('+{gain}', { gain }), x + 78, ry, 'green', false);
     }
   }
 
@@ -848,14 +854,14 @@ export class BattleScene extends Scene {
     const slot = agent.moves[this.moveMenu.index];
     if (!slot) return;
     const md = moveDef(slot.key);
-    font.draw(g, 'PP', 168, y + 8, 'dim', false);
-    font.drawRight(g, `${slot.pp}/${slot.maxPp}`, SCREEN_W - 8, y + 8, 'normal', false);
+    font.draw(g, tUpper('PP'), 168, y + 8, 'dim', false);
+    font.drawRight(g, t('{pp}/{max}', { pp: slot.pp, max: slot.maxPp }), SCREEN_W - 8, y + 8, 'normal', false);
     const td = typeDef(md.type);
     g.fillStyle = td.color ?? '#586074';
     g.fillRect(166, y + 22, 66, 12);
     g.fillStyle = 'rgba(0,0,0,0.25)';
     g.fillRect(166, y + 32, 66, 2);
-    font.drawCentered(g, td.name.toUpperCase(), 199, y + 24, 'white');
+    font.drawCentered(g, upper(typeName(md.type)), 199, y + 24, 'white');
   }
 }
 

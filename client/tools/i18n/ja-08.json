@@ -1,0 +1,14 @@
+{
+  "{name}'s {stat} {change}!": "{name}の {stat}が {change}!",
+  "{name}'s {stat} won't go {direction}!": "{name}の {stat}は もう {direction}!",
+  "{name}'s attack missed!": "{name}の こうげきは はずれた!",
+  "{name}'s data was added to the AGÉNTDEX.": "{name}の データが AGÉNTDEX に きろくされた。",
+  "{name}'s energy was drained!": "{name}の エネルギーを すいとった!",
+  "{name}'s HP was restored.": "{name}の HPが かいふくした。",
+  "Can't escape!": "にげられない!",
+  "It doesn't affect {name}...": "{name}には こうかが ないようだ...",
+  "It's not very effective...": "こうかは いまひとつの ようだ...",
+  "It's super effective!": "こうかは ばつぐんだ!",
+  "There's no running from an engineer battle!": "エンジニアとの しょうぶから にげられない!",
+  "You can't capture another engineer's AGÉNTMON!": "ひとの AGÉNTMON は つかまえられない!"
+}

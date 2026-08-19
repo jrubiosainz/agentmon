@@ -12,9 +12,12 @@ import {
   displayName, expToNextLevel, healFully, isFainted, maxHp, stats,
   STATUS_COLOR, STATUS_SHORT, type AgentInstance,
 } from '../data/agent.ts';
-import { allSpecies, dexSize, move as moveDef, species, typeDef } from '../data/dex.ts';
+import {
+  allSpecies, dexEntryOf, dexSize, genusOf, move as moveDef, moveName, species, typeDef, typeName,
+} from '../data/dex.ts';
 import { CATEGORY_NAME, CATEGORY_ORDER, item as itemDef, type ItemCategory } from '../data/items.ts';
-import { BADGE_INFO, BADGE_ORDER } from '../data/trainers.ts';
+import { badgeInfoName, BADGE_ORDER } from '../data/trainers.ts';
+import { LANGS, getLang, t, tUpper, upper, type Lang } from '../i18n.ts';
 import { saves, summarise } from '../save.ts';
 import {
   bagAdd, bagRemove, BOX_COUNT, BOX_SIZE, formatMoney, formatPlaytime, type SaveData,
@@ -46,15 +49,15 @@ export class StartMenuScene extends Scene {
     // as the story hands them to you, so an empty party can never be opened.
     const items: MenuItem[] = [];
     if (save.dex.seen.length > 0 || save.party.length > 0) {
-      items.push({ label: 'AGÉNTDEX', value: 'dex' });
+      items.push({ label: tUpper('AGÉNTDEX'), value: 'dex' });
     }
-    if (save.party.length > 0) items.push({ label: 'AGÉNTMON', value: 'party' });
+    if (save.party.length > 0) items.push({ label: tUpper('AGÉNTMON'), value: 'party' });
     items.push(
-      { label: 'BAG', value: 'bag' },
+      { label: tUpper('BAG'), value: 'bag' },
       { label: save.playerName.slice(0, 8), value: 'card' },
-      { label: 'SAVE', value: 'save' },
-      { label: 'OPTION', value: 'options' },
-      { label: 'EXIT', value: 'exit' },
+      { label: tUpper('SAVE'), value: 'save' },
+      { label: tUpper('OPTION'), value: 'options' },
+      { label: tUpper('EXIT'), value: 'exit' },
     );
     const keep = this.menu.index;
     this.menu.setItems(items);
@@ -169,7 +172,7 @@ export class PartyScene extends Scene {
 
     if (this.mode === 'battle' || this.mode === 'switchIn') {
       const agent = this.party[this.index]!;
-      if (isFainted(agent)) { this.flash('That AGÉNTMON has no charge left!'); return; }
+      if (isFainted(agent)) { this.flash(t('That AGÉNTMON has no charge left!')); return; }
       this.game.pop({ index: this.index });
       return;
     }
@@ -180,9 +183,9 @@ export class PartyScene extends Scene {
     }
 
     this.subMenu = new Menu([
-      { label: 'SUMMARY', value: 'summary' },
-      { label: 'SWITCH', value: 'switch' },
-      { label: 'CANCEL', value: 'cancel' },
+      { label: tUpper('SUMMARY'), value: 'summary' },
+      { label: tUpper('SWITCH'), value: 'switch' },
+      { label: tUpper('CANCEL'), value: 'cancel' },
     ]);
   }
 
@@ -237,11 +240,11 @@ export class PartyScene extends Scene {
       font.draw(g, displayName(a).slice(0, 10), tx, ty, 'normal', false);
       const ratio = a.hp / maxHp(a);
       if (first) {
-        font.draw(g, `:L${a.level}`, tx, ty + 11, 'normal', false);
+        font.draw(g, t(':L{level}', { level: a.level }), tx, ty + 11, 'normal', false);
         drawHpBar(g, tx, ty + 24, 62, ratio);
         font.drawRight(g, `${a.hp}/${maxHp(a)}`, x + w - 4, ty + 32, 'normal', false);
       } else {
-        font.draw(g, `:L${a.level}`, tx, ty + 9, 'normal', false);
+        font.draw(g, t(':L{level}', { level: a.level }), tx, ty + 9, 'normal', false);
         drawHpBar(g, x + 96, ty + 10, 44, ratio);
         font.drawRight(g, `${a.hp}/${maxHp(a)}`, x + w - 4, ty, 'normal', false);
       }
@@ -263,7 +266,7 @@ export class PartyScene extends Scene {
         const sy = ty + (first ? 11 : 9);
         g.fillStyle = STATUS_COLOR[a.status];
         g.fillRect(sx, sy, 22, 9);
-        font.drawCentered(g, STATUS_SHORT[a.status], sx + 11, sy + 1, 'white', false);
+        font.drawCentered(g, tUpper(STATUS_SHORT[a.status]), sx + 11, sy + 1, 'white', false);
       }
     }
 
@@ -271,12 +274,12 @@ export class PartyScene extends Scene {
     const prompt = this.messageTimer > 0
       ? this.message
       : this.swapFrom >= 0
-        ? 'Move to where?'
+        ? t('Move to where?')
         : this.mode === 'useItem'
-          ? `Use the ${itemDef(this.itemKey ?? 'patch').name} on which one?`
+          ? t('Use the {item} on which one?', { item: t(itemDef(this.itemKey ?? 'patch').name) })
           : this.mode === 'overworld'
-            ? 'Choose an AGÉNTMON.'
-            : 'Send out which AGÉNTMON?';
+            ? t('Choose an AGÉNTMON.')
+            : t('Send out which AGÉNTMON?');
     font.draw(g, prompt, 12, TEXTBOX_Y + 14, 'normal', false);
 
     if (this.subMenu) {
@@ -319,8 +322,8 @@ export class SummaryScene extends Scene {
     const sheet = this.game.creatureSheet(a.speciesKey);
     if (sheet) sheet.drawFrame(g, 'idle', 0, 48, 84, { scale: 0.9 });
     font.draw(g, displayName(a).slice(0, 11), 8, 8, 'normal', false);
-    font.draw(g, `:L${a.level}`, 8, 20, 'normal', false);
-    font.draw(g, `No.${String(sp.id).padStart(3, '0')}`, 8, 92, 'normal', false);
+    font.draw(g, t(':L{level}', { level: a.level }), 8, 20, 'normal', false);
+    font.draw(g, t('No.{n}', { n: String(sp.id).padStart(3, '0') }), 8, 92, 'normal', false);
     font.draw(g, sp.name, 8, 104, 'normal', false);
     let tx = 8;
     for (const t of sp.types) {
@@ -329,30 +332,30 @@ export class SummaryScene extends Scene {
       g.fillRect(tx, 118, 38, 11);
       g.fillStyle = td.dark;
       g.fillRect(tx, 127, 38, 2);
-      font.drawCentered(g, td.name.toUpperCase().slice(0, 6), tx + 19, 120, 'white');
+      font.drawCentered(g, upper(typeName(t)).slice(0, 6), tx + 19, 120, 'white');
       tx += 42;
     }
 
     drawPanel(g, 98, 2, 140, 156, '#f4f4f8', '#404868');
-    const titles = ['INFO', 'STATS', 'MOVES'];
+    const titles = [tUpper('INFO'), tUpper('STATS'), tUpper('MOVES')];
     font.draw(g, titles[this.page]!, 106, 8, 'normal', false);
     font.drawRight(g, '\u25c0 \u25b6', 232, 8, 'dim', false);
 
     if (this.page === 0) {
-      const lines = font.wrap(sp.dexEntry, 124);
+      const lines = font.wrap(dexEntryOf(sp), 124);
       for (const [i, l] of lines.slice(0, 5).entries()) font.draw(g, l, 104, 24 + i * 11, 'normal', false);
-      font.draw(g, `OT  ${a.otName}`, 104, 88, 'normal', false);
-      font.draw(g, `ID  ${String(a.otId).padStart(5, '0')}`, 104, 100, 'normal', false);
-      font.draw(g, `MET ${a.metMap}`, 104, 112, 'normal', false);
-      font.draw(g, `at Lv. ${a.metLevel}`, 104, 124, 'normal', false);
+      font.draw(g, t('OT  {name}', { name: a.otName }), 104, 88, 'normal', false);
+      font.draw(g, t('ID  {id}', { id: String(a.otId).padStart(5, '0') }), 104, 100, 'normal', false);
+      font.draw(g, t('MET {place}', { place: a.metMap }), 104, 112, 'normal', false);
+      font.draw(g, t('at Lv. {level}', { level: a.metLevel }), 104, 124, 'normal', false);
       const { have, need } = expToNextLevel(a);
-      font.draw(g, `NEXT ${Math.max(0, need - have)}`, 104, 136, 'normal', false);
+      font.draw(g, t('NEXT {exp}', { exp: Math.max(0, need - have) }), 104, 136, 'normal', false);
       drawExpBar(g, 104, 148, 126, need > 0 ? have / need : 1);
     } else if (this.page === 1) {
       const s = stats(a);
       const rows: [string, number][] = [
-        ['HP', maxHp(a)], ['ATTACK', s.atk], ['DEFENSE', s.def],
-        ['SP.ATK', s.spa], ['SP.DEF', s.spd], ['SPEED', s.spe],
+        [tUpper('HP'), maxHp(a)], [tUpper('ATTACK'), s.atk], [tUpper('DEFENSE'), s.def],
+        [tUpper('SP.ATK'), s.spa], [tUpper('SP.DEF'), s.spd], [tUpper('SPEED'), s.spe],
       ];
       rows.forEach(([label, value], i) => {
         const y = 26 + i * 20;
@@ -373,10 +376,10 @@ export class SummaryScene extends Scene {
         const td = typeDef(md.type);
         g.fillStyle = td.color;
         g.fillRect(104, y, 40, 11);
-        font.drawCentered(g, td.name.toUpperCase().slice(0, 6), 124, y + 2, 'white');
-        font.draw(g, md.name, 148, y, 'normal', false);
-        font.draw(g, `PP ${slot.pp}/${slot.maxPp}`, 104, y + 14, 'normal', false);
-        font.drawRight(g, md.power > 0 ? `PWR ${md.power}` : 'STATUS', 232, y + 14, 'normal', false);
+        font.drawCentered(g, upper(typeName(md.type)).slice(0, 6), 124, y + 2, 'white');
+        font.draw(g, moveName(md), 148, y, 'normal', false);
+        font.draw(g, t('PP {pp}/{maxPp}', { pp: slot.pp, maxPp: slot.maxPp }), 104, y + 14, 'normal', false);
+        font.drawRight(g, md.power > 0 ? t('PWR {power}', { power: md.power }) : tUpper('STATUS'), 232, y + 14, 'normal', false);
       });
     }
   }
@@ -417,11 +420,11 @@ export class BagScene extends Scene {
     const items = this.game.save.bag
       .filter((b) => itemDef(b.key).category === this.category)
       .map<MenuItem>((b) => ({
-        label: itemDef(b.key).name,
+        label: t(itemDef(b.key).name),
         value: b.key,
-        detail: `x${b.count}`,
+        detail: t('x{count}', { count: b.count }),
       }));
-    items.push({ label: 'CLOSE', value: 'close' });
+    items.push({ label: tUpper('CLOSE'), value: 'close' });
     this.menu.setItems(items);
     this.menu.index = Math.min(this.menu.index, items.length - 1);
   }
@@ -443,12 +446,12 @@ export class BagScene extends Scene {
     audio.sfx('select');
 
     if (this.mode === 'battle') {
-      if (!def.battle) { this.flash('That cannot be used in battle!'); return; }
+      if (!def.battle) { this.flash(t('That cannot be used in battle!')); return; }
       this.game.pop({ key: cur.value });
       return;
     }
 
-    if (!def.field) { this.flash(`The ${def.name} cannot be used here.`); return; }
+    if (!def.field) { this.flash(t('The {item} cannot be used here.', { item: t(def.name) })); return; }
     if (def.heal !== undefined || def.revive !== undefined || def.cures || def.pp !== undefined) {
       this.pendingTarget = cur.value;
       void this.game.scenes.push(new PartyScene(), { mode: 'useItem', itemKey: cur.value });
@@ -458,11 +461,11 @@ export class BagScene extends Scene {
       bagRemove(this.game.save, cur.value, 1);
       this.game.save.repelSteps = def.repel;
       audio.sfx('item');
-      this.flash(`${def.name} activated. Weak wild agents will stay away.`);
+      this.flash(t('{item} activated. Weak wild agents will stay away.', { item: t(def.name) }));
       this.rebuild();
       return;
     }
-    this.flash(`The ${def.name} has no use right now.`);
+    this.flash(t('The {item} has no use right now.', { item: t(def.name) }));
   }
 
   private applyFieldItem(key: string, targetIndex: number): void {
@@ -502,9 +505,9 @@ export class BagScene extends Scene {
     if (used) {
       bagRemove(this.game.save, key, 1);
       audio.sfx('heal');
-      this.flash(`Used the ${def.name} on ${displayName(agent)}.`);
+      this.flash(t('Used the {item} on {agent}.', { item: t(def.name), agent: displayName(agent) }));
     } else {
-      this.flash('It would have no effect.');
+      this.flash(t('It would have no effect.'));
     }
   }
 
@@ -525,7 +528,7 @@ export class BagScene extends Scene {
       const x = 6 + i * 46;
       const active = i === this.catIndex;
       drawPanel(g, x, 4, 44, 14, active ? '#f8f0d0' : '#b0b8c8', '#404868');
-      font.drawCentered(g, CATEGORY_NAME[cat].toUpperCase(), x + 22, 7, 'normal', false);
+      font.drawCentered(g, tUpper(CATEGORY_NAME[cat]), x + 22, 7, 'normal', false);
     }
 
     drawWindow(g, 4, 22, 152, 84);
@@ -543,7 +546,7 @@ export class BagScene extends Scene {
     drawWindow(g, 2, TEXTBOX_Y, SCREEN_W - 4, TEXTBOX_H);
     const text = this.messageTimer > 0
       ? this.message
-      : cur && cur.value !== 'close' ? itemDef(cur.value).desc : 'Close the BAG.';
+      : cur && cur.value !== 'close' ? t(itemDef(cur.value).desc) : t('Close the BAG.');
     for (const [i, line] of font.wrap(text, 216).slice(0, 3).entries()) {
       font.draw(g, line, 12, TEXTBOX_Y + 8 + i * 12, 'normal', false);
     }
@@ -638,12 +641,12 @@ export class DexScene extends Scene {
       const sheet = this.game.creatureSheet(key);
       if (sheet) sheet.drawFrame(g, 'idle', 0, 196, 96, { scale: 0.85 });
       font.drawCentered(g, species(key).name, 196, 104, 'normal', false);
-      font.drawCentered(g, species(key).genus, 196, 116, 'dim', false);
+      font.drawCentered(g, genusOf(species(key)), 196, 116, 'dim', false);
     } else {
       font.drawCentered(g, '???', 196, 80, 'dim', false);
     }
-    font.drawCentered(g, `SEEN ${this.game.save.dex.seen.length}`, 196, 130, 'normal', false);
-    font.drawCentered(g, `OWN  ${this.game.save.dex.caught.length}/${dexSize()}`, 196, 142, 'normal', false);
+    font.drawCentered(g, t('SEEN {n}', { n: this.game.save.dex.seen.length }), 196, 130, 'normal', false);
+    font.drawCentered(g, t('OWN  {caught}/{total}', { caught: this.game.save.dex.caught.length, total: dexSize() }), 196, 142, 'normal', false);
   }
 
   private renderDetail(g: CanvasRenderingContext2D): void {
@@ -652,19 +655,19 @@ export class DexScene extends Scene {
     drawWindow(g, 4, 4, SCREEN_W - 8, SCREEN_H - 8);
     const sheet = this.game.creatureSheet(key);
     if (sheet) sheet.drawFrame(g, 'idle', 0, 56, 96, { scale: 0.95 });
-    font.draw(g, `No.${String(sp.id).padStart(3, '0')}  ${sp.name}`, 100, 14, 'normal', false);
-    font.draw(g, sp.genus, 100, 26, 'dim', false);
+    font.draw(g, t('No.{n}  {name}', { n: String(sp.id).padStart(3, '0'), name: sp.name }), 100, 14, 'normal', false);
+    font.draw(g, genusOf(sp), 100, 26, 'dim', false);
     let tx = 100;
     for (const t of sp.types) {
       const td = typeDef(t);
       g.fillStyle = td.color;
       g.fillRect(tx, 38, 40, 11);
-      font.drawCentered(g, td.name.toUpperCase().slice(0, 6), tx + 20, 40, 'white');
+      font.drawCentered(g, upper(typeName(t)).slice(0, 6), tx + 20, 40, 'white');
       tx += 44;
     }
-    font.draw(g, `HT ${sp.height.toFixed(1)} m`, 100, 56, 'normal', false);
-    font.draw(g, `WT ${sp.weight.toFixed(1)} kg`, 100, 68, 'normal', false);
-    const lines = font.wrap(sp.dexEntry, 216);
+    font.draw(g, t('HT {height} m', { height: sp.height.toFixed(1) }), 100, 56, 'normal', false);
+    font.draw(g, t('WT {weight} kg', { weight: sp.weight.toFixed(1) }), 100, 68, 'normal', false);
+    const lines = font.wrap(dexEntryOf(sp), 216);
     for (const [i, l] of lines.slice(0, 4).entries()) font.draw(g, l, 14, 110 + i * 11, 'normal', false);
   }
 }
@@ -690,24 +693,23 @@ export class TrainerCardScene extends Scene {
     drawPanel(g, 8, 8, SCREEN_W - 16, SCREEN_H - 16, '#f8b830', '#a06818');
     drawPanel(g, 14, 14, SCREEN_W - 28, SCREEN_H - 28, '#f8e8b8', '#c09828');
 
-    font.draw(g, 'TRAINER CARD', 24, 22, 'normal', false);
-    font.draw(g, `NAME   ${save.playerName}`, 24, 40, 'normal', false);
-    font.draw(g, `IDNo.  ${String(save.trainerId).padStart(5, '0')}`, 24, 53, 'normal', false);
-    font.draw(g, `MONEY  \u00a5${formatMoney(save.money)}`, 24, 66, 'normal', false);
-    font.draw(g, `AGÉNTDEX  ${save.dex.caught.length}`, 24, 79, 'normal', false);
-    font.draw(g, `TIME   ${formatPlaytime(save.playtimeFrames)}`, 24, 92, 'normal', false);
+    font.draw(g, tUpper('TRAINER CARD'), 24, 22, 'normal', false);
+    font.draw(g, t('NAME   {name}', { name: save.playerName }), 24, 40, 'normal', false);
+    font.draw(g, t('IDNo.  {id}', { id: String(save.trainerId).padStart(5, '0') }), 24, 53, 'normal', false);
+    font.draw(g, t('MONEY  \u00a5{money}', { money: formatMoney(save.money) }), 24, 66, 'normal', false);
+    font.draw(g, t('AGÉNTDEX  {caught}', { caught: save.dex.caught.length }), 24, 79, 'normal', false);
+    font.draw(g, t('TIME   {time}', { time: formatPlaytime(save.playtimeFrames) }), 24, 92, 'normal', false);
 
     const sheet = this.game.sheet(save.gender === 'm' ? 'ch:player_m' : 'ch:player_f');
     if (sheet) sheet.drawFrame(g, 'walk_down', 0, 198, 92, { scale: 2 });
 
-    font.draw(g, 'BADGES', 24, 100, 'normal', false);
+    font.draw(g, tUpper('BADGES'), 24, 100, 'normal', false);
     const step = Math.floor((SCREEN_W - 60) / Math.max(1, BADGE_ORDER.length));
     for (let i = 0; i < BADGE_ORDER.length; i++) {
       const flagKey = BADGE_ORDER[i]!;
       const owned = save.badges.includes(flagKey);
       const x = 30 + step * i + Math.floor(step / 2);
       const y = 120;
-      const info = BADGE_INFO[flagKey];
       g.fillStyle = owned ? '#f0d040' : '#b8b0a0';
       g.beginPath();
       for (let k = 0; k < 6; k++) {
@@ -725,7 +727,7 @@ export class TrainerCardScene extends Scene {
         g.fillRect(x - 2, y - 4, 4, 8);
       }
       // First word only - full badge names do not fit under the hexagons.
-      const label = (info?.name ?? '').split(' ')[0] ?? '';
+      const label = (badgeInfoName(flagKey) || '').split(' ')[0] ?? '';
       font.drawCentered(g, label, x, 132, owned ? 'normal' : 'dim', false);
     }
   }
@@ -743,7 +745,7 @@ export class SaveScene extends Scene {
 
   override enter(): void {
     this.tw.speed = this.game.textDelay;
-    this.tw.setText('Would you like to save the game?');
+    this.tw.setText(t('Would you like to save the game?'));
   }
 
   update(): void {
@@ -757,7 +759,7 @@ export class SaveScene extends Scene {
         audio.sfx('select');
         if (this.pick === 1) { this.game.pop(); return; }
         this.state = 'saving';
-        this.tw.setText('Saving...');
+        this.tw.setText(t('Saving...'));
         void this.doSave();
       }
       return;
@@ -773,11 +775,11 @@ export class SaveScene extends Scene {
     if (ok) {
       this.state = 'done';
       this.tw.setText(saves.user
-        ? `${this.game.save.playerName} saved the game to the cloud!`
-        : `${this.game.save.playerName} saved the game to this device!`);
+        ? t('{player} saved the game to the cloud!', { player: this.game.save.playerName })
+        : t('{player} saved the game to this device!', { player: this.game.save.playerName }));
     } else {
       this.state = 'failed';
-      this.tw.setText(`Cloud sync failed, but your progress was saved locally.`);
+      this.tw.setText(t('Cloud sync failed, but your progress was saved locally.'));
     }
   }
 
@@ -785,16 +787,16 @@ export class SaveScene extends Scene {
     const save = this.game.save;
     const summary = summarise(save);
     drawWindow(g, 4, 4, 120, 76);
-    font.draw(g, 'PLAYER', 14, 12, 'normal', false);
+    font.draw(g, tUpper('PLAYER'), 14, 12, 'normal', false);
     font.drawRight(g, save.playerName, 116, 12, 'normal', false);
-    font.draw(g, 'BADGES', 14, 26, 'normal', false);
+    font.draw(g, tUpper('BADGES'), 14, 26, 'normal', false);
     font.drawRight(g, String(summary.badges), 116, 26, 'normal', false);
-    font.draw(g, 'AGÉNTDEX', 14, 40, 'normal', false);
+    font.draw(g, tUpper('AGÉNTDEX'), 14, 40, 'normal', false);
     font.drawRight(g, String(summary.dexCaught), 116, 40, 'normal', false);
-    font.draw(g, 'TIME', 14, 54, 'normal', false);
+    font.draw(g, tUpper('TIME'), 14, 54, 'normal', false);
     font.drawRight(g, formatPlaytime(save.playtimeFrames), 116, 54, 'normal', false);
-    font.draw(g, saves.user ? 'CLOUD' : 'LOCAL', 14, 68, 'dim', false);
-    font.drawRight(g, `FILE ${this.game.slot}`, 116, 68, 'dim', false);
+    font.draw(g, saves.user ? tUpper('CLOUD') : tUpper('LOCAL'), 14, 68, 'dim', false);
+    font.drawRight(g, t('FILE {slot}', { slot: this.game.slot }), 116, 68, 'dim', false);
 
     this.tw.draw(g, Math.floor(this.tick / 18) % 2 === 0);
 
@@ -802,8 +804,8 @@ export class SaveScene extends Scene {
       const x = SCREEN_W - 60;
       const y = TEXTBOX_Y - 36;
       drawWindow(g, x, y, 56, 34);
-      font.draw(g, 'YES', x + 18, y + 7, 'normal', false);
-      font.draw(g, 'NO', x + 18, y + 19, 'normal', false);
+      font.draw(g, tUpper('YES'), x + 18, y + 7, 'normal', false);
+      font.draw(g, tUpper('NO'), x + 18, y + 19, 'normal', false);
       font.draw(g, '\u25b6', x + 8, y + 7 + this.pick * 12, 'normal', false);
     }
   }
@@ -820,16 +822,16 @@ type StorageMode = 'root' | 'withdraw' | 'deposit';
 export class StorageScene extends Scene {
   private mode: StorageMode = 'root';
   private root = new Menu([
-    { label: 'WITHDRAW', value: 'withdraw' },
-    { label: 'DEPOSIT', value: 'deposit' },
-    { label: 'LOG OFF', value: 'exit' },
+    { label: tUpper('WITHDRAW'), value: 'withdraw' },
+    { label: tUpper('DEPOSIT'), value: 'deposit' },
+    { label: tUpper('LOG OFF'), value: 'exit' },
   ]);
   private list = new Menu([], 1, 6);
   private tw = new Typewriter();
   private tick = 0;
 
   override enter(): void {
-    this.tw.setText('Which service do you need?');
+    this.tw.setText(t('Which service do you need?'));
     this.tw.skipAll();
   }
 
@@ -844,7 +846,7 @@ export class StorageScene extends Scene {
     this.list.setItems(source.map<MenuItem>((a) => ({
       label: displayName(a).slice(0, 10),
       value: a.uid,
-      detail: `:L${a.level}`,
+      detail: t(':L{level}', { level: a.level }),
       variant: isFainted(a) ? 'dim' : 'normal',
     })));
     this.list.index = 0;
@@ -865,25 +867,25 @@ export class StorageScene extends Scene {
       if (pick === 'exit') { audio.sfx('cancel'); this.game.pop(); return; }
       if (pick === 'withdraw' && this.box.length === 0) {
         audio.sfx('error');
-        this.tw.setText('There is nothing in storage.');
+        this.tw.setText(t('There is nothing in storage.'));
         return;
       }
       if (pick === 'deposit' && this.game.save.party.length <= 1) {
         audio.sfx('error');
-        this.tw.setText('You need at least one AGÉNTMON with you!');
+        this.tw.setText(t('You need at least one AGÉNTMON with you!'));
         return;
       }
       audio.sfx('select');
       this.mode = pick === 'withdraw' ? 'withdraw' : 'deposit';
       this.rebuildList();
-      this.tw.setText(this.mode === 'withdraw' ? 'Withdraw which one?' : 'Store which one?');
+      this.tw.setText(this.mode === 'withdraw' ? t('Withdraw which one?') : t('Store which one?'));
       return;
     }
 
     if (inp.pressed('b')) {
       audio.sfx('cancel');
       this.mode = 'root';
-      this.tw.setText('Which service do you need?');
+      this.tw.setText(t('Which service do you need?'));
       return;
     }
     if (inp.repeat('up') && this.list.move(0, -1)) audio.sfx('cursor');
@@ -899,7 +901,7 @@ export class StorageScene extends Scene {
     if (this.mode === 'withdraw') {
       if (save.party.length >= 6) {
         audio.sfx('error');
-        this.tw.setText('Your team is already full!');
+        this.tw.setText(t('Your team is already full!'));
         return;
       }
       for (const box of save.boxes) {
@@ -908,13 +910,13 @@ export class StorageScene extends Scene {
         const [agent] = box.splice(i, 1);
         save.party.push(agent!);
         audio.sfx('heal');
-        this.tw.setText(`${displayName(agent!)} rejoined the team!`);
+        this.tw.setText(t('{agent} rejoined the team!', { agent: displayName(agent!) }));
         break;
       }
     } else {
       if (save.party.length <= 1) {
         audio.sfx('error');
-        this.tw.setText('You need at least one AGÉNTMON with you!');
+        this.tw.setText(t('You need at least one AGÉNTMON with you!'));
         return;
       }
       const i = save.party.findIndex((a) => a.uid === uid);
@@ -923,7 +925,7 @@ export class StorageScene extends Scene {
       const healthyLeft = save.party.some((a) => a !== target && !isFainted(a));
       if (!healthyLeft) {
         audio.sfx('error');
-        this.tw.setText('You need one working AGÉNTMON with you!');
+        this.tw.setText(t('You need one working AGÉNTMON with you!'));
         return;
       }
       if (save.boxes.length === 0) save.boxes.push([]);
@@ -934,13 +936,13 @@ export class StorageScene extends Scene {
       }
       if (!open) {
         audio.sfx('error');
-        this.tw.setText('Every storage bank is full!');
+        this.tw.setText(t('Every storage bank is full!'));
         return;
       }
       const [agent] = save.party.splice(i, 1);
       open.push(agent!);
       audio.sfx('select');
-      this.tw.setText(`${displayName(agent!)} was moved into storage.`);
+      this.tw.setText(t('{agent} was moved into storage.', { agent: displayName(agent!) }));
     }
     this.rebuildList();
     if (this.list.items.length === 0) this.mode = 'root';
@@ -956,10 +958,10 @@ export class StorageScene extends Scene {
     const stored = this.box.length;
 
     drawWindow(g, 4, 4, 88, 56);
-    font.draw(g, 'STORAGE', 12, 10, 'normal', false);
-    font.draw(g, 'STORED', 12, 26, 'dim', false);
+    font.draw(g, tUpper('STORAGE'), 12, 10, 'normal', false);
+    font.draw(g, tUpper('STORED'), 12, 26, 'dim', false);
     font.drawRight(g, `${stored}/${BOX_COUNT * BOX_SIZE}`, 84, 26, 'normal', false);
-    font.draw(g, 'TEAM', 12, 40, 'dim', false);
+    font.draw(g, tUpper('TEAM'), 12, 40, 'dim', false);
     font.drawRight(g, `${save.party.length}/6`, 84, 40, 'normal', false);
 
     if (this.mode === 'root') {
@@ -988,7 +990,25 @@ export class StorageScene extends Scene {
 // =========================================================================== //
 export class OptionsScene extends Scene {
   private index = 0;
-  private rows = ['TEXT SPEED', 'BATTLE STYLE', 'MUSIC', 'SOUND', 'MUTE', 'FRAME', 'CANCEL'];
+  private rows = this.buildRows();
+
+  private buildRows(): string[] {
+    return [
+      tUpper('TEXT SPEED'),
+      tUpper('BATTLE STYLE'),
+      tUpper('MUSIC'),
+      tUpper('SOUND'),
+      tUpper('MUTE'),
+      tUpper('FRAME'),
+      tUpper('LANGUAGE'),
+      tUpper('CANCEL'),
+    ];
+  }
+
+  private rebuildRows(): void {
+    this.rows = this.buildRows();
+    this.index = Math.min(this.index, this.rows.length - 1);
+  }
 
   update(): void {
     const inp = this.game.input;
@@ -998,6 +1018,7 @@ export class OptionsScene extends Scene {
     const dir = inp.repeat('right') ? 1 : inp.repeat('left') ? -1 : 0;
     if (dir !== 0) {
       audio.sfx('cursor');
+      let applyOptions = true;
       switch (this.index) {
         case 0: o.textSpeed = Math.max(0, Math.min(2, o.textSpeed + dir)) as 0 | 1 | 2; break;
         case 1: o.battleStyle = o.battleStyle === 'shift' ? 'set' : 'shift'; break;
@@ -1005,8 +1026,17 @@ export class OptionsScene extends Scene {
         case 3: o.sfxVolume = Math.max(0, Math.min(1, +(o.sfxVolume + dir * 0.1).toFixed(2))); break;
         case 4: o.muted = !o.muted; break;
         case 5: o.frame = (o.frame + dir + 3) % 3; break;
+        case 6: {
+          const current = Math.max(0, LANGS.findIndex((l) => l.code === getLang()));
+          const next = LANGS[(current + dir + LANGS.length) % LANGS.length]!;
+          this.game.setLanguage(next.code as Lang);
+          this.rebuildRows();
+          applyOptions = false;
+          break;
+        }
+        default: applyOptions = false; break;
       }
-      this.game.applyOptions();
+      if (applyOptions) this.game.applyOptions();
     }
     if (inp.pressed('b') || (inp.pressed('a') && this.index === this.rows.length - 1)) {
       audio.sfx('cancel');
@@ -1019,13 +1049,15 @@ export class OptionsScene extends Scene {
     g.fillRect(0, 0, SCREEN_W, SCREEN_H);
     drawWindow(g, 4, 4, SCREEN_W - 8, SCREEN_H - 8);
     const o = this.game.save.options;
+    const lang = LANGS.find((l) => l.code === getLang()) ?? LANGS[0]!;
     const values = [
-      ['SLOW', 'MID', 'FAST'][o.textSpeed] ?? 'MID',
-      o.battleStyle.toUpperCase(),
+      [tUpper('SLOW'), tUpper('MID'), tUpper('FAST')][o.textSpeed] ?? tUpper('MID'),
+      o.battleStyle === 'shift' ? tUpper('SHIFT') : tUpper('SET'),
       `${Math.round(o.musicVolume * 100)}%`,
       `${Math.round(o.sfxVolume * 100)}%`,
-      o.muted ? 'ON' : 'OFF',
-      `TYPE ${o.frame + 1}`,
+      o.muted ? tUpper('ON') : tUpper('OFF'),
+      t('TYPE {n}', { n: o.frame + 1 }),
+      lang.native,
       '',
     ];
     for (let i = 0; i < this.rows.length; i++) {
@@ -1034,7 +1066,7 @@ export class OptionsScene extends Scene {
       font.draw(g, this.rows[i]!, 26, y, 'normal', false);
       font.drawRight(g, values[i] ?? '', SCREEN_W - 18, y, i === this.index ? 'gold' : 'normal', false);
     }
-    font.drawCentered(g, 'Adjust with \u25c0 \u25b6   B to close', SCREEN_W / 2, SCREEN_H - 26, 'dim');
+    font.drawCentered(g, t('Adjust with \u25c0 \u25b6   B to close'), SCREEN_W / 2, SCREEN_H - 12, 'dim');
   }
 }
 

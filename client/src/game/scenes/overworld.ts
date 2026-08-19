@@ -8,15 +8,16 @@ import { SCREEN_H, SCREEN_W } from '../../engine/screen.ts';
 import { TILE } from '../../engine/tilegen.ts';
 import { drawWindow, fillScreen, TEXTBOX_Y, Typewriter } from '../../engine/ui.ts';
 import { createAgent, healFully, type AgentInstance } from '../data/agent.ts';
-import { species } from '../data/dex.ts';
-import { item as itemDef } from '../data/items.ts';
+import { dexEntryOf, species, typeName } from '../data/dex.ts';
+import { itemName } from '../data/items.ts';
 import { getMap } from '../data/maps.ts';
 import { trackExists } from '../data/music.ts';
 import { rivalStarterFor, STARTER_KEYS } from '../data/starters.ts';
-import { BADGE_INFO, trainer as trainerDef, type TrainerDef } from '../data/trainers.ts';
+import { badgeInfoName, trainer as trainerDef, trainerBadgeName, type TrainerDef } from '../data/trainers.ts';
 import {
   bagAdd, catchSpecies, flag, seeSpecies, setFlag, type Facing,
 } from '../state.ts';
+import { formatNumber, t, tUpper } from '../i18n.ts';
 import { TileMap, type EncounterEntry, type MapDef, type NpcDef, type WarpDef } from '../world/tilemap.ts';
 import type { BattlePayload, BattleResult } from './battle.ts';
 import { BattleScene } from './battle.ts';
@@ -32,6 +33,10 @@ const TURN_FRAMES = 6;
 const DIR_VEC: Record<Facing, [number, number]> = {
   up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0],
 };
+
+function localizeLines(lines: string[]): string[] {
+  return lines.map((line) => t(line));
+}
 
 interface Actor {
   id: string;
@@ -114,7 +119,7 @@ export class OverworldScene extends Scene {
     this.game.save.pos = { map: id, x, y, facing };
     this.updateCamera(true);
     this.playMapMusic();
-    this.banner = { text: this.def.name, timer: this.def.outdoor ? 150 : 0 };
+    this.banner = { text: t(this.def.name), timer: this.def.outdoor ? 150 : 0 };
     if (this.def.healOnEnter) {
       this.game.save.respawn = { map: id, x, y, facing: 'down' };
     }
@@ -403,8 +408,8 @@ export class OverworldScene extends Scene {
   private async blackout(): Promise<void> {
     this.busy = true;
     await this.say(
-      `${this.game.save.playerName} is out of usable AGÉNTMON!`,
-      `${this.game.save.playerName} scrambled back to the nearest REPAIR BAY...`,
+      t('{player} is out of usable AGÉNTMON!', { player: this.game.save.playerName }),
+      t('{player} scrambled back to the nearest REPAIR BAY...', { player: this.game.save.playerName }),
     );
     for (const a of this.game.save.party) healFully(a);
     this.game.save.money = Math.max(0, Math.floor(this.game.save.money * 0.75));
@@ -432,10 +437,9 @@ export class OverworldScene extends Scene {
       setFlag(this.game.save, `item:${this.def.id}:${ball.id}`);
       bagAdd(this.game.save, ball.item, ball.count ?? 1);
       audio.sfx('item');
-      const def = itemDef(ball.item);
       void this.say(
-        `${this.game.save.playerName} found ${def.name}!`,
-        `${this.game.save.playerName} put the ${def.name} in the BAG.`,
+        t('{player} found {item}!', { player: this.game.save.playerName, item: itemName(ball.item) }),
+        t('{player} put the {item} in the BAG.', { player: this.game.save.playerName, item: itemName(ball.item) }),
       );
       return;
     }
@@ -443,7 +447,7 @@ export class OverworldScene extends Scene {
     const sign = this.map.signAt(tx, ty);
     if (sign) {
       if (sign.script) { void this.runSignScript(sign); return; }
-      void this.say(...sign.text);
+      void this.say(...localizeLines(sign.text));
       return;
     }
 
@@ -476,17 +480,17 @@ export class OverworldScene extends Scene {
     }
     if (def.trainer) {
       const t = trainerDef(def.trainer);
-      await this.say(...t.after);
+      await this.say(...localizeLines(t.after));
       this.busy = false;
       return;
     }
-    await this.say(...(def.text ?? ['...']));
+    await this.say(...(def.text ? localizeLines(def.text) : [t('...')]));
     this.busy = false;
   }
 
   private async runSignScript(sign: { text: string[]; script?: string }): Promise<void> {
     this.busy = true;
-    if (sign.text.length > 0) await this.say(...sign.text);
+    if (sign.text.length > 0) await this.say(...localizeLines(sign.text));
     await this.runScript(sign.script!);
     this.busy = false;
   }
@@ -539,10 +543,10 @@ export class OverworldScene extends Scene {
   }
 
   private async runTrainerBattle(key: string): Promise<BattleResult | undefined> {
-    const t: TrainerDef = trainerDef(key);
-    await this.say(...t.intro);
+    const trainer: TrainerDef = trainerDef(key);
+    await this.say(...localizeLines(trainer.intro));
     if (!this.canFight()) return undefined;
-    const foes = t.team.map((m) => createAgent(m.species, { level: m.level, moves: m.moves }));
+    const foes = trainer.team.map((m) => createAgent(m.species, { level: m.level, moves: m.moves }));
     for (const f of foes) seeSpecies(this.game.save, f.speciesKey);
     audio.sfx('encounter');
     await this.game.transitions.out('battleSplit', 46);
@@ -550,14 +554,14 @@ export class OverworldScene extends Scene {
       foes,
       trainerKey: key,
       backdrop: this.def.battleBackdrop ?? 'bg_city',
-      music: t.music ?? 'battleTrainer',
+      music: trainer.music ?? 'battleTrainer',
       config: {
         kind: 'trainer',
         playerName: this.game.save.playerName,
-        trainerName: t.name,
+        trainerName: trainer.name,
         trainerKey: key,
-        trainerAi: t.ai ?? 1,
-        payout: t.payout,
+        trainerAi: trainer.ai ?? 1,
+        payout: trainer.payout,
         canRun: false,
         badges: this.game.save.badges.length,
       },
@@ -572,18 +576,18 @@ export class OverworldScene extends Scene {
       return result;
     }
     setFlag(this.game.save, `beat:${key}`);
-    await this.say(...t.defeat);
-    if (t.badge) {
+    await this.say(...localizeLines(trainer.defeat));
+    if (trainer.badge) {
       audio.sfx('badge');
-      if (!this.game.save.badges.includes(t.badge.flag)) this.game.save.badges.push(t.badge.flag);
-      setFlag(this.game.save, t.badge.flag);
+      if (!this.game.save.badges.includes(trainer.badge.flag)) this.game.save.badges.push(trainer.badge.flag);
+      setFlag(this.game.save, trainer.badge.flag);
       await this.say(
-        `${this.game.save.playerName} received the ${t.badge.name}!`,
-        ...(t.badge.item ? [`You also got a ${itemDef(t.badge.item).name}!`] : []),
+        t('{player} received the {badge}!', { player: this.game.save.playerName, badge: trainerBadgeName(trainer) ?? '' }),
+        ...(trainer.badge.item ? [t('You also got a {item}!', { item: itemName(trainer.badge.item) })] : []),
       );
-      if (t.badge.item) bagAdd(this.game.save, t.badge.item, 1);
+      if (trainer.badge.item) bagAdd(this.game.save, trainer.badge.item, 1);
     }
-    await this.say(...t.after);
+    await this.say(...localizeLines(trainer.after));
     await this.handleEvolutions();
     return result;
   }
@@ -594,47 +598,47 @@ export class OverworldScene extends Scene {
     // Parameterised scripts: `shop:key1,key2,...`
     if (id.startsWith('shop:')) {
       const stock = id.slice(5).split(',').filter(Boolean);
-      await this.say('Hi there! Take your pick of our field supplies.');
+      await this.say(t('Hi there! Take your pick of our field supplies.'));
       await this.openShop(stock);
       return;
     }
     switch (id) {
       case 'heal': {
-        await this.say('Welcome to the REPAIR BAY!', 'Shall I restore your AGÉNTMON to full charge?');
-        const yes = await this.ask('Restore your team?');
-        if (!yes) { await this.say('We hope to see you again!'); return; }
+        await this.say(t('Welcome to the REPAIR BAY!'), t('Shall I restore your AGÉNTMON to full charge?'));
+        const yes = await this.ask(t('Restore your team?'));
+        if (!yes) { await this.say(t('We hope to see you again!')); return; }
         audio.sfx('heal');
         for (const a of save.party) healFully(a);
-        await this.say('Recalibrating...', 'Your AGÉNTMON are fully charged!', 'We hope to see you again!');
+        await this.say(t('Recalibrating...'), t('Your AGÉNTMON are fully charged!'), t('We hope to see you again!'));
         save.respawn = { map: this.def.id, x: this.player.x, y: this.player.y + 1, facing: 'down' };
         return;
       }
       case 'mom': {
         if (!flag(save, 'gotStarter')) {
           await this.say(
-            `MOM: Morning, ${save.playerName}! PROF. ADA came by looking for you.`,
-            'MOM: Something about a field assignment. Go on, do not keep her waiting!',
+            t('MOM: Morning, {player}! PROF. ADA came by looking for you.', { player: save.playerName }),
+            t('MOM: Something about a field assignment. Go on, do not keep her waiting!'),
           );
           setFlag(save, 'labRivalWaiting');
         } else {
           await this.say(
-            'MOM: Look at you, out there with a real AGÉNTMON.',
-            'MOM: Let me top your team up before you go.',
+            t('MOM: Look at you, out there with a real AGÉNTMON.'),
+            t('MOM: Let me top your team up before you go.'),
           );
           audio.sfx('heal');
           for (const a of save.party) healFully(a);
-          await this.say('MOM: There. Good as new. Be careful out there!');
+          await this.say(t('MOM: There. Good as new. Be careful out there!'));
         }
         return;
       }
       case 'route1_block': {
         if (flag(save, 'gotStarter')) {
-          await this.say('TECHNICIAN: Good luck out there!');
+          await this.say(t('TECHNICIAN: Good luck out there!'));
           return;
         }
         await this.say(
-          'TECHNICIAN: Hold up! Wild AGÉNTMON roam past this point.',
-          'TECHNICIAN: Go see PROF. ADA and get a partner first.',
+          t('TECHNICIAN: Hold up! Wild AGÉNTMON roam past this point.'),
+          t('TECHNICIAN: Go see PROF. ADA and get a partner first.'),
         );
         return;
       }
@@ -643,14 +647,13 @@ export class OverworldScene extends Scene {
       case 'citadel_block': {
         const need = id === 'route2_block' ? 'badge_volt'
           : id === 'route3_block' ? 'badge_cryo' : 'badge_thermal';
-        const info = BADGE_INFO[need];
         if (flag(save, need)) {
-          await this.say('GUARD: Clearance confirmed. On you go.');
+          await this.say(t('GUARD: Clearance confirmed. On you go.'));
           return;
         }
         await this.say(
-          'GUARD: This checkpoint needs gym clearance.',
-          `GUARD: Come back with the ${info?.name ?? 'next badge'}.`,
+          t('GUARD: This checkpoint needs gym clearance.'),
+          t('GUARD: Come back with the {badge}.', { badge: badgeInfoName(need) || t('next badge') }),
         );
         return;
       }
@@ -667,7 +670,7 @@ export class OverworldScene extends Scene {
       case 'gift_rarechip': return this.scriptGift('rarechip', 'RESEARCHER', 'rare_chip', 1);
       case 'gift_fullreset': return this.scriptGift('fullreset', 'MEDIC', 'full_reset', 1);
       default: {
-        await this.say(...(npc?.def?.text ?? ['...']));
+        await this.say(...(npc?.def?.text ? localizeLines(npc.def.text) : [t('...')]));
       }
     }
   }
@@ -677,15 +680,14 @@ export class OverworldScene extends Scene {
   ): Promise<void> {
     const save = this.game.save;
     if (flag(save, `gift:${id}`)) {
-      await this.say(`${who}: Use it well!`);
+      await this.say(t('{who}: Use it well!', { who }));
       return;
     }
-    const def = itemDef(itemKey);
-    await this.say(`${who}: Here, take this. You look like you will need it.`);
+    await this.say(t('{who}: Here, take this. You look like you will need it.', { who }));
     bagAdd(save, itemKey, count);
     setFlag(save, `gift:${id}`);
     audio.sfx('item');
-    await this.say(`${save.playerName} received ${def.name}!`);
+    await this.say(t('{player} received {item}!', { player: save.playerName, item: itemName(itemKey) }));
   }
 
   private async scriptAda(): Promise<void> {
@@ -693,15 +695,15 @@ export class OverworldScene extends Scene {
     if (flag(save, 'gotStarter')) {
       const seen = save.dex.seen.length;
       await this.say(
-        'PROF. ADA: How is the field data coming along?',
-        `PROF. ADA: You have logged ${seen} species so far. Keep going!`,
+        t('PROF. ADA: How is the field data coming along?'),
+        t('PROF. ADA: You have logged {count} species so far. Keep going!', { count: formatNumber(seen) }),
       );
       return;
     }
     await this.say(
-      `PROF. ADA: ${save.playerName}! Perfect timing.`,
-      'PROF. ADA: I have three prototype cores here. Each holds a partially trained AGÉNTMON.',
-      'PROF. ADA: Choose the one you feel drawn to. It will be your partner.',
+      t('PROF. ADA: {player}! Perfect timing.', { player: save.playerName }),
+      t('PROF. ADA: I have three prototype cores here. Each holds a partially trained AGÉNTMON.'),
+      t('PROF. ADA: Choose the one you feel drawn to. It will be your partner.'),
     );
     const starters = [...STARTER_KEYS];
     const picked = await this.chooseStarter(starters);
@@ -714,16 +716,16 @@ export class OverworldScene extends Scene {
     setFlag(save, 'gotStarter');
     audio.sfx('levelUp');
     await this.say(
-      `${save.playerName} received ${species(picked).name}!`,
-      'PROF. ADA: Take good care of it. Growth is the whole point.',
+      t('{player} received {species}!', { player: save.playerName, species: species(picked).name }),
+      t('PROF. ADA: Take good care of it. Growth is the whole point.'),
     );
 
     // The rival always takes the type that beats yours.
     save.rivalStarter = rivalStarterFor(picked);
     bagAdd(save, 'nanocore', 5);
     await this.say(
-      'PROF. ADA: Oh, and take these NANOCORES. You will need them to catch new agents.',
-      'PROF. ADA: Head north on ROUTE 1 when you are ready. VOLTSPIRE CITY has the first GYM.',
+      t('PROF. ADA: Oh, and take these NANOCORES. You will need them to catch new agents.'),
+      t('PROF. ADA: Head north on ROUTE 1 when you are ready. VOLTSPIRE CITY has the first GYM.'),
     );
     // REX is waiting to challenge you the moment you have a partner, so he has
     // to be re-evaluated here rather than on the next map load.
@@ -741,7 +743,7 @@ export class OverworldScene extends Scene {
     for (let attempt = 0; attempt < 4; attempt++) {
       const result = await this.pushAndWait<StarterResult>(new StarterScene(), { keys: starters });
       if (result?.key) return result.key;
-      await this.say('PROF. ADA: Take your time. Look them over properly.');
+      await this.say(t('PROF. ADA: Take your time. Look them over properly.'));
     }
     return this.chooseStarterByText(starters);
   }
@@ -751,10 +753,13 @@ export class OverworldScene extends Scene {
     for (;;) {
       const s = species(starters[index]!);
       await this.say(
-        `PROF. ADA: This is ${s.name}, a ${s.types.map((t) => t.toUpperCase()).join('/')} type.`,
-        s.dexEntry ?? 'A remarkable little machine.',
+        t('PROF. ADA: This is {species}, a {types} type.', {
+          species: s.name,
+          types: s.types.map((key) => typeName(key).toUpperCase()).join('/'),
+        }),
+        dexEntryOf(s) ?? t('A remarkable little machine.'),
       );
-      if (await this.ask(`Take ${s.name}?`)) return starters[index]!;
+      if (await this.ask(t('Take {species}?', { species: s.name }))) return starters[index]!;
       index = (index + 1) % starters.length;
     }
   }
@@ -763,19 +768,22 @@ export class OverworldScene extends Scene {
     const save = this.game.save;
     if (!flag(save, 'gotStarter')) {
       await this.say(
-        `${save.rivalName}: There you are. ADA said we each get one.`,
-        `${save.rivalName}: Pick fast. I am not waiting all day.`,
+        t('{rival}: There you are. ADA said we each get one.', { rival: save.rivalName }),
+        t('{rival}: Pick fast. I am not waiting all day.', { rival: save.rivalName }),
       );
       return;
     }
     if (flag(save, 'rivalLabDone')) {
-      await this.say(`${save.rivalName}: See you on the road, ${save.playerName}.`);
+      await this.say(t('{rival}: See you on the road, {player}.', {
+        rival: save.rivalName,
+        player: save.playerName,
+      }));
       return;
     }
     setFlag(save, 'rivalLabDone');
     await this.say(
-      `${save.rivalName}: So you went with that one. Fine by me.`,
-      `${save.rivalName}: Let us settle this right now!`,
+      t('{rival}: So you went with that one. Fine by me.', { rival: save.rivalName }),
+      t('{rival}: Let us settle this right now!', { rival: save.rivalName }),
     );
     // The rival's team scales from whichever starter you passed on.
     const key = save.rivalStarter ?? 'boltkin';
@@ -803,14 +811,14 @@ export class OverworldScene extends Scene {
     this.playMapMusic();
     await this.game.transitions.in('fade', 30);
     if (!result || result.outcome === 'lose') {
-      await this.say(`${save.rivalName}: Told you. Go train, then find me.`);
+      await this.say(t('{rival}: Told you. Go train, then find me.', { rival: save.rivalName }));
       for (const a of save.party) healFully(a);
       this.rebuildNpcs();
       return;
     }
     await this.say(
-      `${save.rivalName}: ...Lucky start. That is all that was.`,
-      `${save.rivalName}: Next time I will be ready. Smell you later!`,
+      t('{rival}: ...Lucky start. That is all that was.', { rival: save.rivalName }),
+      t('{rival}: Next time I will be ready. Smell you later!', { rival: save.rivalName }),
     );
     // `hideIfFlag` already points at `rivalLabDone` in the map data, so the
     // rebuild is all that is needed to walk him off screen.
@@ -821,7 +829,7 @@ export class OverworldScene extends Scene {
   private async scriptRivalFight(key: string, doneFlag: string): Promise<void> {
     const save = this.game.save;
     if (flag(save, doneFlag)) {
-      await this.say(`${save.rivalName}: Keep moving. I will catch up.`);
+      await this.say(t('{rival}: Keep moving. I will catch up.', { rival: save.rivalName }));
       return;
     }
     const result = await this.runTrainerBattle(key);
@@ -829,9 +837,9 @@ export class OverworldScene extends Scene {
   }
 
   private async scriptLeader(key: string): Promise<void> {
-    const t = trainerDef(key);
+    const trainer = trainerDef(key);
     if (flag(this.game.save, `beat:${key}`)) {
-      await this.say(...t.after);
+      await this.say(...localizeLines(trainer.after));
       return;
     }
     await this.runTrainerBattle(key);
@@ -841,15 +849,17 @@ export class OverworldScene extends Scene {
     const save = this.game.save;
     if (flag(save, 'beat:champion')) {
       await this.say(
-        'NEXUS: The CITADEL still hums. You changed something here.',
-        'NEXUS: Come back any time, CHAMPION.',
+        t('NEXUS: The CITADEL still hums. You changed something here.'),
+        t('NEXUS: Come back any time, CHAMPION.'),
       );
       return;
     }
     if (save.badges.length < 3) {
       await this.say(
-        'NEXUS: Three GYM clearances are required to enter the core.',
-        `NEXUS: You are carrying ${save.badges.length}. Come back when you are ready.`,
+        t('NEXUS: Three GYM clearances are required to enter the core.'),
+        t('NEXUS: You are carrying {count}. Come back when you are ready.', {
+          count: formatNumber(save.badges.length),
+        }),
       );
       return;
     }
@@ -858,10 +868,10 @@ export class OverworldScene extends Scene {
       setFlag(save, 'champion');
       audio.playMusic('victory', true);
       await this.say(
-        `NEXUS: ...Remarkable. You did not just out-compute me. You out-grew me.`,
-        `${save.playerName} is the new AGÉNTMON CHAMPION!`,
-        'Your name has been written into the HALL OF FAME.',
-        'THE END... for now.',
+        t('NEXUS: ...Remarkable. You did not just out-compute me. You out-grew me.'),
+        t('{player} is the new AGÉNTMON CHAMPION!', { player: save.playerName }),
+        t('Your name has been written into the HALL OF FAME.'),
+        t('THE END... for now.'),
       );
       await this.game.persist();
     }
@@ -917,7 +927,7 @@ export class OverworldScene extends Scene {
     });
   }
 
-  ask(question: string, yes = 'YES', no = 'NO'): Promise<boolean> {
+  ask(question: string, yes = tUpper('YES'), no = tUpper('NO')): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
       const tw = new Typewriter();
       tw.speed = this.game.textDelay;
@@ -1143,7 +1153,7 @@ export class OverworldScene extends Scene {
 
   /** Used by the save menu to describe where the player is. */
   get locationName(): string {
-    return this.def.name;
+    return t(this.def.name);
   }
 }
 
