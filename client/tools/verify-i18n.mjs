@@ -24,6 +24,7 @@ const KEYS = JSON.parse(readFileSync('tools/i18n-keys.json', 'utf8'));
 const KANJI = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/;
 const fails = [];
 const note = (m) => { fails.push(m); console.log(`  FAIL ${m}`); };
+const warn = (m) => { console.log(`  warn ${m}`); };
 const ph = (s) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join();
 
 // --------------------------------------------------------------------- //
@@ -61,14 +62,41 @@ for (const lang of LANGS) {
   const p = await b.newPage({ viewport: { width: 960, height: 640 } });
   const errs = [];
   const IGNORE = /\b(401|500)\b|\/api\//; // no backend under `vite preview`
+  // Against the deployed B1 site, five back-to-back playthroughs occasionally
+  // trip a transport-level timeout. That says nothing about the build, so it is
+  // a warning here - it is only ignored for a remote host, never for localhost.
+  const REMOTE = !/localhost|127\.0\.0\.1/.test(URL);
+  const FLAKY = /net::ERR_(TIMED_OUT|CONNECTION_RESET|NETWORK_CHANGED|ABORTED|EMPTY_RESPONSE)/;
   p.on('pageerror', (e) => errs.push(`PAGEERROR: ${(e.stack || e.message).split('\n')[0]}`));
-  p.on('console', (m) => { if (m.type() === 'error' && !IGNORE.test(m.text())) errs.push(`CONSOLE: ${m.text()}`); });
+  p.on('console', (m) => {
+    if (m.type() !== 'error' || IGNORE.test(m.text())) return;
+    if (REMOTE && FLAKY.test(m.text())) { warn(`${lang}: transient network error ignored`); return; }
+    errs.push(`CONSOLE: ${m.text()}`);
+  });
 
   await p.addInitScript((l) => {
     try { localStorage.setItem('agentmon.lang', l); } catch { /* private mode */ }
   }, lang);
-  await p.goto(URL, { waitUntil: 'networkidle' });
-  await p.waitForTimeout(2200);
+  // 'networkidle' never settles against the deployed site: the API keeps a
+  // connection open. Wait for the boot scene to finish loading assets instead,
+  // which is the condition the walkthrough below actually depends on. A cold
+  // App Service can drop the first navigation, so give it a second chance.
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      break;
+    } catch (e) {
+      if (attempt === 3) throw e;
+      warn(`${lang}: navigation retry ${attempt}`);
+      await p.waitForTimeout(5000);
+    }
+  }
+  await p.waitForFunction(
+    () => window.agentmon?.scenes?.top?.constructor?.name === 'TitleScene',
+    null,
+    { timeout: 90000 },
+  );
+  await p.waitForTimeout(1200);
 
   const active = await p.evaluate(() => window.agentmon.i18n.getLang());
   if (active !== lang) note(`${lang}: game booted in "${active}"`);
