@@ -28,7 +28,11 @@ const check = (ok, label, detail = '') => {
   if (!ok) fails.push(label);
 };
 
-await p.goto(URL, { waitUntil: 'networkidle' });
+// A B1 App Service can take a minute to warm after a deploy. `commit` resolves
+// as soon as the response lands, and the real readiness gate is the game object
+// - retrying goto() instead just interrupts the navigation already in flight.
+await p.goto(URL, { waitUntil: 'commit', timeout: 180000 });
+await p.waitForFunction(() => !!window.agentmon, null, { timeout: 180000 });
 await p.waitForTimeout(2500);
 
 // ---------------------------------------------------------------- textures
@@ -74,17 +78,18 @@ const sceneName = () => p.evaluate(() => window.agentmon.scenes.top?.constructor
 const tap = async (k, times = 1, ms = 300) => {
   for (let i = 0; i < times; i++) { await p.keyboard.press(k); await p.waitForTimeout(ms); }
 };
-await tap('Shift', 1, 600);
-await tap('z', 2, 600);
-for (let i = 0; i < 12 && (await sceneName()) !== 'IntroScene'; i++) await tap('z', 1, 400);
-await tap('z', 16, 700);
-await tap('z', 2, 300);
-await tap('Shift', 1, 800);
-await tap('z', 1, 300);
-await tap('Shift', 1, 1000);
-for (let i = 0; i < 14 && (await sceneName()) !== 'OverworldScene'; i++) await tap('z', 1, 900);
-await p.waitForTimeout(1200);
-check((await sceneName()) === 'OverworldScene', 'reached the overworld');
+// Adaptive rather than a fixed key sequence: a cold App Service spends far
+// longer on the intro than `vite preview` does, so timing-based navigation
+// silently ends up somewhere else entirely.
+let scene = null;
+for (let i = 0; i < 90; i++) {
+  scene = await sceneName();
+  if (scene === 'OverworldScene') break;
+  if (scene === 'TitleScene') { await tap('Shift', 1, 700); await tap('z', 1, 500); continue; }
+  if (scene === 'IntroScene') { await tap(i % 3 === 2 ? 'Shift' : 'z', 1, 500); continue; }
+  await tap('z', 1, i < 30 ? 420 : 800);
+}
+check(scene === 'OverworldScene', 'reached the overworld', `scene=${scene}`);
 
 await p.evaluate(() => {
   const g = window.agentmon;

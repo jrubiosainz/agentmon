@@ -138,6 +138,45 @@ Re-running the key costs nothing: `tools/.cache` holds every generated PNG, so
 `python tools/generate_assets.py --creatures --trainers --buildings --backdrops
 --title` re-post-processes the cached art without calling Azure at all.
 
+### Why a brand accent disappears (`keep_colors`)
+
+`quantize()` median-cuts the sprite to 15 colours. A detail that covers a handful
+of pixels — Unitree's visor bar, NEO's ear ring, Figure 03's pixel eyes — never
+wins a palette slot, so a render that is perfect at 1024 px comes out blank at
+68 px. **When a sprite looks wrong, open `tools/.cache/images/<key>.*.png` first**
+to tell a bad render from a bad downscale.
+
+The fix is `PixelizeConfig.keep_colors`, driven by a per-species `accents=` field
+in `tools/newmons.py`. Three rules, all learned the hard way:
+
+- Beacon pixels must be excluded from the median-cut **sample**, not merely
+  repainted afterwards, or the accent hue biases (and is averaged into) a
+  neighbouring slot. The palette budget shrinks by the number of reserved
+  colours, and the beacons are painted back GBA-snapped after quantization.
+- `keep_tolerance` is a **sum-of-channels** distance (`tolerance × 3`). 62 was
+  too loose — NEO's beige bodysuit matched pure white. **34 is the default.**
+- A single bright stop is not enough for a thin feature: LANCZOS downscaling
+  blends it toward the background, so give glows **two stops** (bright +
+  falloff), e.g. Unitree `(0x48,0xC8,0xF8)` + `(0x18,0x88,0xC0)`.
+
+`connect_antennae()` has the same problem for 1 px stalks and must run on
+**every** view, not just the COVER pose — hence the per-species `antennae=True`.
+
+### Two more sprite invariants
+
+**Realistic human proportions do not survive 68 px.** A 1:7.5 humanoid puts the
+head at ~9 px and the brand cue at 1 px. Humanoid prompts therefore ask for
+*stylised creature proportions, the head deliberately oversized at roughly one
+quarter of the total body height* — which is what GBA-era Pokémon actually do.
+It was decisive for NEO and Figure 03 and cost nothing in recognisability.
+
+**A featureless silhouette needs an explicit `art_back`.** The generic "seen
+from directly behind" view string applied to a smooth barrel — Reachy Mini —
+produces a blob indistinguishable from its shut COVER pose. That looked like a
+sprite-lookup bug and was not one: `sheetFor()` only swaps to `:cover` when
+`c.covered` is true. `REACHY_BACK` describes the head held upright above an open
+neck gap so the two poses read differently.
+
 ### Why the overworld cast is drawn in code, not generated
 
 The 15 walking characters go through a different path — `agentmon_art/chibi.py`,

@@ -80,7 +80,7 @@ def requests() -> list[ImageRequest]:
     """front + back for every species, shape form and extra pose."""
     reqs: list[ImageRequest] = []
 
-    def pair(key: str, art: str) -> None:
+    def pair(key: str, art: str, art_back: str | None = None) -> None:
         reqs.append(
             ImageRequest(
                 key=f"{key}_front",
@@ -89,11 +89,14 @@ def requests() -> list[ImageRequest]:
                 ),
             )
         )
+        # A creature whose silhouette is mostly a smooth featureless shell reads
+        # as "shut down" from behind unless the rear is described explicitly -
+        # REACHYMINI's back view came out indistinguishable from its COVER pose.
         reqs.append(
             ImageRequest(
                 key=f"{key}_back",
                 prompt=CREATURE_STYLE.format(
-                    desc=art,
+                    desc=art_back or art,
                     view="seen from directly behind, rear view, the back of the creature facing "
                     "the viewer, its face and front completely hidden",
                 ),
@@ -101,9 +104,9 @@ def requests() -> list[ImageRequest]:
         )
 
     for s in newmons.SPECIES:
-        pair(s["key"], s["art"])
+        pair(s["key"], s["art"], s.get("art_back"))
         for form in s.get("shape_forms", []):
-            pair(f"{s['key']}_{form['key']}", form["art"])
+            pair(f"{s['key']}_{form['key']}", form["art"], form.get("art_back"))
         for pose, art in s.get("extra_poses", {}).items():
             reqs.append(
                 ImageRequest(
@@ -177,12 +180,14 @@ def connect_antennae(img: Image.Image) -> Image.Image:
 # ------------------------------------------------------------------- sprites
 
 def build_sprite(src: Path, key: str, cell: tuple[int, int], back: bool,
-                 repair_antennae: bool = False) -> Image.Image:
+                 repair_antennae: bool = False,
+                 accents: tuple[tuple[int, int, int], ...] = ()) -> Image.Image:
     """Pixelize one render and pack its battle animation set."""
     cw, ch = cell
     if back:
         cw, ch = int(cw * 1.15), int(ch * 1.15)
-    base = pixelize(src, PixelizeConfig(width=cw, height=ch, colors=15, align="bottom"))
+    base = pixelize(src, PixelizeConfig(width=cw, height=ch, colors=15, align="bottom",
+                                        keep_colors=accents))
     if repair_antennae:
         base = connect_antennae(base)
     write_sheet(base, key, back)
@@ -214,23 +219,30 @@ def main() -> int:
         raise SystemExit(f"renders failed: {missing} - rerun, the rest is cached")
 
     cells = {s["key"]: tuple(s["cell"]) for s in newmons.SPECIES}
+    accents = {s["key"]: tuple(tuple(c) for c in s.get("accents", ())) for s in newmons.SPECIES}
     made: list[str] = []
 
     for s in newmons.SPECIES:
         cell = cells[s["key"]]
+        acc = accents[s["key"]]
+        # Hair-thin antenna stalks never survive the 15-colour reduction, so any
+        # species that has them needs the repair pass on EVERY view, not just on
+        # the COVER pose - the rear view lost them entirely.
+        fix = bool(s.get("antennae"))
         for suffix, back in (("front", False), ("back", True)):
             key = f"{s['key']}_{suffix}"
-            build_sprite(paths[key], key, cell, back)
+            build_sprite(paths[key], key, cell, back, repair_antennae=fix, accents=acc)
             made.append(key)
 
         for form in s.get("shape_forms", []):
+            facc = tuple(tuple(c) for c in form.get("accents", acc))
             for suffix, back in (("front", False), ("back", True)):
                 key = f"{s['key']}_{form['key']}_{suffix}"
-                build_sprite(paths[key], key, cell, back)
+                build_sprite(paths[key], key, cell, back, repair_antennae=fix, accents=facc)
                 made.append(key)
         for pose in s.get("extra_poses", {}):
             key = f"{s['key']}_{pose}"
-            build_sprite(paths[key], key, cell, False, repair_antennae=True)
+            build_sprite(paths[key], key, cell, False, repair_antennae=True, accents=acc)
             made.append(key)
 
         # Shape forms share the shell silhouette, so their covered pose is the

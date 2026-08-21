@@ -53,6 +53,19 @@ REACHY_BODY = (
     "the bottom, and a dark grey base ring"
 )
 
+# The generic "seen from behind" view produced a featureless blob for REACHYMINI
+# that was indistinguishable from its COVER pose, so its rear is spelled out:
+# the head must stay a separate dome sitting ABOVE the body on a visible neck.
+REACHY_BACK = (
+    "a small desk companion robot creature seen from behind, its rounded squarish head held fully "
+    "upright and clearly separated from the body, sitting high above a smooth egg-shaped barrel body "
+    "on a visible open neck gap crossed by several thin dark diagonal support rods, the smooth blank "
+    "back of the head showing a soft rounded shell with a small round dark port at its centre and no "
+    "eyes and no face anywhere, two long thin black spring antennae rising from the top of the head, "
+    "the barrel body wider at the bottom with one horizontal seam and a dark grey base ring, the head "
+    "plainly detached and floating above the shell opening rather than tucked inside it"
+)
+
 SPECIES = [
     # --------------------------------------------------------------- STACKCHAN
     dict(
@@ -78,10 +91,13 @@ SPECIES = [
         types=["neural"], genus="Shell Unit",
         stats=(60, 52, 62, 95, 96, 90), catch=140, base_exp=168,
         growth="medium_fast", height=0.28, weight=1.5, cell=(56, 56),
+        antennae=True,
         dex="Two spring antennae read the room before it moves. At the first hint of trouble it bows "
             "its head into its shell.",
         art="Official Pokemon-style creature version of " + REACHY_BODY + ", in clean off-white and "
             "pale cream with a soft grey shadow, cheerful and curious, small stubby feet under the base",
+        art_back="Official Pokemon-style creature version of " + REACHY_BACK + ", in clean off-white "
+            "and pale cream with a soft grey shadow, small stubby feet under the base",
         learn=[(1, "scratch"), (1, "cover"), (5, "mind_link"), (9, "prediction"), (13, "quick_jab"),
                (17, "smokescreen"), (22, "logic_bomb"), (27, "empathy"), (32, "hypnotize"),
                (38, "neural_storm"), (45, "recalibrate")],
@@ -111,6 +127,8 @@ SPECIES = [
                      "eyes joined by a slim black bridge bar, two long thin black spring antennae, and "
                      "a smooth egg-shaped white barrel body, the entire head and body painted with bold "
                      "black zebra stripes, dark grey base ring",
+                 art_back="Official Pokemon-style creature: " + REACHY_BACK + ", the entire head and "
+                     "body painted with bold black zebra stripes",
                  learn=[(1, "scratch"), (1, "cover"), (5, "mind_link"), (9, "dazzle_stripe"),
                         (13, "bolt_toss"), (18, "hull_plating"), (23, "logic_bomb"), (28, "empathy"),
                         (33, "plate_press"), (39, "neural_storm"), (46, "girder_smash")]),
@@ -130,18 +148,19 @@ SPECIES = [
         extra_poses={
             "cover": "A small robot creature curled into a defensive shut-down posture: one smooth "
                      "seamless off-white egg-shaped barrel body, widest at the bottom and tapering to "
-                     "a rounded top, with its rounded head bowed steeply forward and downward into the "
-                     "top opening so that only the smooth curved outer back of the head faces the "
-                     "viewer like a closed lid, the face and both eyes completely hidden behind it, "
-                     "the upper half of the head still rising clearly above the body so the head is "
-                     "not swallowed, two small soft rounded ear bumps on the top corners of the head, "
-                     "two long thin solid black antennae rising cleanly from behind the head, each an "
-                     "unbroken continuous stalk firmly attached to the head and tipped with a small "
-                     "white ball, clearly connected and never floating or broken, two very narrow "
-                     "dark crescent slivers of the hidden eye opening barely visible at the sides, a "
-                     "thin dark grey base ring flat on the ground, one faint horizontal seam low on "
-                     "the body and two tiny vertical vent slots, no legs, no buttons, no centre line, "
-                     "no visible face, quiet and closed",
+                     "a rounded top, with its head bowed steeply forward and downward into the top "
+                     "opening so that only the smooth curved outer back of the head faces the viewer "
+                     "like a closed lid, the face and both eyes completely hidden behind it, the head "
+                     "a perfectly smooth round dome, a clean unbroken circular arc with no ears, no "
+                     "ear bumps, no corners, no lumps and no protrusions of any kind on it, the upper "
+                     "half of that dome still rising clearly above the body so the head is not "
+                     "swallowed, two long thin solid black antennae rising cleanly from behind the "
+                     "dome, each an unbroken continuous stalk firmly attached to the head and tipped "
+                     "with a small white ball, clearly connected and never floating or broken, two "
+                     "very narrow dark crescent slivers of the hidden eye opening barely visible at "
+                     "the sides, a thin dark grey base ring flat on the ground, one faint horizontal "
+                     "seam low on the body and two tiny vertical vent slots, no legs, no buttons, no "
+                     "centre line, no visible face, quiet and closed",
         },
     ),
 
@@ -151,18 +170,23 @@ SPECIES = [
         types=["alloy", "servo"], genus="Labor Unit",
         stats=(82, 105, 92, 68, 80, 83), catch=45, base_exp=196,
         growth="slow", height=1.73, weight=57.0, cell=(70, 70),
+        accents=((0x30, 0xD8, 0xE8), (0x10, 0x88, 0xA0)),  # cyan faceplate outline + its falloff
         dex="Built for a full factory shift and never once complaining. It can lift a chassis twice "
             "its mass without a sound.",
-        art="A tall human-proportioned bipedal humanoid robot creature standing upright and relaxed with "
-            "its arms down at its sides: the head is a small smooth rounded-rectangle helmet whose "
-            "entire front is one flat glossy pure-black faceplate with absolutely no eyes, mouth or "
-            "features, framed by a bone-white shell over the top and sides of the helmet; a slim "
-            "exposed matte-black neck; a bone-white chest plate split by a fine vertical centre seam "
-            "over a matte-black abdomen; bone-white pearl armour shells covering the shoulders, upper "
-            "arms, forearms, thighs and shins with slim matte-black actuator joints clearly exposed at "
-            "the elbows, waist, hips and knees; realistic bone-white five-fingered human-shaped hands "
-            "with dark finger joints; bone-white feet with dark soles; matte satin finish, calm and "
-            "industrial",
+        art="A tall slim human-proportioned bipedal humanoid robot creature standing upright and relaxed "
+            "with its arms straight down at its sides: the head is a small smooth rounded helmet that is "
+            "entirely glossy piano-black, front and sides alike, one seamless featureless black "
+            "faceplate with absolutely no eyes and no mouth, and the whole outline of that faceplate is "
+            "traced by one thin continuous glowing cyan light line running around its edge like neon "
+            "piping, which is the single brightest detail on the creature; a short matte-black neck; a "
+            "large smooth pearl-white chest plate with a soft vertical centre seam, flanked by "
+            "matte-black shoulder caps and matte-black torso sides so the white chest reads as a panel "
+            "set into black; a narrow matte-black waist band; pearl-white upper-arm and forearm shells "
+            "separated by exposed matte-black elbow actuators; pearl-white five-fingered human-shaped "
+            "hands with dark knuckle lines; a matte-black hip block; pearl-white thigh and shin shells "
+            "with exposed matte-black knee actuators between them; pearl-white feet with dark soles; "
+            "strong two-tone contrast of glossy black and satin pearl white only, no other colour "
+            "besides the cyan face outline, calm and industrial",
         learn=[(1, "tackle"), (1, "bolt_toss"), (6, "brace"), (11, "plate_press"), (16, "power_surge"),
                (21, "gear_grind"), (27, "hull_plating"), (33, "slam"), (39, "pile_drive"),
                (46, "girder_smash"), (54, "hyper_drive")],
@@ -211,18 +235,25 @@ SPECIES = [
         types=["alloy", "neural"], genus="Helper Unit",
         stats=(78, 88, 84, 100, 88, 77), catch=45, base_exp=194,
         growth="slow", height=1.68, weight=49.0, cell=(70, 70),
+        accents=((0xFF, 0xFF, 0xFF),),  # white pixel eyes on the black helmet
         dex="Its visor is one sheet of glass hiding a very fast mind. It watches a task once and can "
             "then repeat it forever.",
         art="A soft-looking human-proportioned bipedal humanoid robot creature standing calmly with arms "
-            "at its sides: the head is a compact rounded helmet, glossy jet-black across the whole "
-            "curved front like a single wraparound visor with no eyes or mouth, capped by a smooth "
-            "light-grey shell over the crown; the torso, shoulders and upper arms are wrapped in a "
-            "distinctly darker mid slate-grey soft woven textile cover with a clearly visible vertical "
-            "cloth seam down the chest, reading as padded fabric rather than hard armour and standing "
-            "out clearly against the much lighter limbs; matte dark charcoal forearms and slim dark hip "
-            "and knee joints; bright off-white moulded thigh and shin panels; light five-fingered "
-            "hands; clean off-white boots; strong light-dark contrast between the pale legs and the "
-            "dark fabric torso; friendly domestic proportions, soft rounded edges, no exposed wiring",
+            "at its sides: the head is a smooth glossy jet-black rounded egg-shaped helmet, taller than "
+            "it is wide and completely black all over with no visor line, bearing across its front "
+            "three or four large bright white square pixel blocks arranged in a short row like a "
+            "minimal blocky pixel face, boldly drawn and the only light on the head; a short grey "
+            "neck; the torso, shoulders and upper arms "
+            "are wrapped in a mid slate-grey soft woven textile cover with a clearly visible ribbed "
+            "knit weave and a vertical cloth seam down the chest, reading as padded fabric rather than "
+            "hard armour, with a small dark chequered pixel logo high on the chest; matte charcoal "
+            "elbow joints and light grey forearms; a moulded matte-black hip block; grey knitted thighs "
+            "meeting chunky matte-black knee blocks; light grey shins; light five-fingered hands with "
+            "dark joints; clean pale grey boots; an overall soft muted grey-and-black palette with the "
+            "glossy black head standing out against the woven grey body; friendly domestic proportions, "
+            "soft rounded edges, no exposed wiring; drawn with stylised creature proportions, the head "
+            "deliberately oversized at roughly one quarter of the total body height and the limbs "
+            "correspondingly shorter, so the pixel face reads clearly at small size",
         learn=[(1, "tackle"), (1, "mind_link"), (6, "prediction"), (11, "bolt_toss"), (16, "laser_ping"),
                (21, "hull_plating"), (27, "plate_press"), (33, "logic_bomb"), (40, "visor_beam"),
                (47, "neural_storm"), (55, "girder_smash")],
@@ -234,17 +265,22 @@ SPECIES = [
         types=["alloy", "volt"], genus="Kata Unit",
         stats=(74, 118, 78, 66, 74, 115), catch=45, base_exp=204,
         growth="fast", height=1.32, weight=35.0, cell=(68, 68),
+        accents=((0x48, 0xC8, 0xF8), (0x18, 0x88, 0xC0)),  # glowing blue visor bar + its falloff
         dex="It trains kata four hundred times an hour. It knows how you mean to dodge and picks the "
             "kick you cannot.",
         art="A compact short agile bipedal humanoid robot creature in a low ready martial-arts stance "
-            "with knees bent and fists raised: the head is a small dark-grey rounded pod dominated by a "
-            "wide horizontal glossy black visor band with a single round camera lens at its centre, and "
-            "a small dark depth-sensor dome sitting on top of the crown; brushed silver-grey metallic "
-            "shells over the chest, upper arms, thighs and shins; large clearly visible black "
-            "cylindrical rotary joint actuators like thick discs at both shoulders, both elbows, both "
-            "hips and both knees; slim dark limb linkages between them; small dark three-fingered "
-            "gripper hands; short flat dark feet; a small blue accent stripe on the chest; athletic, "
-            "squat and springy proportions",
+            "with knees bent and fists raised: the head is a small smooth dark navy-black wraparound "
+            "helmet, rounded like a motorcycle helmet with a glossy black visor covering the whole "
+            "front, and across that visor runs one wide bright glowing electric-blue horizontal light "
+            "bar from side to side, the single brightest feature of the creature, with no eyes and no "
+            "mouth; a short dark neck; a bright glossy pearl-white rounded chest plate carrying small "
+            "dark lettering across it, set between dark grey shoulder joints; brushed silver-white "
+            "shells over the upper arms, forearms, thighs and shins; large clearly visible matte-black "
+            "cylindrical rotary joint actuators like thick dark discs at both shoulders, both elbows, "
+            "the waist, both hips and both knees, with slim dark linkages between them; small dark "
+            "three-fingered gripper hands; short flat dark feet; crisp white-and-black two-tone "
+            "colouring with the blue visor bar as the only accent; athletic, squat and springy "
+            "proportions",
         learn=[(1, "scratch"), (1, "spark"), (5, "quick_jab"), (10, "volt_bite"), (15, "overclock"),
                (20, "spin_kick"), (26, "static_field"), (32, "gear_grind"), (38, "arc_bolt"),
                (45, "slam"), (53, "thunder_core")],
@@ -256,19 +292,28 @@ SPECIES = [
         types=["neural", "alloy"], genus="Home Unit",
         stats=(100, 80, 90, 82, 96, 57), catch=45, base_exp=192,
         growth="slow", height=1.65, weight=30.0, cell=(68, 68),
+        accents=((0xFF, 0xFF, 0xFF),),  # glowing white ear ring
         dex="Wrapped head to toe in soft knit so it can never hurt anyone. It tidies your workshop "
             "while you sleep.",
-        art="A gentle human-proportioned bipedal humanoid robot creature standing calmly, its entire "
-            "body sheathed head to toe in one continuous soft pale oatmeal-beige knitted fabric suit "
-            "like a knitted bodysuit, the colour a very desaturated light greige sand tone close to raw "
-            "undyed wool or unbleached linen, definitely NOT orange and NOT bright tan, kept muted and "
-            "washed-out: the head is a smooth featureless rounded egg "
-            "shape covered in the same beige knit, with no eyes, no mouth and no visor at all, only a "
-            "faint slightly darker oval panel where a face would be; a soft knitted collar at the neck; "
-            "the shoulders, arms, torso, hips and legs all show a visible ribbed knit stitch texture "
-            "with gentle fabric creases; soft five-fingered knit-covered hands; softly rounded knit "
-            "feet; slim calm friendly proportions, warm and domestic, entirely fabric with no exposed "
-            "metal or machinery anywhere",
+        art="A gentle human-proportioned bipedal humanoid robot creature standing calmly with its arms "
+            "relaxed at its sides, its entire body sheathed head to toe in one continuous soft pale "
+            "oatmeal-beige knitted fabric suit like a full knitted bodysuit, the colour a very "
+            "desaturated light greige sand tone close to raw undyed wool or unbleached linen, "
+            "definitely NOT orange and NOT bright tan, kept muted and washed-out: the head is a smooth "
+            "featureless rounded egg shape covered in the same beige knit with no eyes, no mouth and no "
+            "visor at all, and on the side of the head exactly where a human ear would sit there is one "
+            "large bright glowing white circular ring, a bold luminous white halo outline taking up a "
+            "third of the visible side of the head, which is the single brightest and most distinctive "
+            "feature of the creature; a soft knitted collar at "
+            "the neck; the shoulders, chest, arms, hips and legs all show a clearly visible ribbed knit "
+            "stitch texture with gentle fabric creases and soft seams running down the outside of the "
+            "arms and legs; the hands are the only hard parts, smooth cream-white moulded "
+            "five-fingered robotic hands with visible finger segments emerging from knitted cuffs; one "
+            "small round darker port low on the outer hip; softly rounded knit feet; broad relaxed "
+            "shoulders and a calm friendly stance, warm and domestic, everything else fabric with no "
+            "exposed metal or machinery anywhere; drawn with stylised creature proportions, the head "
+            "deliberately oversized at roughly one quarter of the total body height and the limbs "
+            "correspondingly shorter, so the head reads clearly at small size",
         learn=[(1, "tackle"), (1, "mind_link"), (6, "empathy"), (11, "brace"), (16, "soft_grip"),
                (21, "prediction"), (27, "hull_plating"), (33, "logic_bomb"), (40, "plate_press"),
                (47, "neural_storm"), (55, "girder_smash")],

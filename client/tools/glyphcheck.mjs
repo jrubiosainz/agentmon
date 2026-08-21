@@ -50,7 +50,7 @@ const SET = BASE + [...extra].sort().join('');
 const browser = await chromium.launch();
 const page = await browser.newPage();
 await page.goto(URL, { waitUntil: 'load' });
-await page.waitForFunction('!!window.agentmon', null, { timeout: 20000 });
+await page.waitForFunction(() => !!window.agentmon, null, { timeout: 20000 });
 
 const bad = await page.evaluate(async (set) => {
   const { font } = await import('/src/engine/font.ts');

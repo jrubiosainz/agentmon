@@ -46,6 +46,13 @@ class PixelizeConfig:
     despeckle: bool = True
     pad_bottom: int = 0
     align: str = "center"  # center | bottom
+    # Signature "beacon" colours that must survive palette reduction. A brand's
+    # accent - Unitree's blue visor bar, NEO's white ear ring, Figure 03's pixel
+    # eyes - covers a handful of pixels, so median-cut always throws it away and
+    # the sprite stops being recognisable. Each entry reserves a palette slot and
+    # is painted back exactly after quantization.
+    keep_colors: tuple[tuple[int, int, int], ...] = ()
+    keep_tolerance: int = 34
 
 
 # --------------------------------------------------------------------------- #
@@ -188,6 +195,18 @@ def fit(img: Image.Image, cfg: PixelizeConfig) -> Image.Image:
 # --------------------------------------------------------------------------- #
 # 4. Quantize to a small GBA palette
 # --------------------------------------------------------------------------- #
+def _beacon_mask(rgb: np.ndarray, hard: np.ndarray, cfg: PixelizeConfig) -> np.ndarray:
+    """Pixels close enough to a reserved colour to be worth protecting."""
+    keep = np.zeros(hard.shape, dtype=bool)
+    if not cfg.keep_colors:
+        return keep
+    src = rgb.astype(np.int32)
+    for col in cfg.keep_colors:
+        d = np.abs(src - np.array(col, dtype=np.int32)).sum(axis=2)
+        keep |= (d <= cfg.keep_tolerance * 3) & (hard > 0)
+    return keep
+
+
 def quantize(img: Image.Image, cfg: PixelizeConfig) -> Image.Image:
     arr = np.array(img.convert("RGBA"))
     alpha = arr[:, :, 3]
@@ -199,12 +218,22 @@ def quantize(img: Image.Image, cfg: PixelizeConfig) -> Image.Image:
 
     # Median-cut over opaque pixels only, so the palette isn't wasted on fringe.
     opaque = np.array(rgb)
+    beacons = _beacon_mask(opaque, hard, cfg)
+    budget = max(2, cfg.colors - len(cfg.keep_colors)) if cfg.keep_colors else cfg.colors
     tmp = opaque.copy()
-    tmp[hard == 0] = tmp[hard > 0].mean(axis=0).astype(np.uint8) if (hard > 0).any() else 0
-    pal_src = Image.fromarray(tmp, "RGB").quantize(colors=cfg.colors, method=Image.MEDIANCUT, dither=Image.NONE)
+    # Beacon pixels are excluded from the median-cut sample as well, or the
+    # accent hue would still bias (and be averaged into) a neighbouring slot.
+    sample = (hard > 0) & ~beacons
+    fill = tmp[sample].mean(axis=0).astype(np.uint8) if sample.any() else 0
+    tmp[~sample] = fill
+    pal_src = Image.fromarray(tmp, "RGB").quantize(colors=budget, method=Image.MEDIANCUT, dither=Image.NONE)
     reduced = np.array(pal_src.convert("RGB"))
 
     reduced = to_gba_color(reduced)
+    for col in cfg.keep_colors:
+        d = np.abs(opaque.astype(np.int32) - np.array(col, dtype=np.int32)).sum(axis=2)
+        hit = beacons & (d <= cfg.keep_tolerance * 3)
+        reduced[hit] = to_gba_color(np.array(col, dtype=np.uint8).reshape(1, 1, 3))[0, 0]
     out = np.dstack([reduced, hard]).astype(np.uint8)
     out[hard == 0] = (0, 0, 0, 0)
     return Image.fromarray(out, "RGBA")

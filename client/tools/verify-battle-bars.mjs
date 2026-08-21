@@ -35,7 +35,7 @@ const tap = async (k, times = 1, ms = 300) => {
 
 // ------------------------------------------------------------ reach the world
 await page.goto(URL, { waitUntil: 'load' });
-await page.waitForFunction('!!window.agentmon', null, { timeout: 20000 });
+await page.waitForFunction(() => !!window.agentmon, null, { timeout: 20000 });
 await page.waitForTimeout(2200);
 await tap('Shift', 1, 600);
 await tap('z', 2, 600);

@@ -127,7 +127,7 @@ for (const s of steps) {
   const tag = String(++i).padStart(2, '0');
   if (s.reload) {
     await page.reload({ waitUntil: 'load' });
-    await page.waitForFunction('!!window.agentmon', null, { timeout: 20000 });
+    await page.waitForFunction(() => !!window.agentmon, null, { timeout: 20000 });
     await page.waitForTimeout(1500);
     console.log('  reloaded ->', await scene());
   }
