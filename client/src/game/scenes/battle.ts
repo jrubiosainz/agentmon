@@ -11,7 +11,8 @@ import {
   TEXTBOX_H, TEXTBOX_Y, Typewriter, type MenuItem,
 } from '../../engine/ui.ts';
 import {
-  displayName, expToNextLevel, isFainted, learnMove, maxHp, statAt, STATUS_COLOR, STATUS_SHORT,
+  agentSpriteKey, displayName, expToNextLevel, isFainted, learnMove, maxHp, statAt,
+  types as agentTypes, STATUS_COLOR, STATUS_SHORT,
   type AgentInstance,
 } from '../data/agent.ts';
 import { move as moveDef, moveName, species, typeDef, typeName, type Stats } from '../data/dex.ts';
@@ -182,8 +183,15 @@ export class BattleScene extends Scene {
   }
 
   private sheetFor(side: Side): SpriteSheet | null {
-    const agent = side === 'player' ? this.battle.playerC.agent : this.battle.foeC.agent;
-    return this.game.creatureSheet(agent.speciesKey, side === 'player');
+    const c = side === 'player' ? this.battle.playerC : this.battle.foeC;
+    const key = agentSpriteKey(c.agent);
+    // While COVER is up the unit is drawn shut, front-facing on both sides -
+    // there is no separate back pose for a closed shell.
+    if (c.covered) {
+      const shut = this.game.creatureSheet(`${key}:cover`);
+      if (shut) return shut;
+    }
+    return this.game.creatureSheet(key, side === 'player');
   }
 
   // ------------------------------------------------------------------ intro
@@ -466,6 +474,14 @@ export class BattleScene extends Scene {
         case 'miss':
         case 'noEffect':
           break;
+        case 'cover': {
+          // `sheetFor()` already reads `covered`, so the pose swaps itself;
+          // this just gives the shell a beat to slam shut / spring open.
+          audio.sfx(ev.up ? 'charge' : 'cancel');
+          this.play(ev.side, 'idle', true);
+          yield 12;
+          break;
+        }
         case 'throwBall': {
           audio.sfx('ballThrow');
           this.ballAnim = { t: 0, shakes: ev.shakes, caught: ev.caught, total: 0 };
@@ -716,7 +732,7 @@ export class BattleScene extends Scene {
       const sp = species(agent.speciesKey);
       const w = side === 'player' ? 56 : 46;
       g.globalAlpha = s.alpha;
-      g.fillStyle = typeDef(sp.types[0]!).color ?? '#586074';
+      g.fillStyle = typeDef(agentTypes(agent)[0]!).color ?? '#586074';
       g.fillRect(x - w / 2, y - w, w, w);
       g.globalAlpha = 1;
       font.drawCentered(g, sp.name, x, y - w - 10, 'white');

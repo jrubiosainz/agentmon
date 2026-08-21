@@ -15,8 +15,11 @@ import { Battle, type PlayerAction } from '../src/game/battle/engine.ts';
 import {
   BACKDROP_KEYS, BUILDING_KEYS, CHARACTER_KEYS, TRAINER_KEYS,
 } from '../src/game/data/artkeys.ts';
-import { createAgent } from '../src/game/data/agent.ts';
-import { DEX, setDex, move as moveDef, species as speciesDef, typeEffect } from '../src/game/data/dex.ts';
+import { createAgent, evolveTo, maxHp, types as agentTypes } from '../src/game/data/agent.ts';
+import {
+  DEX, allSpecies, hasCoverPose, learnsetOf, setDex, move as moveDef, species as speciesDef,
+  spriteKey, typeEffect, typesOf,
+} from '../src/game/data/dex.ts';
 import { ITEMS } from '../src/game/data/items.ts';
 import { ALL_MAPS, mapExists } from '../src/game/data/maps.ts';
 import { ALL_TRACKS, trackExists } from '../src/game/data/music.ts';
@@ -752,5 +755,203 @@ describe('starters', () => {
       expect(STARTER_KEYS as readonly string[], key).toContain(answer);
       expect(speciesDef(answer).key).toBe(answer);
     }
+  });
+});
+
+describe('forms', () => {
+  /**
+   * REACHYMINI is the only species with alternate looks. Colour forms are pure
+   * palette swaps; shape forms bring their own typing and moves. Everything
+   * downstream (sprite key, learnset, type chart) has to follow the form, and
+   * every species that predates forms has to keep behaving exactly as before.
+   */
+  it('only species that declare forms have them, and every form is well formed', () => {
+    const problems: string[] = [];
+    for (const s of allSpecies()) {
+      for (const f of s.forms) {
+        if (!f.key || !f.label) problems.push(`${s.key}: form with no key/label`);
+        if (f.kind !== 'colour' && f.kind !== 'shape') problems.push(`${s.key}/${f.key}: bad kind`);
+        if (f.kind === 'shape') {
+          if (!f.types?.length) problems.push(`${s.key}/${f.key}: shape form without types`);
+          if (!f.learnset?.length) problems.push(`${s.key}/${f.key}: shape form without learnset`);
+        }
+        for (const ty of f.types ?? []) {
+          if (!DEX().types[ty]) problems.push(`${s.key}/${f.key}: unknown type ${ty}`);
+        }
+        for (const [, k] of f.learnset ?? []) {
+          if (!DEX().moves[k]) problems.push(`${s.key}/${f.key}: unknown move ${k}`);
+        }
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+
+  it('a form overrides typing and learnset, and the base is untouched', () => {
+    const base = createAgent('reachymini', { level: 30, form: null });
+    const zebra = createAgent('reachymini', { level: 30, form: 'zebra' });
+    expect(agentTypes(base)).toEqual(speciesDef('reachymini').types);
+    expect(agentTypes(zebra)).not.toEqual(agentTypes(base));
+    expect(typesOf('reachymini', 'zebra')).toEqual(agentTypes(zebra));
+    // Shape forms carry their own moves, so the auto-filled set must differ.
+    expect(zebra.moves.map((m) => m.key)).not.toEqual(base.moves.map((m) => m.key));
+  });
+
+  it('a colour form is a palette swap: same types, same learnset, own sprite', () => {
+    const sky = createAgent('reachymini', { level: 30, form: 'sky' });
+    expect(agentTypes(sky)).toEqual(speciesDef('reachymini').types);
+    expect(learnsetOf('reachymini', 'sky')).toEqual(speciesDef('reachymini').learnset);
+    expect(spriteKey('reachymini', 'sky')).toBe('reachymini_sky');
+  });
+
+  it('the untinted colour form falls back to the species sheet', () => {
+    // SNOW *is* the base render, so it ships no sheet of its own; asking for
+    // one would 404 and leave the battler invisible.
+    const snow = speciesDef('reachymini').forms.find((f) => f.kind === 'colour' && !f.tint);
+    expect(snow, 'expected an untinted colour form').toBeTruthy();
+    expect(spriteKey('reachymini', snow!.key)).toBe('reachymini');
+  });
+
+  it('species without forms are completely unaffected', () => {
+    const a = createAgent('stackbit', { level: 20 });
+    expect(a.form).toBeNull();
+    expect(spriteKey('stackbit', a.form)).toBe('stackbit');
+    expect(agentTypes(a)).toEqual(speciesDef('stackbit').types);
+  });
+
+  it('an unknown form key never crashes and never changes behaviour', () => {
+    expect(typesOf('reachymini', 'nope')).toEqual(speciesDef('reachymini').types);
+    expect(spriteKey('reachymini', 'nope')).toBe('reachymini');
+    // Saves written before forms existed have no `form` field at all.
+    const legacy = createAgent('reachymini', { level: 10 });
+    delete (legacy as { form?: string | null }).form;
+    expect(agentTypes(legacy)).toEqual(speciesDef('reachymini').types);
+  });
+
+  it('evolving drops a form the new species does not have', () => {
+    const a = createAgent('reachymini', { level: 30, form: 'zebra' });
+    evolveTo(a, 'stackbit');
+    expect(a.form).toBeNull();
+    expect(agentTypes(a)).toEqual(speciesDef('stackbit').types);
+  });
+
+  it('every declared form that needs art has a sheet on disk', () => {
+    const problems: string[] = [];
+    for (const s of allSpecies()) {
+      for (const f of s.forms) {
+        const key = spriteKey(s.key, f.key);
+        if (key === s.key) continue;
+        for (const suffix of ['', '_back']) {
+          const p = new URL(`../public/assets/creatures/${key}${suffix}.png`, import.meta.url);
+          if (!existsSync(fileURLToPath(p))) problems.push(`missing ${key}${suffix}.png`);
+        }
+        if (hasCoverPose(s.key, f.key)) {
+          const p = new URL(`../public/assets/creatures/${key}_cover.png`, import.meta.url);
+          if (!existsSync(fileURLToPath(p))) problems.push(`missing ${key}_cover.png`);
+        }
+      }
+      if (hasCoverPose(s.key, null)) {
+        const p = new URL(`../public/assets/creatures/${s.key}_cover.png`, import.meta.url);
+        if (!existsSync(fileURLToPath(p))) problems.push(`missing ${s.key}_cover.png`);
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+});
+
+describe('COVER', () => {
+  /**
+   * COVER closes the shell for exactly one turn: no damage gets through, a
+   * tenth of max HP comes back, and - deliberately - a wild unit can still be
+   * caught while hiding. Chaining it has to decay, or the move is a soft lock.
+   */
+  function stage(seed: number, foeMove = 'tackle'): Battle {
+    const mine = createAgent('reachymini', { level: 30, form: null, moves: ['cover', 'tackle'] });
+    const theirs = createAgent('boltkin', { level: 30, moves: [foeMove] });
+    return new Battle([mine], [theirs], { kind: 'wild', playerName: 'AAA', canRun: true, seed });
+  }
+
+  it('blocks every incoming damaging move for the turn', () => {
+    for (let seed = 1; seed <= 30; seed++) {
+      const b = stage(seed);
+      b.playerC.agent.hp = 1;
+      b.takeTurn({ kind: 'move', index: 0 }, { kind: 'move', index: 0 });
+      expect(b.playerC.agent.hp, `seed ${seed}: damage leaked through COVER`).toBeGreaterThan(0);
+    }
+  });
+
+  it('restores a tenth of max HP', () => {
+    const b = stage(7);
+    const max = maxHp(b.playerC.agent);
+    b.playerC.agent.hp = Math.floor(max / 2);
+    const before = b.playerC.agent.hp;
+    b.takeTurn({ kind: 'move', index: 0 }, { kind: 'move', index: 0 });
+    expect(b.playerC.agent.hp).toBe(before + Math.floor(max / 10));
+  });
+
+  it('lasts exactly one turn', () => {
+    const b = stage(11);
+    b.takeTurn({ kind: 'move', index: 0 }, { kind: 'move', index: 0 });
+    expect(b.playerC.covered, 'the shell stayed shut into the next turn').toBe(false);
+    const before = b.playerC.agent.hp;
+    b.takeTurn({ kind: 'move', index: 1 }, { kind: 'move', index: 0 });
+    expect(b.playerC.agent.hp, 'the next attack should land').toBeLessThan(before);
+  });
+
+  it('decays when chained, so it can never stall forever', () => {
+    // Two independent brakes: PP (10 uses) and the halving ladder. This isolates
+    // the ladder by topping PP up, so a shell that never failed would show up.
+    const b = stage(3);
+    let failures = 0;
+    for (let i = 0; i < 60; i++) {
+      b.playerC.agent.hp = maxHp(b.playerC.agent);
+      b.playerC.agent.moves[0]!.pp = b.playerC.agent.moves[0]!.maxPp;
+      const before = b.playerC.coverStreak;
+      b.takeTurn({ kind: 'move', index: 0 }, { kind: 'move', index: 0 });
+      if (before > 0 && b.playerC.coverStreak === 0) failures++;
+    }
+    expect(failures, 'COVER never failed - infinite stall').toBeGreaterThan(5);
+  });
+
+  it('runs out of PP long before it becomes a lock', () => {
+    const b = stage(3);
+    for (let i = 0; i < 40; i++) {
+      b.playerC.agent.hp = maxHp(b.playerC.agent);
+      b.takeTurn({ kind: 'move', index: 0 }, { kind: 'move', index: 0 });
+    }
+    expect(b.playerC.agent.moves[0]!.pp).toBe(0);
+  });
+
+  it('using any other move resets the ladder', () => {
+    const b = stage(5);
+    b.takeTurn({ kind: 'move', index: 0 }, { kind: 'move', index: 0 });
+    expect(b.playerC.coverStreak).toBe(1);
+    b.takeTurn({ kind: 'move', index: 1 }, { kind: 'move', index: 0 });
+    expect(b.playerC.coverStreak).toBe(0);
+  });
+
+  it('a hiding wild unit can still be caught', () => {
+    // Explicit design call: hiding makes a robot easier to scoop up, not safe.
+    // COVER has priority 4, so forcing it as the foe's action makes it resolve
+    // in `openTurn` - the shell is shut while the ball is still in the air.
+    let caught = false;
+    let everCovered = false;
+    for (let seed = 1; seed <= 60 && !caught; seed++) {
+      const mine = createAgent('stackbit', { level: 40, moves: ['tackle'] });
+      const wild = createAgent('reachymini', { level: 5, form: null, moves: ['cover'] });
+      const b = new Battle([mine], [wild], { kind: 'wild', playerName: 'AAA', canRun: true, seed });
+      b.openTurn({ kind: 'move', index: 0 });
+      if (!b.foeC.covered) continue;
+      everCovered = true;
+      b.closeTurn({ kind: 'item', key: 'quantumcore' });
+      if (b.outcome === 'caught') caught = true;
+    }
+    expect(everCovered, 'the wild unit never covered').toBe(true);
+    expect(caught, 'a covered wild unit was never catchable').toBe(true);
+  });
+
+  it('status moves still get through a closed shell', () => {
+    const b = stage(9, 'static_field');
+    b.takeTurn({ kind: 'move', index: 0 }, { kind: 'move', index: 0 });
+    expect(b.playerC.agent.status).not.toBe('none');
   });
 });

@@ -2,8 +2,8 @@
 
 import { rng } from '../../engine/rng.ts';
 import {
-  expForLevel, levelForExp, move, species,
-  type MoveDef, type SpeciesDef, type Stats, type TypeKey,
+  expForLevel, formOf, formsOf, learnsetOf, levelForExp, move, species, spriteKey, typesOf,
+  type FormDef, type MoveDef, type SpeciesDef, type Stats, type TypeKey,
 } from './dex.ts';
 
 export type StatusKey = 'none' | 'poison' | 'burn' | 'freeze' | 'paralysis' | 'sleep' | 'confusion';
@@ -43,6 +43,11 @@ export interface AgentInstance {
   /** Unique per save so party/box references stay stable. */
   uid: string;
   speciesKey: string;
+  /**
+   * Alternate appearance, if this species has any. Optional so every save
+   * written before forms existed still loads - `null` means "base look".
+   */
+  form?: string | null;
   nickname: string | null;
   level: number;
   exp: number;
@@ -106,15 +111,33 @@ export function stats(a: AgentInstance): Stats {
 }
 
 /** The four most recent level-up moves at or below `level`. */
-export function defaultMoves(speciesKey: string, level: number): MoveSlot[] {
-  const sp = species(speciesKey);
-  const learned = sp.learnset.filter(([lv]) => lv <= level).map(([, key]) => key);
+export function defaultMoves(speciesKey: string, level: number, form?: string | null): MoveSlot[] {
+  const learned = learnsetOf(speciesKey, form).filter(([lv]) => lv <= level).map(([, key]) => key);
   const unique: string[] = [];
   for (const k of learned) if (!unique.includes(k)) unique.push(k);
   return unique.slice(-4).map((key) => {
     const m = move(key);
     return { key, pp: m.pp, maxPp: m.pp };
   });
+}
+
+/**
+ * Pick an appearance for a fresh wild/gift agent.
+ *
+ * Shape forms are proper variants with their own typing, so they stay rare;
+ * colour forms are cosmetic and split the rest evenly. Species without forms
+ * always return null, which keeps every pre-existing creature untouched.
+ */
+export function rollForm(speciesKey: string): string | null {
+  const forms = formsOf(speciesKey);
+  if (!forms.length) return null;
+  const shapes = forms.filter((f) => f.kind === 'shape');
+  const colours = forms.filter((f) => f.kind === 'colour');
+  if (shapes.length && rng.next() < 0.12) {
+    return shapes[rng.int(0, shapes.length - 1)]!.key;
+  }
+  if (!colours.length) return null;
+  return colours[rng.int(0, colours.length - 1)]!.key;
 }
 
 export interface CreateOptions {
@@ -126,11 +149,14 @@ export interface CreateOptions {
   moves?: string[];
   shinyChance?: number;
   ivFloor?: number;
+  /** Explicit appearance. Omit to roll one; pass `null` to force the base look. */
+  form?: string | null;
 }
 
 export function createAgent(speciesKey: string, opts: CreateOptions): AgentInstance {
   const sp = species(speciesKey);
   const level = Math.max(1, Math.min(100, opts.level));
+  const form = opts.form === undefined ? rollForm(speciesKey) : opts.form;
   const ivs = randomIvs();
   if (opts.ivFloor) {
     for (const k of Object.keys(ivs) as (keyof Stats)[]) {
@@ -140,6 +166,7 @@ export function createAgent(speciesKey: string, opts: CreateOptions): AgentInsta
   const agent: AgentInstance = {
     uid: newUid(),
     speciesKey,
+    form,
     nickname: opts.nickname ?? null,
     level,
     exp: expForLevel(sp.growthRate, level),
@@ -150,7 +177,7 @@ export function createAgent(speciesKey: string, opts: CreateOptions): AgentInsta
     sleepTurns: 0,
     moves: opts.moves
       ? opts.moves.map((key) => ({ key, pp: move(key).pp, maxPp: move(key).pp }))
-      : defaultMoves(speciesKey, level),
+      : defaultMoves(speciesKey, level, form),
     otName: opts.otName ?? 'WILD',
     otId: opts.otId ?? 0,
     metMap: opts.metMap ?? 'unknown',
@@ -171,7 +198,17 @@ export function isFainted(a: AgentInstance): boolean {
 }
 
 export function types(a: AgentInstance): TypeKey[] {
-  return species(a.speciesKey).types;
+  return typesOf(a.speciesKey, a.form);
+}
+
+/** The form this agent is wearing, or null for the base appearance. */
+export function formDef(a: AgentInstance): FormDef | null {
+  return formOf(a.speciesKey, a.form);
+}
+
+/** Asset key for this agent's battle sheet and party icon. */
+export function agentSpriteKey(a: AgentInstance): string {
+  return spriteKey(a.speciesKey, a.form);
 }
 
 export function healFully(a: AgentInstance): void {
@@ -206,7 +243,7 @@ export function gainExp(a: AgentInstance, amount: number): LevelUpResult {
   const learned: { level: number; move: MoveDef }[] = [];
   for (let lv = before + 1; lv <= after; lv++) {
     levels.push(lv);
-    for (const [reqLv, key] of sp.learnset) {
+    for (const [reqLv, key] of learnsetOf(a.speciesKey, a.form)) {
       if (reqLv === lv) learned.push({ level: lv, move: move(key) });
     }
   }
@@ -235,13 +272,15 @@ export function canEvolve(a: AgentInstance): string | null {
 export function evolveTo(a: AgentInstance, targetKey: string): void {
   const beforeMax = maxHp(a);
   a.speciesKey = targetKey;
+  // The new species has its own form list, so an old form key would dangle.
+  if (a.form && !formOf(targetKey, a.form)) a.form = null;
   const gain = maxHp(a) - beforeMax;
   if (gain > 0) a.hp += gain;
 }
 
 /** Moves the species would learn at exactly this level (used post-evolution). */
-export function movesAtLevel(speciesKey: string, level: number): MoveDef[] {
-  return species(speciesKey).learnset
+export function movesAtLevel(speciesKey: string, level: number, form?: string | null): MoveDef[] {
+  return learnsetOf(speciesKey, form)
     .filter(([lv]) => lv === level)
     .map(([, key]) => move(key));
 }

@@ -7,10 +7,12 @@ pipeline (prompt generation), so gameplay and art can never drift apart.
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "shared" / "agentdex.json"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 # --------------------------------------------------------------------------- #
 # Types
@@ -139,6 +141,19 @@ MOVES = [
     mv("superposition", "SUPERPOSITION", "quantum", "status", 0, 100, 10, effect="eva_up", target="self", desc="Raises EVASION."),
     mv("singularity", "SINGULARITY", "quantum", "special", 140, 85, 5, effect="recharge", desc="The ultimate collapse."),
     mv("decoherence", "DECOHERENCE", "quantum", "special", 90, 100, 10, effect="spa_down", chance=20, desc="May lower SP.ATK."),
+
+    # --- moves introduced with the real-hardware homage species ---
+    mv("cover", "COVER", "alloy", "status", 0, 100, 10, priority=4, effect="shell_cover", chance=100, target="self", desc="Pulls its head into its shell. Blocks all damage for the turn and restores a little HP."),
+    mv("pixel_grin", "PIXEL GRIN", "data", "special", 65, 100, 15, effect="conf", chance=20, desc="Flashes a grin so pixel-perfect it may CONFUSE."),
+    mv("jack_flare", "JACK FLARE", "thermal", "special", 75, 100, 15, effect="burn", chance=25, desc="A carved lantern flare. May OVERHEAT the foe."),
+    mv("dazzle_stripe", "DAZZLE STRIPE", "optic", "special", 70, 100, 15, effect="acc_down", chance=30, desc="Dizzying stripes that may lower ACCURACY."),
+    mv("many_hands", "MANY HANDS", "data", "physical", 22, 95, 20, effect="multi_hit", chance=100, desc="Hugs the foe with every hand it has. Hits 2-5 times."),
+    mv("pile_drive", "PILE DRIVE", "servo", "physical", 100, 90, 10, effect="recoil_third", chance=100, desc="A full-mass slam. The user takes recoil."),
+    mv("pounce", "POUNCE", "servo", "physical", 70, 100, 20, effect="flinch", chance=30, desc="A sudden four-legged leap. May make the foe FLINCH."),
+    mv("grapple_arm", "GRAPPLE ARM", "alloy", "physical", 90, 100, 10, effect="def_down", chance=20, desc="Seizes the foe with a manipulator. May lower DEFENSE."),
+    mv("spin_kick", "SPIN KICK", "servo", "physical", 85, 100, 15, effect="high_crit", chance=100, desc="A whirling roundhouse. High critical-hit ratio."),
+    mv("soft_grip", "SOFT GRIP", "neural", "physical", 75, 100, 15, effect="atk_down", chance=30, desc="A gentle but irresistible hold. May lower ATTACK."),
+    mv("visor_beam", "VISOR BEAM", "optic", "special", 95, 100, 10, effect="spd_down", chance=20, desc="A focused beam from its visor. May lower SP.DEF."),
 ]
 
 # --------------------------------------------------------------------------- #
@@ -146,7 +161,8 @@ MOVES = [
 # --------------------------------------------------------------------------- #
 # stats: hp, atk, def, spa, spd, spe
 def sp(idx, key, name, types, stats, catch, base_exp, growth, height, weight,
-       dex, art, learn, evo=None, airborne=False, cell=(64, 64), legendary=False, genus=""):
+       dex, art, learn, evo=None, airborne=False, cell=(64, 64), legendary=False, genus="",
+       forms=None, inspired=""):
     return {
         "id": idx, "key": key, "name": name, "types": types, "genus": genus,
         "baseStats": dict(zip(("hp", "atk", "def", "spa", "spd", "spe"), stats)),
@@ -154,6 +170,7 @@ def sp(idx, key, name, types, stats, catch, base_exp, growth, height, weight,
         "height": height, "weight": weight, "dexEntry": dex, "art": art,
         "learnset": learn, "evolution": evo, "airborne": airborne,
         "cell": {"w": cell[0], "h": cell[1]}, "legendary": legendary,
+        "forms": forms or [], "inspired": inspired,
     }
 
 
@@ -402,6 +419,34 @@ add("nexusprime", "NEXUSPRIME", ["alloy", "quantum"], (126, 138, 136, 108, 118, 
     legendary=True, genus="Datacenter Core", cell=(84, 82))
 
 
+# ---- Real-hardware homage species (ids 38+) --------------------------------- #
+# Designs, stats, learnsets and art prompts live in `tools/newmons.py` so the
+# sprite preview tool and this dex build can never drift apart. They are
+# appended AFTER the legendaries on purpose: species ids are baked into saved
+# games, so existing entries must keep their numbers.
+from newmons import SPECIES as HOMAGE  # noqa: E402
+
+
+def _forms_of(s: dict) -> list[dict]:
+    """Colour forms are pure palette swaps; shape forms also override typing
+    and learnset. Both resolve to their own sprite `<species>_<form>`."""
+    out = []
+    for key, label, rgb in s.get("colour_forms", []):
+        out.append({"key": key, "label": label, "kind": "colour",
+                    "tint": None if rgb is None else "#%02x%02x%02x" % tuple(rgb)})
+    for f in s.get("shape_forms", []):
+        out.append({"key": f["key"], "label": f["label"], "kind": "shape",
+                    "types": f["types"], "learnset": [list(x) for x in f["learn"]]})
+    return out
+
+
+for _s in HOMAGE:
+    add(_s["key"], _s["name"], _s["types"], _s["stats"], _s["catch"], _s["base_exp"],
+        _s["growth"], _s["height"], _s["weight"], _s["dex"], _s["art"],
+        [list(x) for x in _s["learn"]], evo=_s.get("evo"), cell=_s["cell"],
+        genus=_s["genus"], forms=_forms_of(_s), inspired=_s["inspired"])
+
+
 # --------------------------------------------------------------------------- #
 def main() -> None:
     keys = {s["key"] for s in S}
@@ -409,6 +454,11 @@ def main() -> None:
     for s in S:
         for _lv, mk in s["learnset"]:
             assert mk in move_keys, f"{s['key']} references unknown move {mk}"
+        for f in s["forms"]:
+            for _lv, mk in f.get("learnset", []):
+                assert mk in move_keys, f"{s['key']}/{f['key']} references unknown move {mk}"
+            for t in f.get("types", []):
+                assert t in {t2["key"] for t2 in TYPES}, f"{s['key']}/{f['key']} bad type {t}"
         if s["evolution"]:
             assert s["evolution"]["to"] in keys, f"{s['key']} evolves into unknown {s['evolution']['to']}"
         for t in s["types"]:

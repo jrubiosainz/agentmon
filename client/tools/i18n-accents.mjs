@@ -6,8 +6,10 @@ import { readFileSync } from 'node:fs';
 // unambiguously misspelled in that language.
 const SUSPECT = {
   es: /\b(accion|energia|numero|rapido|electrico|metalico|termico|criogenico|cinetico|optico|cuantico|informacion|proteccion|reduccion|evasion|precision|despues|tambien|aqui|alli|habra|podras|estaras|volvera|codigo|critico|maximo|minimo|automatico|tecnico|electronico|magnetico|analisis|bateria|categoria|sonico|dificil|facil|debil)\b/i,
-  fr: /\b(tres|rate|ratee|deja|apres|prete|prets?|ete|etre|reussi|echec|echoue|energie|elevee?|eleve|degat|degats|defaite|arrete|entrainement|entraineur|equipe|etat|evite|experience|genere|leger|legere|memoire|numero|operation|precision|premiere|prepare|recupere|reseau|resiste|securite|selectionne|separe|serie|specialise?|systeme|telecharge|termine|verifie|zero|donnees|ajoutees|felicitations|cameras|connait|chargee|transfere|deplace|reboote|repare|drainee|restaures)\b/i,
-  it: /(\bE'|\be'\b|\bpiu'|\bgia'|\bcosi'|\bperche'|\bpero'|\bpuo'|ita'\b)/,
+  fr: /\b(tres|rate|ratee|deja|apres|prete|prets?|ete|etre|reussi|echec|echoue|energie|elevee?|eleve|degat|degats|defaite|arrete|entrainement|entraineur|equipe|etat|evite|experience|genere|leger|legere|memoire|numero|operation|precision|premiere|prepare|recupere|reseau|resiste|securite|selectionne|separe|serie|specialise?|systeme|telecharge|termine|verifie|zero|donnees|ajoutees|felicitations|cameras|connait|chargee|transfere|deplace|reboote|repare|drainee|restaures|unite|unites)\b/i,
+  // Italian writes the grave accent, never an apostrophe. `po'` is the one
+  // legitimate apostrophe-final word and is deliberately absent from this list.
+  it: /\b(e|piu|gia|cosi|perche|finche|pero|puo|unita|identita|specialita|probabilita|velocita|profondita|sara|fara|crescera|aspettero|si)'/i,
 };
 
 let total = 0;

@@ -1052,6 +1052,160 @@
    "effectChance": 20,
    "target": "foe",
    "desc": "May lower SP.ATK."
+  },
+  {
+   "key": "cover",
+   "name": "COVER",
+   "type": "alloy",
+   "category": "status",
+   "power": 0,
+   "accuracy": 100,
+   "pp": 10,
+   "priority": 4,
+   "effect": "shell_cover",
+   "effectChance": 100,
+   "target": "self",
+   "desc": "Pulls its head into its shell. Blocks all damage for the turn and restores a little HP."
+  },
+  {
+   "key": "pixel_grin",
+   "name": "PIXEL GRIN",
+   "type": "data",
+   "category": "special",
+   "power": 65,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "conf",
+   "effectChance": 20,
+   "target": "foe",
+   "desc": "Flashes a grin so pixel-perfect it may CONFUSE."
+  },
+  {
+   "key": "jack_flare",
+   "name": "JACK FLARE",
+   "type": "thermal",
+   "category": "special",
+   "power": 75,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "burn",
+   "effectChance": 25,
+   "target": "foe",
+   "desc": "A carved lantern flare. May OVERHEAT the foe."
+  },
+  {
+   "key": "dazzle_stripe",
+   "name": "DAZZLE STRIPE",
+   "type": "optic",
+   "category": "special",
+   "power": 70,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "acc_down",
+   "effectChance": 30,
+   "target": "foe",
+   "desc": "Dizzying stripes that may lower ACCURACY."
+  },
+  {
+   "key": "many_hands",
+   "name": "MANY HANDS",
+   "type": "data",
+   "category": "physical",
+   "power": 22,
+   "accuracy": 95,
+   "pp": 20,
+   "priority": 0,
+   "effect": "multi_hit",
+   "effectChance": 100,
+   "target": "foe",
+   "desc": "Hugs the foe with every hand it has. Hits 2-5 times."
+  },
+  {
+   "key": "pile_drive",
+   "name": "PILE DRIVE",
+   "type": "servo",
+   "category": "physical",
+   "power": 100,
+   "accuracy": 90,
+   "pp": 10,
+   "priority": 0,
+   "effect": "recoil_third",
+   "effectChance": 100,
+   "target": "foe",
+   "desc": "A full-mass slam. The user takes recoil."
+  },
+  {
+   "key": "pounce",
+   "name": "POUNCE",
+   "type": "servo",
+   "category": "physical",
+   "power": 70,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "flinch",
+   "effectChance": 30,
+   "target": "foe",
+   "desc": "A sudden four-legged leap. May make the foe FLINCH."
+  },
+  {
+   "key": "grapple_arm",
+   "name": "GRAPPLE ARM",
+   "type": "alloy",
+   "category": "physical",
+   "power": 90,
+   "accuracy": 100,
+   "pp": 10,
+   "priority": 0,
+   "effect": "def_down",
+   "effectChance": 20,
+   "target": "foe",
+   "desc": "Seizes the foe with a manipulator. May lower DEFENSE."
+  },
+  {
+   "key": "spin_kick",
+   "name": "SPIN KICK",
+   "type": "servo",
+   "category": "physical",
+   "power": 85,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "high_crit",
+   "effectChance": 100,
+   "target": "foe",
+   "desc": "A whirling roundhouse. High critical-hit ratio."
+  },
+  {
+   "key": "soft_grip",
+   "name": "SOFT GRIP",
+   "type": "neural",
+   "category": "physical",
+   "power": 75,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "atk_down",
+   "effectChance": 30,
+   "target": "foe",
+   "desc": "A gentle but irresistible hold. May lower ATTACK."
+  },
+  {
+   "key": "visor_beam",
+   "name": "VISOR BEAM",
+   "type": "optic",
+   "category": "special",
+   "power": 95,
+   "accuracy": 100,
+   "pp": 10,
+   "priority": 0,
+   "effect": "spd_down",
+   "effectChance": 20,
+   "target": "foe",
+   "desc": "A focused beam from its visor. May lower SP.DEF."
   }
  ],
  "species": [
@@ -1133,7 +1287,9 @@
     "w": 56,
     "h": 56
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 2,
@@ -1213,7 +1369,9 @@
     "w": 64,
     "h": 64
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 3,
@@ -1291,7 +1449,9 @@
     "w": 72,
     "h": 72
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 4,
@@ -1371,7 +1531,9 @@
     "w": 52,
     "h": 52
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 5,
@@ -1451,7 +1613,9 @@
     "w": 60,
     "h": 60
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 6,
@@ -1529,7 +1693,9 @@
     "w": 72,
     "h": 72
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 7,
@@ -1609,7 +1775,9 @@
     "w": 56,
     "h": 56
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 8,
@@ -1689,7 +1857,9 @@
     "w": 64,
     "h": 64
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 9,
@@ -1767,7 +1937,9 @@
     "w": 74,
     "h": 74
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 10,
@@ -1844,7 +2016,9 @@
     "w": 56,
     "h": 60
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 11,
@@ -1921,7 +2095,9 @@
     "w": 64,
     "h": 68
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 12,
@@ -1995,7 +2171,9 @@
     "w": 76,
     "h": 78
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 13,
@@ -2067,7 +2245,9 @@
     "w": 54,
     "h": 60
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 14,
@@ -2139,7 +2319,9 @@
     "w": 62,
     "h": 68
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 15,
@@ -2209,7 +2391,9 @@
     "w": 70,
     "h": 74
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 16,
@@ -2281,7 +2465,9 @@
     "w": 56,
     "h": 50
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 17,
@@ -2354,7 +2540,9 @@
     "w": 64,
     "h": 58
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 18,
@@ -2424,7 +2612,9 @@
     "w": 74,
     "h": 66
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 19,
@@ -2496,7 +2686,9 @@
     "w": 52,
     "h": 44
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 20,
@@ -2566,7 +2758,9 @@
     "w": 64,
     "h": 58
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 21,
@@ -2638,7 +2832,9 @@
     "w": 56,
     "h": 52
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 22,
@@ -2710,7 +2906,9 @@
     "w": 64,
     "h": 58
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 23,
@@ -2780,7 +2978,9 @@
     "w": 76,
     "h": 72
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 24,
@@ -2852,7 +3052,9 @@
     "w": 52,
     "h": 52
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 25,
@@ -2921,7 +3123,9 @@
     "w": 66,
     "h": 66
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 26,
@@ -2993,7 +3197,9 @@
     "w": 54,
     "h": 56
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 27,
@@ -3062,7 +3268,9 @@
     "w": 66,
     "h": 70
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 28,
@@ -3134,7 +3342,9 @@
     "w": 50,
     "h": 52
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 29,
@@ -3206,7 +3416,9 @@
     "w": 62,
     "h": 62
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 30,
@@ -3276,7 +3488,9 @@
     "w": 74,
     "h": 76
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 31,
@@ -3348,7 +3562,9 @@
     "w": 54,
     "h": 48
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 32,
@@ -3421,7 +3637,9 @@
     "w": 64,
     "h": 58
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 33,
@@ -3491,7 +3709,9 @@
     "w": 78,
     "h": 74
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 34,
@@ -3563,7 +3783,9 @@
     "w": 56,
     "h": 58
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 35,
@@ -3633,7 +3855,9 @@
     "w": 70,
     "h": 70
    },
-   "legendary": false
+   "legendary": false,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 36,
@@ -3699,7 +3923,9 @@
     "w": 80,
     "h": 80
    },
-   "legendary": true
+   "legendary": true,
+   "forms": [],
+   "inspired": ""
   },
   {
    "id": 37,
@@ -3765,7 +3991,851 @@
     "w": 84,
     "h": 82
    },
-   "legendary": true
+   "legendary": true,
+   "forms": [],
+   "inspired": ""
+  },
+  {
+   "id": 38,
+   "key": "stackchan",
+   "name": "STACKCHAN",
+   "types": [
+    "data",
+    "servo"
+   ],
+   "genus": "Servo Face Unit",
+   "baseStats": {
+    "hp": 58,
+    "atk": 65,
+    "def": 70,
+    "spa": 92,
+    "spd": 82,
+    "spe": 98
+   },
+   "catchRate": 120,
+   "baseExp": 172,
+   "growthRate": "medium_fast",
+   "height": 0.19,
+   "weight": 1.4,
+   "dexEntry": "A desktop unit whose whole face is one bright screen. It follows you across the room and mirrors your expression back.",
+   "art": "A small palm-sized desk robot creature: a chunky rounded off-white plastic cube head with a large glossy black square screen face displaying a simple friendly face of two round white dots for eyes and a short white line for a mouth, the cube mounted on a chunky dark grey articulated servo bracket and a wide flat grey base plate, small teal accent panel on the side of the cube, tiny speaker holes",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     1,
+     "data_spike"
+    ],
+    [
+     4,
+     "smokescreen"
+    ],
+    [
+     8,
+     "pixel_grin"
+    ],
+    [
+     12,
+     "quick_jab"
+    ],
+    [
+     16,
+     "recalibrate"
+    ],
+    [
+     20,
+     "null_ptr"
+    ],
+    [
+     25,
+     "debug"
+    ],
+    [
+     30,
+     "stack_trace"
+    ],
+    [
+     36,
+     "logic_bomb"
+    ],
+    [
+     43,
+     "kernel_panic"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 54,
+    "h": 54
+   },
+   "legendary": false,
+   "forms": [],
+   "inspired": "Stack-chan (M5Stack)"
+  },
+  {
+   "id": 39,
+   "key": "reachymini",
+   "name": "REACHYMINI",
+   "types": [
+    "neural"
+   ],
+   "genus": "Shell Unit",
+   "baseStats": {
+    "hp": 60,
+    "atk": 52,
+    "def": 62,
+    "spa": 95,
+    "spd": 96,
+    "spe": 90
+   },
+   "catchRate": 140,
+   "baseExp": 168,
+   "growthRate": "medium_fast",
+   "height": 0.28,
+   "weight": 1.5,
+   "dexEntry": "Two spring antennae read the room before it moves. At the first hint of trouble it bows its head into its shell.",
+   "art": "Official Pokemon-style creature version of a small desk companion robot creature with a rounded squarish head, two very large round glossy black camera-lens eyes joined by a slim black bridge bar like a pair of goggles, two long thin black spring antennae rising from the top of the head, a smooth egg-shaped barrel body wider at the bottom, and a dark grey base ring, in clean off-white and pale cream with a soft grey shadow, cheerful and curious, small stubby feet under the base",
+   "learnset": [
+    [
+     1,
+     "scratch"
+    ],
+    [
+     1,
+     "cover"
+    ],
+    [
+     5,
+     "mind_link"
+    ],
+    [
+     9,
+     "prediction"
+    ],
+    [
+     13,
+     "quick_jab"
+    ],
+    [
+     17,
+     "smokescreen"
+    ],
+    [
+     22,
+     "logic_bomb"
+    ],
+    [
+     27,
+     "empathy"
+    ],
+    [
+     32,
+     "hypnotize"
+    ],
+    [
+     38,
+     "neural_storm"
+    ],
+    [
+     45,
+     "recalibrate"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 56,
+    "h": 56
+   },
+   "legendary": false,
+   "forms": [
+    {
+     "key": "snow",
+     "label": "SNOW",
+     "kind": "colour",
+     "tint": null
+    },
+    {
+     "key": "sky",
+     "label": "SKY",
+     "kind": "colour",
+     "tint": "#5cc8d8"
+    },
+    {
+     "key": "lime",
+     "label": "LIME",
+     "kind": "colour",
+     "tint": "#a8d028"
+    },
+    {
+     "key": "sun",
+     "label": "SUN",
+     "kind": "colour",
+     "tint": "#f8c020"
+    },
+    {
+     "key": "ember",
+     "label": "EMBER",
+     "kind": "colour",
+     "tint": "#e85030"
+    },
+    {
+     "key": "hallow",
+     "label": "HALLOW",
+     "kind": "shape",
+     "types": [
+      "neural",
+      "thermal"
+     ],
+     "learnset": [
+      [
+       1,
+       "scratch"
+      ],
+      [
+       1,
+       "cover"
+      ],
+      [
+       5,
+       "heat_vent"
+      ],
+      [
+       9,
+       "prediction"
+      ],
+      [
+       13,
+       "jack_flare"
+      ],
+      [
+       18,
+       "smokescreen"
+      ],
+      [
+       23,
+       "logic_bomb"
+      ],
+      [
+       28,
+       "empathy"
+      ],
+      [
+       33,
+       "solder_burst"
+      ],
+      [
+       39,
+       "neural_storm"
+      ],
+      [
+       46,
+       "meltdown"
+      ]
+     ]
+    },
+    {
+     "key": "zebra",
+     "label": "ZEBRA",
+     "kind": "shape",
+     "types": [
+      "neural",
+      "alloy"
+     ],
+     "learnset": [
+      [
+       1,
+       "scratch"
+      ],
+      [
+       1,
+       "cover"
+      ],
+      [
+       5,
+       "mind_link"
+      ],
+      [
+       9,
+       "dazzle_stripe"
+      ],
+      [
+       13,
+       "bolt_toss"
+      ],
+      [
+       18,
+       "hull_plating"
+      ],
+      [
+       23,
+       "logic_bomb"
+      ],
+      [
+       28,
+       "empathy"
+      ],
+      [
+       33,
+       "plate_press"
+      ],
+      [
+       39,
+       "neural_storm"
+      ],
+      [
+       46,
+       "girder_smash"
+      ]
+     ]
+    },
+    {
+     "key": "hf",
+     "label": "HF",
+     "kind": "shape",
+     "types": [
+      "neural",
+      "data"
+     ],
+     "learnset": [
+      [
+       1,
+       "scratch"
+      ],
+      [
+       1,
+       "cover"
+      ],
+      [
+       5,
+       "mind_link"
+      ],
+      [
+       9,
+       "many_hands"
+      ],
+      [
+       13,
+       "data_spike"
+      ],
+      [
+       18,
+       "recursion"
+      ],
+      [
+       23,
+       "logic_bomb"
+      ],
+      [
+       28,
+       "empathy"
+      ],
+      [
+       33,
+       "null_ptr"
+      ],
+      [
+       39,
+       "neural_storm"
+      ],
+      [
+       46,
+       "stack_trace"
+      ]
+     ]
+    }
+   ],
+   "inspired": "Reachy Mini (Pollen / Hugging Face)"
+  },
+  {
+   "id": 40,
+   "key": "optimus",
+   "name": "OPTIMUS",
+   "types": [
+    "alloy",
+    "servo"
+   ],
+   "genus": "Labor Unit",
+   "baseStats": {
+    "hp": 82,
+    "atk": 105,
+    "def": 92,
+    "spa": 68,
+    "spd": 80,
+    "spe": 83
+   },
+   "catchRate": 45,
+   "baseExp": 196,
+   "growthRate": "slow",
+   "height": 1.73,
+   "weight": 57.0,
+   "dexEntry": "Built for a full factory shift and never once complaining. It can lift a chassis twice its mass without a sound.",
+   "art": "A tall human-proportioned bipedal humanoid robot creature standing upright and relaxed with its arms down at its sides: the head is a small smooth rounded-rectangle helmet whose entire front is one flat glossy pure-black faceplate with absolutely no eyes, mouth or features, framed by a bone-white shell over the top and sides of the helmet; a slim exposed matte-black neck; a bone-white chest plate split by a fine vertical centre seam over a matte-black abdomen; bone-white pearl armour shells covering the shoulders, upper arms, forearms, thighs and shins with slim matte-black actuator joints clearly exposed at the elbows, waist, hips and knees; realistic bone-white five-fingered human-shaped hands with dark finger joints; bone-white feet with dark soles; matte satin finish, calm and industrial",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     1,
+     "bolt_toss"
+    ],
+    [
+     6,
+     "brace"
+    ],
+    [
+     11,
+     "plate_press"
+    ],
+    [
+     16,
+     "power_surge"
+    ],
+    [
+     21,
+     "gear_grind"
+    ],
+    [
+     27,
+     "hull_plating"
+    ],
+    [
+     33,
+     "slam"
+    ],
+    [
+     39,
+     "pile_drive"
+    ],
+    [
+     46,
+     "girder_smash"
+    ],
+    [
+     54,
+     "hyper_drive"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 70,
+    "h": 70
+   },
+   "legendary": false,
+   "forms": [],
+   "inspired": "Tesla Optimus"
+  },
+  {
+   "id": 41,
+   "key": "spot",
+   "name": "SPOT",
+   "types": [
+    "servo",
+    "optic"
+   ],
+   "genus": "Patrol Unit",
+   "baseStats": {
+    "hp": 65,
+    "atk": 76,
+    "def": 70,
+    "spa": 58,
+    "spd": 64,
+    "spe": 97
+   },
+   "catchRate": 90,
+   "baseExp": 148,
+   "growthRate": "medium_slow",
+   "height": 0.84,
+   "weight": 32.5,
+   "dexEntry": "A four-legged surveyor that never stumbles. Shove it and it takes one neat step sideways and keeps mapping.",
+   "art": "A four-legged robot dog creature with no head: a bright safety-yellow rectangular body shell, a yellow forward sensor block at the front with a row of small dark camera lenses and a glowing green status strip instead of a face, four slender black articulated legs with bright yellow thigh shrouds and thin dark shins, alert forward-leaning stance",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     1,
+     "laser_ping"
+    ],
+    [
+     5,
+     "quick_jab"
+    ],
+    [
+     9,
+     "lidar_scan"
+    ],
+    [
+     14,
+     "pounce"
+    ],
+    [
+     19,
+     "strobe"
+    ],
+    [
+     24,
+     "gear_grind"
+    ],
+    [
+     30,
+     "photon_beam"
+    ],
+    [
+     36,
+     "slam"
+    ],
+    [
+     43,
+     "prism_lance"
+    ],
+    [
+     50,
+     "hyper_drive"
+    ]
+   ],
+   "evolution": {
+    "to": "spotarm",
+    "level": 36
+   },
+   "airborne": false,
+   "cell": {
+    "w": 64,
+    "h": 60
+   },
+   "legendary": false,
+   "forms": [],
+   "inspired": "Boston Dynamics Spot"
+  },
+  {
+   "id": 42,
+   "key": "spotarm",
+   "name": "SPOTARM",
+   "types": [
+    "servo",
+    "alloy"
+   ],
+   "genus": "Handler Unit",
+   "baseStats": {
+    "hp": 85,
+    "atk": 112,
+    "def": 95,
+    "spa": 70,
+    "spd": 80,
+    "spe": 103
+   },
+   "catchRate": 45,
+   "baseExp": 228,
+   "growthRate": "medium_slow",
+   "height": 1.1,
+   "weight": 43.0,
+   "dexEntry": "The arm folded on its back can open a door, right a fallen crate or pin a rival. It decides which in a fifth of a second.",
+   "art": "A large four-legged robot dog creature carrying equipment: a bright safety-yellow and black body shell, a yellow forward sensor block with dark camera lenses and a glowing green status strip instead of a face, four slender black articulated legs with bright yellow thigh shrouds, and mounted on its back a long yellow and black articulated manipulator arm ending in a chunky gripper claw raised over its shoulder, plus a small black sensor mast, commanding powerful stance",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     1,
+     "laser_ping"
+    ],
+    [
+     5,
+     "quick_jab"
+    ],
+    [
+     9,
+     "lidar_scan"
+    ],
+    [
+     14,
+     "pounce"
+    ],
+    [
+     19,
+     "strobe"
+    ],
+    [
+     24,
+     "gear_grind"
+    ],
+    [
+     30,
+     "photon_beam"
+    ],
+    [
+     36,
+     "grapple_arm"
+    ],
+    [
+     44,
+     "slam"
+    ],
+    [
+     52,
+     "prism_lance"
+    ],
+    [
+     60,
+     "hyper_drive"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 72,
+    "h": 66
+   },
+   "legendary": false,
+   "forms": [],
+   "inspired": "Boston Dynamics Spot + Spot Arm"
+  },
+  {
+   "id": 43,
+   "key": "figure03",
+   "name": "FIGURE03",
+   "types": [
+    "alloy",
+    "neural"
+   ],
+   "genus": "Helper Unit",
+   "baseStats": {
+    "hp": 78,
+    "atk": 88,
+    "def": 84,
+    "spa": 100,
+    "spd": 88,
+    "spe": 77
+   },
+   "catchRate": 45,
+   "baseExp": 194,
+   "growthRate": "slow",
+   "height": 1.68,
+   "weight": 49.0,
+   "dexEntry": "Its visor is one sheet of glass hiding a very fast mind. It watches a task once and can then repeat it forever.",
+   "art": "A soft-looking human-proportioned bipedal humanoid robot creature standing calmly with arms at its sides: the head is a compact rounded helmet, glossy jet-black across the whole curved front like a single wraparound visor with no eyes or mouth, capped by a smooth light-grey shell over the crown; the torso, shoulders and upper arms are wrapped in a distinctly darker mid slate-grey soft woven textile cover with a clearly visible vertical cloth seam down the chest, reading as padded fabric rather than hard armour and standing out clearly against the much lighter limbs; matte dark charcoal forearms and slim dark hip and knee joints; bright off-white moulded thigh and shin panels; light five-fingered hands; clean off-white boots; strong light-dark contrast between the pale legs and the dark fabric torso; friendly domestic proportions, soft rounded edges, no exposed wiring",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     1,
+     "mind_link"
+    ],
+    [
+     6,
+     "prediction"
+    ],
+    [
+     11,
+     "bolt_toss"
+    ],
+    [
+     16,
+     "laser_ping"
+    ],
+    [
+     21,
+     "hull_plating"
+    ],
+    [
+     27,
+     "plate_press"
+    ],
+    [
+     33,
+     "logic_bomb"
+    ],
+    [
+     40,
+     "visor_beam"
+    ],
+    [
+     47,
+     "neural_storm"
+    ],
+    [
+     55,
+     "girder_smash"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 70,
+    "h": 70
+   },
+   "legendary": false,
+   "forms": [],
+   "inspired": "Figure 03"
+  },
+  {
+   "id": 44,
+   "key": "unitree",
+   "name": "UNITREE",
+   "types": [
+    "alloy",
+    "volt"
+   ],
+   "genus": "Kata Unit",
+   "baseStats": {
+    "hp": 74,
+    "atk": 118,
+    "def": 78,
+    "spa": 66,
+    "spd": 74,
+    "spe": 115
+   },
+   "catchRate": 45,
+   "baseExp": 204,
+   "growthRate": "fast",
+   "height": 1.32,
+   "weight": 35.0,
+   "dexEntry": "It trains kata four hundred times an hour. It knows how you mean to dodge and picks the kick you cannot.",
+   "art": "A compact short agile bipedal humanoid robot creature in a low ready martial-arts stance with knees bent and fists raised: the head is a small dark-grey rounded pod dominated by a wide horizontal glossy black visor band with a single round camera lens at its centre, and a small dark depth-sensor dome sitting on top of the crown; brushed silver-grey metallic shells over the chest, upper arms, thighs and shins; large clearly visible black cylindrical rotary joint actuators like thick discs at both shoulders, both elbows, both hips and both knees; slim dark limb linkages between them; small dark three-fingered gripper hands; short flat dark feet; a small blue accent stripe on the chest; athletic, squat and springy proportions",
+   "learnset": [
+    [
+     1,
+     "scratch"
+    ],
+    [
+     1,
+     "spark"
+    ],
+    [
+     5,
+     "quick_jab"
+    ],
+    [
+     10,
+     "volt_bite"
+    ],
+    [
+     15,
+     "overclock"
+    ],
+    [
+     20,
+     "spin_kick"
+    ],
+    [
+     26,
+     "static_field"
+    ],
+    [
+     32,
+     "gear_grind"
+    ],
+    [
+     38,
+     "arc_bolt"
+    ],
+    [
+     45,
+     "slam"
+    ],
+    [
+     53,
+     "thunder_core"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 68,
+    "h": 68
+   },
+   "legendary": false,
+   "forms": [],
+   "inspired": "Unitree G1"
+  },
+  {
+   "id": 45,
+   "key": "neo",
+   "name": "NEO",
+   "types": [
+    "neural",
+    "alloy"
+   ],
+   "genus": "Home Unit",
+   "baseStats": {
+    "hp": 100,
+    "atk": 80,
+    "def": 90,
+    "spa": 82,
+    "spd": 96,
+    "spe": 57
+   },
+   "catchRate": 45,
+   "baseExp": 192,
+   "growthRate": "slow",
+   "height": 1.65,
+   "weight": 30.0,
+   "dexEntry": "Wrapped head to toe in soft knit so it can never hurt anyone. It tidies your workshop while you sleep.",
+   "art": "A gentle human-proportioned bipedal humanoid robot creature standing calmly, its entire body sheathed head to toe in one continuous soft pale oatmeal-beige knitted fabric suit like a knitted bodysuit, the colour a very desaturated light greige sand tone close to raw undyed wool or unbleached linen, definitely NOT orange and NOT bright tan, kept muted and washed-out: the head is a smooth featureless rounded egg shape covered in the same beige knit, with no eyes, no mouth and no visor at all, only a faint slightly darker oval panel where a face would be; a soft knitted collar at the neck; the shoulders, arms, torso, hips and legs all show a visible ribbed knit stitch texture with gentle fabric creases; soft five-fingered knit-covered hands; softly rounded knit feet; slim calm friendly proportions, warm and domestic, entirely fabric with no exposed metal or machinery anywhere",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     1,
+     "mind_link"
+    ],
+    [
+     6,
+     "empathy"
+    ],
+    [
+     11,
+     "brace"
+    ],
+    [
+     16,
+     "soft_grip"
+    ],
+    [
+     21,
+     "prediction"
+    ],
+    [
+     27,
+     "hull_plating"
+    ],
+    [
+     33,
+     "logic_bomb"
+    ],
+    [
+     40,
+     "plate_press"
+    ],
+    [
+     47,
+     "neural_storm"
+    ],
+    [
+     55,
+     "girder_smash"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 68,
+    "h": 68
+   },
+   "legendary": false,
+   "forms": [],
+   "inspired": "1X NEO"
   }
  ]
 }

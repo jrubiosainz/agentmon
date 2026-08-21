@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageEnhance
@@ -254,9 +255,9 @@ def despeckle(img: Image.Image, min_neighbours: int = 2) -> Image.Image:
 # --------------------------------------------------------------------------- #
 # Full pipeline
 # --------------------------------------------------------------------------- #
-def pixelize(src: Image.Image | str, cfg: PixelizeConfig | None = None) -> Image.Image:
+def pixelize(src: Image.Image | str | Path, cfg: PixelizeConfig | None = None) -> Image.Image:
     cfg = cfg or PixelizeConfig()
-    img = Image.open(src) if isinstance(src, str) else src
+    img = src if isinstance(src, Image.Image) else Image.open(src)
     img = img.convert("RGBA")
     img = keyout(img, cfg.key_tolerance)
     img = trim(img)

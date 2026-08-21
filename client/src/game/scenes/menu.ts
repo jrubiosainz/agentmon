@@ -9,11 +9,12 @@ import {
   Typewriter, drawCaptureCore, type MenuItem,
 } from '../../engine/ui.ts';
 import {
-  displayName, expToNextLevel, healFully, isFainted, maxHp, stats,
-  STATUS_COLOR, STATUS_SHORT, type AgentInstance,
+  agentSpriteKey, displayName, expToNextLevel, formDef, healFully, isFainted, maxHp, stats,
+  types as agentTypes, STATUS_COLOR, STATUS_SHORT, type AgentInstance,
 } from '../data/agent.ts';
 import {
-  allSpecies, dexEntryOf, dexSize, genusOf, move as moveDef, moveName, species, typeDef, typeName,
+  allSpecies, dexEntryOf, dexSize, formLabel, genusOf, move as moveDef, moveName, species,
+  typeDef, typeName,
 } from '../data/dex.ts';
 import { CATEGORY_NAME, CATEGORY_ORDER, item as itemDef, type ItemCategory } from '../data/items.ts';
 import { badgeInfoName, BADGE_ORDER } from '../data/trainers.ts';
@@ -250,13 +251,14 @@ export class PartyScene extends Scene {
       }
 
       const icon = this.game.atlas('icons');
-      if (icon?.has(a.speciesKey)) {
+      const iconKey = agentSpriteKey(a);
+      if (icon?.has(iconKey)) {
         // Compact rows are 20px tall, so the icon has to scale to fit exactly:
         // any overhang bleeds into the neighbouring row.
-        if (first) icon.draw(g, a.speciesKey, x + Math.floor(w / 2) - 16, y + 50, 1);
-        else icon.draw(g, a.speciesKey, x + 2, y, 0.625);
+        if (first) icon.draw(g, iconKey, x + Math.floor(w / 2) - 16, y + 50, 1);
+        else icon.draw(g, iconKey, x + 2, y, 0.625);
       } else {
-        g.fillStyle = typeDef(species(a.speciesKey).types[0]!).color;
+        g.fillStyle = typeDef(agentTypes(a)[0]!).color;
         g.fillRect(first ? x + 28 : x + 6, first ? y + 56 : y + 3, 14, 14);
       }
 
@@ -319,14 +321,16 @@ export class SummaryScene extends Scene {
     const sp = species(a.speciesKey);
 
     drawPanel(g, 2, 2, 92, 156, '#e8ecf4', '#404868');
-    const sheet = this.game.creatureSheet(a.speciesKey);
+    const sheet = this.game.creatureSheet(agentSpriteKey(a));
     if (sheet) sheet.drawFrame(g, 'idle', 0, 48, 84, { scale: 0.9 });
     font.draw(g, displayName(a).slice(0, 11), 8, 8, 'normal', false);
     font.draw(g, t(':L{level}', { level: a.level }), 8, 20, 'normal', false);
     font.draw(g, t('No.{n}', { n: String(sp.id).padStart(3, '0') }), 8, 92, 'normal', false);
+    const fd = formDef(a);
     font.draw(g, sp.name, 8, 104, 'normal', false);
+    if (fd) font.drawRight(g, upper(formLabel(fd)).slice(0, 8), 90, 104, 'dim', false);
     let tx = 8;
-    for (const t of sp.types) {
+    for (const t of agentTypes(a)) {
       const td = typeDef(t);
       g.fillStyle = td.color;
       g.fillRect(tx, 118, 38, 11);
@@ -976,7 +980,8 @@ export class StorageScene extends Scene {
       if (agent) {
         drawWindow(g, 4, 62, 88, 48);
         const icon = this.game.atlas('icons');
-        if (icon?.has(agent.speciesKey)) icon.draw(g, agent.speciesKey, 32, 64, 1);
+        const iconKey = agentSpriteKey(agent);
+        if (icon?.has(iconKey)) icon.draw(g, iconKey, 32, 64, 1);
         font.drawCentered(g, species(agent.speciesKey).name, 48, 97, 'normal', false);
       }
     }

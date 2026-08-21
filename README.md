@@ -17,11 +17,12 @@ tilemap, sprite, bitmap-font, transition and chiptune-audio layers are all in
 
 | | |
 |---|---|
-| Species | 37 across 10 types (VOLT, METAL, DATA, THERMAL, CRYO, KINETIC, OPTIC, NEURAL, VIRAL, QUANTUM) |
-| Moves | 65 |
+| Species | 45 across 10 types (VOLT, METAL, DATA, THERMAL, CRYO, KINETIC, OPTIC, NEURAL, VIRAL, QUANTUM) — including 8 homages to real robots, one of them with 8 forms |
+| Moves | 76 |
 | Items | 33 |
 | Maps | 26 — 4 towns/cities, 3 routes, a forest, interiors, and 3 datacenter gyms + the Citadel |
 | Trainer classes | 12 |
+| Languages | 5 — English, Español, Français, Italiano, 日本語 |
 
 ## Repository layout
 
@@ -177,6 +178,92 @@ badly on the dark datacenter backdrops unless the prompt asks for light, saturat
 garment colours *and* explicitly says `bright even daylight, high contrast, no
 dark shadows`. Every character prompt in `tools/generate_assets.py` is written
 that way and the resulting sheets average a luminance of ~105–160.
+
+## The homage roster (forms and COVER)
+
+Dex numbers **38–45** are portraits of real robots, named after the machines they
+honour: `stackchan`, `reachymini`, `optimus`, `spot` → `spotarm` (level 36),
+`figure03`, `unitree`, `neo`. Their design lives in `tools/newmons.py`
+(`NEW_MOVES`, `REACHY_BODY`, `SPECIES`); run `python tools\build_dex.py` from the
+repo root after any edit, then `python tools\ship_newmons.py` to stage the sheets.
+
+Two rules governed the integration and must hold for any future addition:
+
+- **Species ids are appended, never inserted.** They are baked into saved games,
+  so the homage roster sits *after* the legendaries even though it reads oddly in
+  the dex order.
+- **Dex entries stay ≤ ~120 characters.** `menu.ts` wraps the entry at 124 px and
+  slices to 5 lines (≈100 chars) on the summary page and at 216 px / 4 lines
+  (≈144) in the dex page; `starter.ts` allows 3 lines at 220 px. A longer entry is
+  not an error, it just silently loses its last sentence.
+
+### Forms
+
+`REACHYMINI` is the only species with `forms` populated, and the only one that
+learns `COVER`. Colour forms (`snow` `sky` `lime` `sun` `ember`) share types and
+learnset and differ only by shell tint; shape forms (`hallow` `zebra` `hf`) add a
+second type and their own moves. `rollForm()` gives a wild encounter a 12 % chance
+of a shape form, the remainder split evenly across colours.
+
+`agentSpriteKey()` **falls back to the bare species key** whenever a form has no
+tint of its own (`snow` *is* the base render) or is unknown. That is what makes a
+legacy save, or a hand-edited form key, incapable of 404-ing a sprite sheet.
+
+### COVER
+
+`alloy`/status, power 0, **accuracy 100**, PP 10, priority 4, target self, effect
+`shell_cover`. It blocks every *damaging* move for one turn, lets status moves
+through, heals `floor(maxHp / 10)`, and — deliberately, at the player's request —
+**does not prevent a wild unit from being caught**.
+
+Accuracy is 100 rather than a sentinel because `every move is internally
+consistent` caps it there, and status moves skip the accuracy gate anyway
+(`m.accuracy < 100 || m.category !== 'status'`).
+
+Two independent brakes stop it becoming a stall lock: a Protect-style ladder
+(`odds = 1 / 2 ** coverStreak`) and the PP pool.
+
+**Testing gotcha:** `covered` is cleared inside `finishTurn()`, so it is *always*
+false once `takeTurn()` returns. To observe the shell up, use
+`openTurn(forcedFoeAction)` then `closeTurn(playerAction)`, or set
+`playerC.covered` by hand for a frame.
+
+Verify with `client/tools/verify-newmons.mjs` (22 checks: every new sheet resolves
+front/back/cover through the live loader, a real battle starts, the shell blocks
+damage and the shut pose is the one actually drawn).
+
+## Languages
+
+Playable in **EN / ES / FR / IT / JA**, picked from the title screen or from
+OPTIONS mid-game. `client/src/game/i18n.ts` is the runtime;
+`localStorage['agentmon.lang']` is the source of truth, because the selector sits
+on the title screen *before* any save loads. **English source strings are the
+translation keys**, so an unknown key falls through to English and can never
+crash. Species names, character names and place names are never translated.
+
+Three traps, each of which cost a round-trip:
+
+- **Eager evaluation.** `maps.ts`, `interiors.ts`, `items.ts`, `trainers.ts` and
+  `agent.ts` build `export const X = {...}` literals at import time, so a `t()`
+  inside one freezes the boot language forever. Data stays English; localisation
+  happens at the accessor (`moveName()`, `itemName()`, `genusOf()`, `typeName()`…)
+  or the draw call. Never translate twice — `upper(typeName(x))`, never
+  `tUpper(typeName(x))`.
+- **The extractor's blind spot.** `i18n-scan.mjs` reads `t('…')` literals out of
+  the source and cannot see a table indexed at runtime (`t(STAT_NAME[stat])`).
+  Any new module-level string table must be exported through an `xxxStrings()`
+  function folded into `dataStrings()` in `main.ts`, or it silently ships in
+  English.
+- **Orthography.** The font composes accents over the base glyph, so the advance
+  stays 6 px and a diacritic is *free* — but the translation pass still shipped
+  `tres`/`ete` (fr) and `E'`/`piu'` (it). `npm run i18n:accents` is the permanent
+  gate and must print `ACCENTS OK`. Its Italian pattern is case-insensitive (or
+  `Puo'` escapes) and `po'` is deliberately allowed, being correct Italian.
+
+`npm run i18n:check` proves every key exists in every catalogue with placeholders
+intact; `npm run verify:i18n` boots the game in all five languages and asserts
+glyph coverage, label widths and an empty `missingKeys`. Both need
+`npm run preview`.
 
 ## Verification harness
 

@@ -5,7 +5,7 @@ import { font } from '../../engine/font.ts';
 import { Scene } from '../../engine/scene.ts';
 import { SCREEN_H, SCREEN_W } from '../../engine/screen.ts';
 import { drawPanel, PALETTE } from '../../engine/ui.ts';
-import { allSpecies, setDex } from '../data/dex.ts';
+import { allSpecies, hasCoverPose, setDex, spriteKey } from '../data/dex.ts';
 import {
   BACKDROP_KEYS, BUILDING_KEYS, CHARACTER_KEYS, TRAINER_KEYS,
 } from '../data/artkeys.ts';
@@ -47,6 +47,18 @@ export class BootScene extends Scene {
     for (const s of allSpecies()) {
       assets.queueSheet(`cr:${s.key}`, `assets/creatures/${s.key}`, true);
       assets.queueSheet(`cr:${s.key}:back`, `assets/creatures/${s.key}_back`, true);
+      if (hasCoverPose(s.key, null)) {
+        assets.queueSheet(`cr:${s.key}:cover`, `assets/creatures/${s.key}_cover`, true);
+      }
+      for (const f of s.forms ?? []) {
+        const key = spriteKey(s.key, f.key);
+        if (key === s.key) continue; // base look, already queued above
+        assets.queueSheet(`cr:${key}`, `assets/creatures/${key}`, true);
+        assets.queueSheet(`cr:${key}:back`, `assets/creatures/${key}_back`, true);
+        if (hasCoverPose(s.key, f.key)) {
+          assets.queueSheet(`cr:${key}:cover`, `assets/creatures/${key}_cover`, true);
+        }
+      }
     }
     assets.queueSheet('icons', 'assets/atlas/creature_icons', true);
     for (const k of CHARACTER_KEYS) assets.queueSheet(`ch:${k}`, `assets/chars/${k}`, true);

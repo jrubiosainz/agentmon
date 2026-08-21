@@ -1,0 +1,1 @@
+{"frameWidth": 78, "frameHeight": 78, "animations": {"idle": {"row": 0, "frames": 4}, "attack": {"row": 1, "frames": 6}, "hit": {"row": 2, "frames": 6}, "appear": {"row": 3, "frames": 5}}, "species": "neo_back"}

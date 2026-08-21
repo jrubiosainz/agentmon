@@ -39,6 +39,21 @@
     "qubitto": 33,
     "entangl": 34,
     "agentzero": 35,
-    "nexusprime": 36
+    "nexusprime": 36,
+    "stackchan": 37,
+    "reachymini": 38,
+    "reachymini_sky": 39,
+    "reachymini_lime": 40,
+    "reachymini_sun": 41,
+    "reachymini_ember": 42,
+    "reachymini_hallow": 43,
+    "reachymini_zebra": 44,
+    "reachymini_hf": 45,
+    "optimus": 46,
+    "spot": 47,
+    "spotarm": 48,
+    "figure03": 49,
+    "unitree": 50,
+    "neo": 51
   }
 }

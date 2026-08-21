@@ -621,6 +621,8 @@ export const ROUTE2: MapDef = {
     { species: 'boltkin', min: 10, max: 13, weight: 10 },
     { species: 'fanlet', min: 10, max: 14, weight: 8 },
     { species: 'chassik', min: 11, max: 14, weight: 4 },
+    { species: 'stackchan', min: 10, max: 13, weight: 6 },
+    { species: 'spot', min: 10, max: 13, weight: 5 },
   ],
 };
 
@@ -712,6 +714,8 @@ export const CACHEWOOD: MapDef = {
     { species: 'cryobit', min: 14, max: 18, weight: 10 },
     { species: 'figlet', min: 14, max: 18, weight: 8 },
     { species: 'malwarm', min: 16, max: 18, weight: 6 },
+    { species: 'reachymini', min: 13, max: 17, weight: 12 },
+    { species: 'stackchan', min: 14, max: 18, weight: 8 },
   ],
 };
 
@@ -975,6 +979,10 @@ export const ROUTE3: MapDef = {
     { species: 'quadrotor', min: 21, max: 24, weight: 9 },
     { species: 'radiaton', min: 22, max: 25, weight: 5 },
     { species: 'qubitto', min: 22, max: 25, weight: 3 },
+    { species: 'spot', min: 19, max: 23, weight: 9 },
+    { species: 'optimus', min: 21, max: 24, weight: 7 },
+    { species: 'figure03', min: 21, max: 24, weight: 6 },
+    { species: 'unitree', min: 22, max: 25, weight: 4 },
   ],
 };
 
@@ -1224,6 +1232,11 @@ export const CITADEL: MapDef = {
     { species: 'optibrawn', min: 28, max: 32, weight: 10 },
     { species: 'entangl', min: 32, max: 34, weight: 3 },
     { species: 'agentzero', min: 40, max: 40, weight: 1 },
+    { species: 'neo', min: 28, max: 32, weight: 8 },
+    { species: 'unitree', min: 28, max: 32, weight: 6 },
+    { species: 'optimus', min: 29, max: 33, weight: 6 },
+    { species: 'figure03', min: 29, max: 33, weight: 5 },
+    { species: 'spotarm', min: 30, max: 34, weight: 5 },
   ],
 };
 

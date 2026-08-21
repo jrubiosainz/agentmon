@@ -41,6 +41,26 @@ export interface Stats {
 
 export type GrowthRate = 'fast' | 'medium_fast' | 'medium_slow' | 'slow';
 
+/**
+ * An alternate appearance of a species.
+ *
+ * `colour` forms are pure palette swaps - same typing, same learnset, so they
+ * exist only to make a wild encounter feel personal. `shape` forms are proper
+ * variants: they keep the base stats but bring their own second type and their
+ * own signature moves. Both resolve to their own sprite, `<species>_<form>`.
+ */
+export type FormKind = 'colour' | 'shape';
+
+export interface FormDef {
+  key: string;
+  label: string;
+  kind: FormKind;
+  /** Colour forms: the shell tint, for UI chips. Null on the base appearance. */
+  tint?: string | null;
+  types?: TypeKey[];
+  learnset?: [number, string][];
+}
+
 export interface SpeciesDef {
   id: number;
   key: string;
@@ -60,6 +80,9 @@ export interface SpeciesDef {
   airborne: boolean;
   cell: { w: number; h: number };
   legendary: boolean;
+  forms: FormDef[];
+  /** Real hardware this design pays homage to. Credit, never shown as a name. */
+  inspired: string;
 }
 
 export interface Dex {
@@ -131,6 +154,49 @@ export function allSpecies(): SpeciesDef[] {
   return Object.values(DEX().species).sort((a, b) => a.id - b.id);
 }
 
+// --------------------------------------------------------------------------- //
+// Forms
+// --------------------------------------------------------------------------- //
+export function formsOf(sp: SpeciesDef | string): FormDef[] {
+  return (typeof sp === 'string' ? species(sp) : sp).forms ?? [];
+}
+
+export function formOf(sp: SpeciesDef | string, form: string | null | undefined): FormDef | null {
+  if (!form) return null;
+  return formsOf(sp).find((f) => f.key === form) ?? null;
+}
+
+/** Typing after the form override, which only `shape` forms carry. */
+export function typesOf(speciesKey: string, form?: string | null): TypeKey[] {
+  const sp = species(speciesKey);
+  return formOf(sp, form)?.types ?? sp.types;
+}
+
+export function learnsetOf(speciesKey: string, form?: string | null): [number, string][] {
+  const sp = species(speciesKey);
+  return formOf(sp, form)?.learnset ?? sp.learnset;
+}
+
+/**
+ * Asset key for a species/form pair. Forms whose art is the untouched base
+ * generation (SNOW) ship no sheet of their own, so they fall back to the
+ * species key rather than 404ing.
+ */
+export function spriteKey(speciesKey: string, form?: string | null): string {
+  const f = formOf(speciesKey, form);
+  if (!f) return speciesKey;
+  if (f.kind === 'colour' && !f.tint) return speciesKey;
+  return `${speciesKey}_${f.key}`;
+}
+
+/**
+ * Whether a `<key>_cover` sheet was shipped. Data-driven off the learnset so a
+ * new shell-hider only has to learn COVER to get its pose queued.
+ */
+export function hasCoverPose(speciesKey: string, form?: string | null): boolean {
+  return learnsetOf(speciesKey, form).some(([, key]) => key === 'cover');
+}
+
 export function dexSize(): number {
   return Object.keys(DEX().species).length;
 }
@@ -164,11 +230,22 @@ export function typeName(key: TypeKey): string {
   return t(typeDef(key).name);
 }
 
+/**
+ * Form labels are descriptors (SKY, ZEBRA, HALLOW), not names, so unlike a
+ * species name they DO translate.
+ */
+export function formLabel(f: FormDef | null): string {
+  return f ? t(f.label) : '';
+}
+
 /** Every localisable dex string (never species names), for the extractor. */
 export function dexStrings(): string[] {
   const d = DEX();
   const out: string[] = [];
-  for (const s of Object.values(d.species)) out.push(s.genus, s.dexEntry);
+  for (const s of Object.values(d.species)) {
+    out.push(s.genus, s.dexEntry);
+    for (const f of s.forms ?? []) out.push(f.label);
+  }
   for (const m of Object.values(d.moves)) out.push(m.name, m.desc);
   for (const ty of Object.values(d.types)) out.push(ty.name);
   return out;

@@ -8,7 +8,7 @@
 
 import { Rng } from '../../engine/rng.ts';
 import {
-  displayName, gainEvs, gainExp, isFainted, learnMove, maxHp, stats,
+  displayName, gainEvs, gainExp, isFainted, learnMove, maxHp, stats, types as agentTypes,
   type AgentInstance, type LevelUpResult, type StatusKey,
 } from '../data/agent.ts';
 import { move, moveName, species, typeEffect, type MoveDef, type TypeKey } from '../data/dex.ts';
@@ -30,6 +30,17 @@ export interface Combatant {
   hasActed: boolean;
   /** A turn checks for faints more than once; each KO is only announced once. */
   faintAnnounced: boolean;
+  /**
+   * COVER: the shell is closed, so damaging moves bounce off. Lasts exactly one
+   * turn (cleared in `finishTurn`), and catching deliberately still works -
+   * a hiding wild unit is the *easier* one to scoop up.
+   */
+  covered: boolean;
+  /**
+   * Consecutive successful COVERs. Halves the success odds each time so the
+   * move cannot be chained into an unkillable stall.
+   */
+  coverStreak: number;
 }
 
 export type Side = 'player' | 'foe';
@@ -60,7 +71,8 @@ export type BattleEvent =
   | { t: 'flee'; success: boolean }
   | { t: 'end'; outcome: BattleOutcome }
   | { t: 'sfx'; name: string }
-  | { t: 'requestSwitch'; side: Side };
+  | { t: 'requestSwitch'; side: Side }
+  | { t: 'cover'; side: Side; up: boolean };
 
 export type BattleOutcome = 'win' | 'lose' | 'caught' | 'fled' | 'foeFled';
 
@@ -112,6 +124,8 @@ export function makeCombatant(agent: AgentInstance): Combatant {
     turnsOut: 0,
     hasActed: false,
     faintAnnounced: false,
+    covered: false,
+    coverStreak: 0,
   };
 }
 
@@ -318,6 +332,14 @@ export class Battle {
   private finishTurn(ev: BattleEvent[]): void {
     if (!this.outcome) this.endOfTurn(ev);
     if (!this.outcome) this.checkFaints(ev);
+    // COVER lasts exactly one turn - the shell opens again here.
+    for (const side of ['player', 'foe'] as Side[]) {
+      const c = this.side(side);
+      if (c.covered) {
+        c.covered = false;
+        ev.push({ t: 'cover', side, up: false });
+      }
+    }
     this.playerC.turnsOut++;
     this.foeC.turnsOut++;
     this.turnOpen = false;
@@ -398,6 +420,8 @@ export class Battle {
     slot.pp--;
     attacker.hasActed = true;
     const m = move(slot.key);
+    // Chaining COVER must get harder; any other move resets the ladder.
+    if (m.effect !== 'shell_cover') attacker.coverStreak = 0;
     ev.push({ t: 'useMove', side, move: m });
     ev.push({ t: 'text', text: t('{name} used {move}!', { name, move: moveName(m) }), wait: false });
 
@@ -417,8 +441,18 @@ export class Battle {
       return;
     }
 
+    // A closed shell eats the hit entirely - no damage, no secondary effect.
+    if (defender.covered) {
+      ev.push({
+        t: 'text',
+        text: t('{name} is shielded by its shell!', { name: this.label(this.foeOf(side)) }),
+        wait: true,
+      });
+      return;
+    }
+
     // Damage.
-    const eff = typeEffect(m.type, species(defender.agent.speciesKey).types);
+    const eff = typeEffect(m.type, agentTypes(defender.agent));
     if (eff === 0) {
       ev.push({ t: 'noEffect', side });
       ev.push({ t: 'text', text: t("It doesn't affect {name}...", { name: this.label(this.foeOf(side)) }), wait: true });
@@ -458,7 +492,7 @@ export class Battle {
 
     let dmg = Math.floor(Math.floor(Math.floor((2 * level) / 5 + 2) * m.power * atk / def) / 50) + 2;
     if (crit) dmg = Math.floor(dmg * 1.5);
-    const stab = species(attacker.agent.speciesKey).types.includes(m.type) ? 1.5 : 1;
+    const stab = agentTypes(attacker.agent).includes(m.type) ? 1.5 : 1;
     dmg = Math.floor(dmg * stab);
     dmg = Math.floor(dmg * eff);
     dmg = Math.floor((dmg * this.rng.int(85, 100)) / 100);
@@ -527,7 +561,7 @@ export class Battle {
 
     const setStatus = (s: StatusKey, immuneType?: TypeKey): boolean => {
       if (c.agent.status !== 'none') return false;
-      if (immuneType && species(c.agent.speciesKey).types.includes(immuneType)) return false;
+      if (immuneType && agentTypes(c.agent).includes(immuneType)) return false;
       c.agent.status = s;
       if (s === 'sleep') c.agent.sleepTurns = this.rng.int(2, 4);
       ev.push({ t: 'status', side: target, status: s });
@@ -549,6 +583,34 @@ export class Battle {
       }
       case 'flinch': {
         c.flinched = true;
+        return true;
+      }
+      case 'shell_cover': {
+        const self = this.side(source);
+        // Protect-style ladder: certain the first time, halved on every repeat.
+        const odds = 1 / Math.pow(2, self.coverStreak);
+        if (self.coverStreak > 0 && !this.rng.chance(odds)) {
+          self.coverStreak = 0;
+          ev.push({ t: 'text', text: t('But the shell would not close again!'), wait: true });
+          return true;
+        }
+        self.covered = true;
+        self.coverStreak++;
+        ev.push({ t: 'cover', side: source, up: true });
+        ev.push({
+          t: 'text',
+          text: t('{name} pulled its head into its shell!', { name: this.label(source) }),
+          wait: true,
+        });
+        const heal = Math.floor(maxHp(self.agent) / 10);
+        if (heal > 0 && self.agent.hp < maxHp(self.agent)) {
+          this.healBy(ev, source, heal);
+          ev.push({
+            t: 'text',
+            text: t('{name} recalibrated in the dark!', { name: this.label(source) }),
+            wait: true,
+          });
+        }
         return true;
       }
       case 'heal_half': {
@@ -869,11 +931,11 @@ export class Battle {
         .map((a, i) => ({ a, i }))
         .filter(({ a, i }) => !isFainted(a) && i !== this.foe.activeIndex);
       if (bench.length) {
-        const playerTypes = species(this.playerC.agent.speciesKey).types;
-        const current = this.threatScore(c.agent.speciesKey, playerTypes);
+        const playerTypes = agentTypes(this.playerC.agent);
+        const current = this.threatScore(c.agent, playerTypes);
         const best = bench.reduce((acc, b) =>
-          this.threatScore(b.a.speciesKey, playerTypes) > this.threatScore(acc.a.speciesKey, playerTypes) ? b : acc);
-        if (this.threatScore(best.a.speciesKey, playerTypes) > current + 0.6) {
+          this.threatScore(b.a, playerTypes) > this.threatScore(acc.a, playerTypes) ? b : acc);
+        if (this.threatScore(best.a, playerTypes) > current + 0.6) {
           return { kind: 'switch', index: best.i };
         }
       }
@@ -881,7 +943,7 @@ export class Battle {
 
     if (ai === 0) return { kind: 'move', index: this.rng.pick(usable).i };
 
-    const defTypes = species(this.playerC.agent.speciesKey).types;
+    const defTypes = agentTypes(this.playerC.agent);
     const scored = usable.map(({ m, i }) => {
       const def = move(m.key);
       let score = 1;
@@ -890,7 +952,7 @@ export class Battle {
         if (def.target === 'self') score = c.turnsOut < 2 ? 22 : 8;
       } else {
         const eff = typeEffect(def.type, defTypes);
-        const stab = species(c.agent.speciesKey).types.includes(def.type) ? 1.5 : 1;
+        const stab = agentTypes(c.agent).includes(def.type) ? 1.5 : 1;
         score = def.power * eff * stab * (def.accuracy / 100);
         if (eff === 0) score = 0;
       }
@@ -902,8 +964,8 @@ export class Battle {
     return { kind: 'move', index: scored[0]!.i };
   }
 
-  private threatScore(speciesKey: string, foeTypes: TypeKey[]): number {
-    const own = species(speciesKey).types;
+  private threatScore(a: AgentInstance, foeTypes: TypeKey[]): number {
+    const own = agentTypes(a);
     let off = 0;
     for (const t of own) off = Math.max(off, typeEffect(t, foeTypes));
     let vuln = 0;

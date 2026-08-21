@@ -12,6 +12,8 @@ __pycache__/
 .venv/
 venv/
 tools/.cache/
+tools/.preview/
+tools/_moves.txt
 tools/out/raw/
 coverage/
 .vscode/
