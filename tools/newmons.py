@@ -292,7 +292,7 @@ SPECIES = [
         types=["neural", "alloy"], genus="Home Unit",
         stats=(100, 80, 90, 82, 96, 57), catch=45, base_exp=192,
         growth="slow", height=1.65, weight=30.0, cell=(68, 68),
-        accents=((0xFF, 0xFF, 0xFF),),  # glowing white ear ring
+        accents=((0xFF, 0xFF, 0xFF), (0x28, 0x2C, 0x34)),  # ear ring + dark face
         dex="Wrapped head to toe in soft knit so it can never hurt anyone. It tidies your workshop "
             "while you sleep.",
         art="A gentle human-proportioned bipedal humanoid robot creature standing calmly with its arms "
@@ -300,15 +300,19 @@ SPECIES = [
             "oatmeal-beige knitted fabric suit like a full knitted bodysuit, the colour a very "
             "desaturated light greige sand tone close to raw undyed wool or unbleached linen, "
             "definitely NOT orange and NOT bright tan, kept muted and washed-out: the head is a smooth "
-            "featureless rounded egg shape covered in the same beige knit with no eyes, no mouth and no "
-            "visor at all, and on the side of the head exactly where a human ear would sit there is one "
+            "rounded egg shape covered in the same beige knit, and set into the front of that head is "
+            "one large smooth glossy very dark charcoal-black oval face panel with no eyes and no "
+            "mouth, a plain unbroken dark visor plate covering most of the front of the head and "
+            "contrasting strongly against the pale knit around it; on the side of the head exactly "
+            "where a human ear would sit there is one "
             "large bright glowing white circular ring, a bold luminous white halo outline taking up a "
-            "third of the visible side of the head, which is the single brightest and most distinctive "
-            "feature of the creature; a soft knitted collar at "
+            "third of the visible side of the head, which together with the dark face is the most "
+            "distinctive feature of the creature; a soft knitted collar at "
             "the neck; the shoulders, chest, arms, hips and legs all show a clearly visible ribbed knit "
             "stitch texture with gentle fabric creases and soft seams running down the outside of the "
-            "arms and legs; the hands are the only hard parts, smooth cream-white moulded "
-            "five-fingered robotic hands with visible finger segments emerging from knitted cuffs; one "
+            "arms and legs; the hands are the only hard parts, large bright cream-white moulded "
+            "five-fingered robotic hands, clearly much paler and glossier than the knit sleeves, with "
+            "visible finger segments emerging from darker knitted cuffs; one "
             "small round darker port low on the outer hip; softly rounded knit feet; broad relaxed "
             "shoulders and a calm friendly stance, warm and domestic, everything else fabric with no "
             "exposed metal or machinery anywhere; drawn with stylised creature proportions, the head "
