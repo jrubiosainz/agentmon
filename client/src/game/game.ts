@@ -49,14 +49,20 @@ export class Game {
   }
 
   // ------------------------------------------------------------------ assets
-  /** Build (and memoise) a SpriteSheet from a queued `queueSheet` pair. */
+  /**
+   * Build (and memoise) a SpriteSheet from a queued `queueSheet` pair.
+   *
+   * A miss is only memoised once the loader is idle. Caching `null` while an
+   * asset is still in flight would blank that sprite for the whole session -
+   * the negative entry outlives the download, and nothing ever re-probes it.
+   */
   sheet(key: string): SpriteSheet | null {
     const cached = this.sheets.get(key);
     if (cached !== undefined) return cached;
     const img = assets.image(key);
     const meta = assets.sheetMeta(key);
     if (!img || !meta) {
-      this.sheets.set(key, null);
+      if (!assets.busy) this.sheets.set(key, null);
       return null;
     }
     const anims: Record<string, { row: number; frames: number }> = {};
@@ -79,7 +85,7 @@ export class Game {
       index: Record<string, number>;
     }>(`${key}:meta`);
     if (!img || !meta) {
-      this.atlases.set(key, null);
+      if (!assets.busy) this.atlases.set(key, null);
       return null;
     }
     const at = new GridAtlas(img, meta.frameWidth, meta.frameHeight, meta.columns, meta.index);

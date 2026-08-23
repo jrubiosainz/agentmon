@@ -21,6 +21,7 @@ export class Assets {
   private json = new Map<string, unknown>();
   private tasks: Task[] = [];
   private failed = new Set<string>();
+  private loading = 0;
 
   base = import.meta.env.BASE_URL ?? '/';
 
@@ -70,24 +71,39 @@ export class Assets {
     return this.tasks.length;
   }
 
+  /**
+   * True while anything is still queued or in flight. Callers that memoise a
+   * lookup MUST consult this before caching a miss: an asset that simply has
+   * not landed yet is not an asset that is absent, and caching `null` for it
+   * would hide that art for the rest of the session.
+   */
+  get busy(): boolean {
+    return this.loading > 0 || this.tasks.length > 0;
+  }
+
   async loadAll(onProgress?: (done: number, total: number) => void): Promise<void> {
     const total = this.tasks.length;
     let done = 0;
     const queue = this.tasks;
     this.tasks = [];
+    this.loading++;
 
-    const CONCURRENCY = 8;
-    let cursor = 0;
-    const workers = Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
-      for (;;) {
-        const i = cursor++;
-        if (i >= queue.length) return;
-        await queue[i]!.run();
-        done++;
-        onProgress?.(done, total);
-      }
-    });
-    await Promise.all(workers);
+    try {
+      const CONCURRENCY = 8;
+      let cursor = 0;
+      const workers = Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
+        for (;;) {
+          const i = cursor++;
+          if (i >= queue.length) return;
+          await queue[i]!.run();
+          done++;
+          onProgress?.(done, total);
+        }
+      });
+      await Promise.all(workers);
+    } finally {
+      this.loading--;
+    }
   }
 
   image(key: string): HTMLImageElement | null {

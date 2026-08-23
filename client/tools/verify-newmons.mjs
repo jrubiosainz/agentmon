@@ -33,7 +33,11 @@ const check = (ok, label, detail = '') => {
 // - retrying goto() instead just interrupts the navigation already in flight.
 await p.goto(URL, { waitUntil: 'commit', timeout: 180000 });
 await p.waitForFunction(() => !!window.agentmon, null, { timeout: 180000 });
-await p.waitForTimeout(2500);
+// `window.agentmon` exists the moment the loop starts, but BootScene is still
+// downloading. Probing a sheet before its asset lands is meaningless, so wait
+// for the loader to go idle rather than guessing with a sleep.
+await p.waitForFunction(() => window.agentmon.assets.busy === false, null, { timeout: 180000 });
+await p.waitForTimeout(1500);
 
 // ---------------------------------------------------------------- textures
 console.log('== loaded sprite sheets ==');

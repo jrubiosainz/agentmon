@@ -9,10 +9,11 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
+import { assets } from '../src/engine/assets.ts';
 import { Loop } from '../src/engine/loop.ts';
 import { Scene, SceneStack } from '../src/engine/scene.ts';
 import { Transitions } from '../src/engine/transition.ts';
-import type { Game } from '../src/game/game.ts';
+import { Game } from '../src/game/game.ts';
 
 class Recorder extends Scene {
   updates = 0;
@@ -130,5 +131,49 @@ describe('Transitions never strand the curtain', () => {
     t.uncover();
     expect(t.isCovered).toBe(false);
     expect(t.stuckFrames).toBe(0);
+  });
+});
+
+/**
+ * Homage species rendered as blanks in production while working locally: any
+ * lookup made before an asset landed cached `null` FOREVER, because the
+ * memoised miss outlives the download and nothing re-probes it. A slow network
+ * was all it took to permanently blank a sprite for the whole session.
+ */
+describe('asset cache never memoises a miss that is still downloading', () => {
+  const sheetsOf = (g: unknown) => (g as { sheets: Map<string, unknown> }).sheets;
+  const makeGame = (): Game => {
+    const g = Object.create(Game.prototype) as Game;
+    (g as unknown as { sheets: Map<string, unknown> }).sheets = new Map();
+    (g as unknown as { atlases: Map<string, unknown> }).atlases = new Map();
+    return g;
+  };
+
+  it('is busy while anything is queued or in flight', async () => {
+    expect(assets.busy).toBe(false);
+    assets.queueJson('probe:absent', 'does-not-exist.json', true);
+    expect(assets.busy).toBe(true);
+    await assets.loadAll();
+    expect(assets.busy).toBe(false);
+  });
+
+  it('retries a sheet whose asset has not landed yet', async () => {
+    const g = makeGame();
+    assets.queueJson('probe:absent', 'does-not-exist.json', true);
+    expect(g.sheet('cr:reachymini')).toBeNull();
+    // Nothing memoised: the next frame gets to ask again.
+    expect(sheetsOf(g).size).toBe(0);
+    expect(g.atlas('tiles:town')).toBeNull();
+    expect((g as unknown as { atlases: Map<string, unknown> }).atlases.size).toBe(0);
+    await assets.loadAll();
+  });
+
+  it('memoises a genuine miss once the loader is idle', () => {
+    const g = makeGame();
+    expect(assets.busy).toBe(false);
+    expect(g.sheet('cr:nosuchbot')).toBeNull();
+    expect(sheetsOf(g).get('cr:nosuchbot')).toBeNull();
+    expect(g.atlas('tiles:nosuchset')).toBeNull();
+    expect((g as unknown as { atlases: Map<string, unknown> }).atlases.size).toBe(1);
   });
 });

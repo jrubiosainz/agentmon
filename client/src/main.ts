@@ -5,6 +5,7 @@
  */
 
 import './style.css';
+import { assets } from './engine/assets.ts';
 import { audio, loadMutePreference } from './engine/audio.ts';
 import { font } from './engine/font.ts';
 import { Loop } from './engine/loop.ts';
@@ -161,7 +162,7 @@ function boot(): void {
   // Handy for debugging from the console; harmless in production. The i18n
   // surface is what the verification harness reads to prove no key is missing.
   (window as unknown as { agentmon?: unknown }).agentmon =
-    Object.assign(game, { saves, agent, audio, font, i18n, maps, trainers, dataStrings });
+    Object.assign(game, { saves, agent, assets, audio, font, i18n, maps, trainers, dataStrings });
 }
 
 // The active language's catalogue is code-split, so wait for it before the
