@@ -47,7 +47,14 @@ const check = (ok, label, detail = '') => {
 
 await p.goto(URL, { waitUntil: 'commit', timeout: 180000 });
 await p.waitForFunction(() => !!window.agentmon, null, { timeout: 180000 });
-await p.waitForTimeout(2500);
+// BootScene awaits `saves.init()` before it queues any art, so `assets.busy`
+// is briefly false at the very start. Wait for boot to leave the stack first.
+await p.waitForFunction(
+  () => window.agentmon.scenes.top && window.agentmon.scenes.top.constructor.name !== 'BootScene',
+  null,
+  { timeout: 180000 },
+);
+await p.waitForFunction(() => window.agentmon.assets.busy === false, null, { timeout: 180000 });
 
 const sceneName = () => p.evaluate(() => window.agentmon.scenes.top?.constructor?.name);
 const tap = async (k, times = 1, ms = 300) => {

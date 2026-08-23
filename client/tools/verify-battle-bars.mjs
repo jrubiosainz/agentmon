@@ -34,18 +34,29 @@ const tap = async (k, times = 1, ms = 300) => {
 };
 
 // ------------------------------------------------------------ reach the world
-await page.goto(URL, { waitUntil: 'load' });
-await page.waitForFunction(() => !!window.agentmon, null, { timeout: 20000 });
-await page.waitForTimeout(2200);
-await tap('Shift', 1, 600);
-await tap('z', 2, 600);
-for (let i = 0; i < 12 && (await probe()).scene !== 'IntroScene'; i++) await tap('z', 1, 400);
-await tap('z', 16, 700);
-await tap('z', 2, 300);
-await tap('Shift', 1, 800);
-await tap('z', 1, 300);
-await tap('Shift', 1, 1000);
-for (let i = 0; i < 14 && (await probe()).scene !== 'OverworldScene'; i++) await tap('z', 1, 900);
+// `commit` + explicit readiness gates: a cold B1 App Service takes far longer
+// than `vite preview`, and a fixed key sequence silently lands somewhere else.
+await page.goto(URL, { waitUntil: 'commit', timeout: 180000 });
+await page.waitForFunction(() => !!window.agentmon, null, { timeout: 180000 });
+await page.waitForFunction(
+  () => window.agentmon.scenes.top && window.agentmon.scenes.top.constructor.name !== 'BootScene',
+  null,
+  { timeout: 180000 },
+);
+await page.waitForFunction(() => window.agentmon.assets.busy === false, null, { timeout: 180000 });
+
+let scene = null;
+for (let i = 0; i < 90; i++) {
+  scene = (await probe()).scene;
+  if (scene === 'OverworldScene') break;
+  if (scene === 'TitleScene') { await tap('Shift', 1, 700); await tap('z', 1, 500); continue; }
+  if (scene === 'IntroScene') { await tap(i % 3 === 2 ? 'Shift' : 'z', 1, 500); continue; }
+  await tap('z', 1, i < 30 ? 420 : 800);
+}
+if (scene !== 'OverworldScene') {
+  console.error(`never reached the overworld (stuck on ${scene})`);
+  process.exit(1);
+}
 await page.waitForTimeout(1200);
 
 // A slow, sturdy starter against a foe that survives a hit and strikes back, so
