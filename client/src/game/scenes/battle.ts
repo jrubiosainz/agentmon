@@ -74,6 +74,12 @@ function newSpriteState(): SpriteState {
   return { anim: 'idle', frame: 0, timer: 0, loop: true, visible: false, offX: 0, offY: 0, alpha: 1, scale: 1, flash: 0 };
 }
 
+/** The agent the scene is currently drawing for one side. See `pView`/`fView`. */
+interface CombatView {
+  agent: AgentInstance;
+  covered: boolean;
+}
+
 export class BattleScene extends Scene {
   private battle!: Battle;
   private payload!: BattlePayload;
@@ -112,6 +118,23 @@ export class BattleScene extends Scene {
   private childStack: ((r: unknown) => void)[] = [];
   private caughtAgent: AgentInstance | null = null;
   private levelPanel: { agent: AgentInstance; timer: number } | null = null;
+  /**
+   * What the player is currently LOOKING AT, as opposed to what the engine has
+   * already resolved.
+   *
+   * `Battle.takeTurn()` settles an entire turn before a frame is drawn, and
+   * `checkFaints()` calls `doSwitch()` *while it is still building the event
+   * array* - so `battle.foeC` holds the trainer's NEXT agent long before
+   * `playEvents` narrates the blow that scrapped the previous one. Rendering
+   * from the model therefore drew the incoming agent standing there taking a
+   * hit it never received, with the wrong name, level and HP denominator.
+   *
+   * The rule is the same one the HP bars already follow: **the battlefield
+   * follows the event log, never the model.** Only a replayed `sendOut` moves
+   * the view, and only a replayed `cover` toggles the shell pose.
+   */
+  private pView!: CombatView;
+  private fView!: CombatView;
 
   override async enter(payload?: unknown): Promise<void> {
     const p = payload as BattlePayload | undefined;
@@ -122,6 +145,8 @@ export class BattleScene extends Scene {
     if (!save.party.length) throw new Error('BattleScene: the player has no agents');
     this.payload = p;
     this.battle = new Battle(save.party, p.foes, p.config);
+    this.pView = { agent: this.battle.playerC.agent, covered: false };
+    this.fView = { agent: this.battle.foeC.agent, covered: false };
     this.syncBars(true);
     audio.playMusic(p.music ?? 'battleWild', true);
     this.game.transitions.cover();
@@ -183,15 +208,28 @@ export class BattleScene extends Scene {
   }
 
   private sheetFor(side: Side): SpriteSheet | null {
-    const c = side === 'player' ? this.battle.playerC : this.battle.foeC;
-    const key = agentSpriteKey(c.agent);
+    const v = this.view(side);
+    const key = agentSpriteKey(v.agent);
     // While COVER is up the unit is drawn shut, front-facing on both sides -
     // there is no separate back pose for a closed shell.
-    if (c.covered) {
+    if (v.covered) {
       const shut = this.game.creatureSheet(`${key}:cover`);
       if (shut) return shut;
     }
     return this.game.creatureSheet(key, side === 'player');
+  }
+
+  /** The agent currently ON SCREEN for a side - never the engine's live one. */
+  private view(side: Side): CombatView {
+    return side === 'player' ? this.pView : this.fView;
+  }
+
+  /** Snap a view back onto the model. Only sendOut/syncBars may call this. */
+  private syncView(side: Side, agent?: AgentInstance): void {
+    const c = side === 'player' ? this.battle.playerC : this.battle.foeC;
+    const v = this.view(side);
+    v.agent = agent ?? c.agent;
+    v.covered = v.agent === c.agent ? c.covered : false;
   }
 
   // ------------------------------------------------------------------ intro
@@ -449,6 +487,10 @@ export class BattleScene extends Scene {
         }
         case 'sendOut': {
           const s = this.sprite(ev.side);
+          // The event log is the only place the battlefield is allowed to
+          // change hands: everything drawn now belongs to the new agent.
+          const roster = ev.side === 'player' ? this.battle.player : this.battle.foe;
+          this.syncView(ev.side, roster.members[ev.index]);
           s.visible = true;
           s.alpha = 1;
           s.scale = 1;
@@ -456,14 +498,14 @@ export class BattleScene extends Scene {
           s.offY = 0;
           this.play(ev.side, 'appear');
           if (ev.side === 'player') {
-            this.pHpTarget = this.battle.playerC.agent.hp;
+            this.pHpTarget = this.pView.agent.hp;
             this.pHpShown = this.pHpTarget;
             this.expTarget = this.expRatio();
             this.expShown = this.expTarget;
           } else {
-            this.fHpTarget = this.battle.foeC.agent.hp;
+            this.fHpTarget = this.fView.agent.hp;
             this.fHpShown = this.fHpTarget;
-            seeSpecies(this.game.save, this.battle.foeC.agent.speciesKey);
+            seeSpecies(this.game.save, this.fView.agent.speciesKey);
           }
           yield 24;
           this.play(ev.side, 'idle', true);
@@ -475,8 +517,10 @@ export class BattleScene extends Scene {
         case 'noEffect':
           break;
         case 'cover': {
-          // `sheetFor()` already reads `covered`, so the pose swaps itself;
-          // this just gives the shell a beat to slam shut / spring open.
+          // The pose belongs to the narration, not the model: the engine may
+          // already have opened the shell (or swapped the agent out entirely)
+          // several events ahead of what is on screen.
+          this.view(ev.side).covered = ev.up;
           audio.sfx(ev.up ? 'charge' : 'cancel');
           this.play(ev.side, 'idle', true);
           yield 12;
@@ -525,7 +569,7 @@ export class BattleScene extends Scene {
         case 'exp': {
           const target = this.game.save.party[ev.index];
           if (!target) break;
-          if (ev.index === this.battle.player.activeIndex) {
+          if (target.uid === this.pView.agent.uid) {
             audio.sfx('charge');
             // A level-up tops the bar out first; the leftover is animated by
             // the levelUp events that follow this one.
@@ -538,7 +582,7 @@ export class BattleScene extends Scene {
           audio.sfx('levelUp');
           const agent = this.game.save.party[ev.index];
           if (agent) this.levelPanel = { agent, timer: 110 };
-          if (ev.index === this.battle.player.activeIndex) {
+          if (agent && agent.uid === this.pView.agent.uid) {
             this.expShown = 0;
             // Only the last level of the batch keeps the remainder; any level
             // before it fills the bar all over again.
@@ -604,15 +648,17 @@ export class BattleScene extends Scene {
 
   // ---------------------------------------------------------------- helpers
   private expRatio(): number {
-    const a = this.battle.playerC.agent;
+    const a = this.pView.agent;
     const { have, need } = expToNextLevel(a);
     return need <= 0 ? 1 : Math.max(0, Math.min(1, have / need));
   }
 
   private syncBars(snap: boolean): void {
     if (!snap) return;
-    this.pHpTarget = this.battle.playerC.agent.hp;
-    this.fHpTarget = this.battle.foeC.agent.hp;
+    this.syncView('player');
+    this.syncView('foe');
+    this.pHpTarget = this.pView.agent.hp;
+    this.fHpTarget = this.fView.agent.hp;
     this.expTarget = this.expRatio();
     this.pHpShown = this.pHpTarget;
     this.fHpShown = this.fHpTarget;
@@ -631,8 +677,8 @@ export class BattleScene extends Scene {
   }
 
   private tweenBars(): void {
-    const pMax = maxHp(this.battle.playerC.agent);
-    const fMax = maxHp(this.battle.foeC.agent);
+    const pMax = maxHp(this.pView.agent);
+    const fMax = maxHp(this.fView.agent);
     const pStep = Math.max(0.35, pMax / 90);
     const fStep = Math.max(0.35, fMax / 90);
     if (this.pHpShown > this.pHpTarget) this.pHpShown = Math.max(this.pHpTarget, this.pHpShown - pStep);
@@ -676,7 +722,7 @@ export class BattleScene extends Scene {
     // While the challenger portrait is on screen their agent has not been sent
     // out yet, so its status panel must not be showing.
     const foeBoxHidden = this.trainerSlide > 0;
-    if (!foeBoxHidden && (this.fSprite.visible || this.battle.foeC.agent.hp > 0)) this.drawFoeBox(g);
+    if (!foeBoxHidden && (this.fSprite.visible || this.fView.agent.hp > 0)) this.drawFoeBox(g);
     if (this.pSprite.visible && !this.levelPanel) this.drawPlayerBox(g);
 
     if (this.levelPanel) this.drawLevelPanel(g);
@@ -720,7 +766,7 @@ export class BattleScene extends Scene {
   private drawCreature(g: CanvasRenderingContext2D, side: Side): void {
     const s = this.sprite(side);
     if (!s.visible) return;
-    const agent = side === 'player' ? this.battle.playerC.agent : this.battle.foeC.agent;
+    const agent = this.view(side).agent;
     const sheet = this.sheetFor(side);
     const baseX = side === 'player' ? PLAYER_X : FOE_X;
     const baseY = side === 'player' ? PLAYER_Y : FOE_Y;
@@ -776,7 +822,7 @@ export class BattleScene extends Scene {
   }
 
   private drawFoeBox(g: CanvasRenderingContext2D): void {
-    const a = this.battle.foeC.agent;
+    const a = this.fView.agent;
     const x = 6;
     const y = 10;
     drawWindow(g, x, y, 108, 30, 'flat');
@@ -798,7 +844,7 @@ export class BattleScene extends Scene {
   }
 
   private drawPlayerBox(g: CanvasRenderingContext2D): void {
-    const a = this.battle.playerC.agent;
+    const a = this.pView.agent;
     const x = SCREEN_W - 118;
     const y = SCREEN_H - TEXTBOX_H - 46;
     drawWindow(g, x, y, 112, 40, 'flat');

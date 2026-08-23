@@ -12,7 +12,8 @@
     "i18n:scan": "node tools/i18n-scan.mjs",
     "i18n:check": "node tools/i18n-scan.mjs --check",
     "i18n:accents": "node tools/i18n-accents.mjs",
-    "verify:i18n": "node tools/verify-i18n.mjs"
+    "verify:i18n": "node tools/verify-i18n.mjs",
+    "verify:gyms": "node tools/verify-gyms.mjs"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

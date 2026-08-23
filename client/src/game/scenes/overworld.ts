@@ -468,31 +468,56 @@ export class OverworldScene extends Scene {
         : (dy > 0 ? 'down' : 'up');
     }
 
-    if (def.script) {
-      await this.runScript(def.script, npc);
+    // `busy` gates every input, so it MUST be cleared even when a script throws.
+    // A single bad item key once bricked the overworld: the rejection escaped
+    // before `busy = false`, leaving the player unable to talk, walk or cancel.
+    try {
+      if (def.script) {
+        await this.runScript(def.script, npc);
+        return;
+      }
+      if (def.trainer && !flag(this.game.save, `beat:${def.trainer}`)) {
+        await this.runTrainerBattle(def.trainer);
+        return;
+      }
+      if (def.trainer) {
+        const t = trainerDef(def.trainer);
+        await this.say(...localizeLines(t.after));
+        return;
+      }
+      await this.say(...(def.text ? localizeLines(def.text) : [t('...')]));
+    } catch (err) {
+      await this.recoverFromScript(err, def.script ?? def.id);
+    } finally {
       this.busy = false;
-      return;
     }
-    if (def.trainer && !flag(this.game.save, `beat:${def.trainer}`)) {
-      await this.runTrainerBattle(def.trainer);
-      this.busy = false;
-      return;
+  }
+
+  /**
+   * Last-ditch handler for a script that blew up mid-dialogue. It closes any
+   * half-open textbox so the player is handed control back on a clean frame.
+   */
+  private async recoverFromScript(err: unknown, where: string): Promise<void> {
+    console.error(`agentmon: script "${where}" failed`, err);
+    this.dialogue = null;
+    this.resumeStack.length = 0;
+    try {
+      await this.say(t('...'));
+    } catch {
+      this.dialogue = null;
     }
-    if (def.trainer) {
-      const t = trainerDef(def.trainer);
-      await this.say(...localizeLines(t.after));
-      this.busy = false;
-      return;
-    }
-    await this.say(...(def.text ? localizeLines(def.text) : [t('...')]));
-    this.busy = false;
   }
 
   private async runSignScript(sign: { text: string[]; script?: string }): Promise<void> {
     this.busy = true;
-    if (sign.text.length > 0) await this.say(...localizeLines(sign.text));
-    await this.runScript(sign.script!);
-    this.busy = false;
+    try {
+      if (sign.text.length > 0) await this.say(...localizeLines(sign.text));
+      await this.runScript(sign.script!);
+    } catch (err) {
+      await this.recoverFromScript(err, sign.script ?? 'sign');
+    } finally {
+      this.busy = false;
+    }
   }
 
   // -------------------------------------------------------------- trainers
@@ -519,23 +544,28 @@ export class OverworldScene extends Scene {
   }
 
   private async runTrainerApproach(npc: Actor, def: NpcDef): Promise<void> {
-    // Walk the trainer up to the player, one tile at a time.
-    for (let guard = 0; guard < 12; guard++) {
-      const [dx, dy] = DIR_VEC[npc.facing];
-      const nx = npc.x + dx;
-      const ny = npc.y + dy;
-      if (nx === this.player.x && ny === this.player.y) break;
-      if (this.map.isSolid(nx, ny)) break;
-      this.map.setSolid(npc.x, npc.y, false);
-      npc.moving = true;
-      npc.moveDur = WALK_FRAMES;
-      npc.moveTimer = 0;
-      await this.waitFor(() => !npc.moving);
-      this.map.setSolid(npc.x, npc.y, true);
+    try {
+      // Walk the trainer up to the player, one tile at a time.
+      for (let guard = 0; guard < 12; guard++) {
+        const [dx, dy] = DIR_VEC[npc.facing];
+        const nx = npc.x + dx;
+        const ny = npc.y + dy;
+        if (nx === this.player.x && ny === this.player.y) break;
+        if (this.map.isSolid(nx, ny)) break;
+        this.map.setSolid(npc.x, npc.y, false);
+        npc.moving = true;
+        npc.moveDur = WALK_FRAMES;
+        npc.moveTimer = 0;
+        await this.waitFor(() => !npc.moving);
+        this.map.setSolid(npc.x, npc.y, true);
+      }
+      this.player.facing = this.opposite(npc.facing);
+      await this.runTrainerBattle(def.trainer!);
+    } catch (err) {
+      await this.recoverFromScript(err, `trainer:${def.trainer ?? def.id}`);
+    } finally {
+      this.busy = false;
     }
-    this.player.facing = this.opposite(npc.facing);
-    await this.runTrainerBattle(def.trainer!);
-    this.busy = false;
   }
 
   private opposite(f: Facing): Facing {
@@ -657,6 +687,16 @@ export class OverworldScene extends Scene {
         );
         return;
       }
+      case 'gym_medic': {
+        await this.say(
+          t('GYM MEDIC: Challengers get free servicing on this floor.'),
+          t('GYM MEDIC: Hold still. This only takes a moment.'),
+        );
+        audio.sfx('heal');
+        for (const a of save.party) healFully(a);
+        await this.say(t('GYM MEDIC: All charged up. Go and win it.'));
+        return;
+      }
       case 'ada': return this.scriptAda();
       case 'rival_lab': return npc ? this.scriptRivalLab() : undefined;
       case 'storage': return this.scriptStorage();
@@ -666,9 +706,12 @@ export class OverworldScene extends Scene {
       case 'gym2_leader': return this.scriptLeader('gym2_leader');
       case 'gym3_leader': return this.scriptLeader('gym3_leader');
       case 'champion': return this.scriptChampion();
-      case 'gift_toolkit': return this.scriptGift('toolkit', 'ENGINEER', 'repair_kit', 1);
-      case 'gift_rarechip': return this.scriptGift('rarechip', 'RESEARCHER', 'rare_chip', 1);
-      case 'gift_fullreset': return this.scriptGift('fullreset', 'MEDIC', 'full_reset', 1);
+      case 'gift_toolkit': return this.scriptGift('toolkit', 'ENGINEER', 'toolkit', 1);
+      case 'gift_rarechip': return this.scriptGift('rarechip', 'RESEARCHER', 'rarechip', 1);
+      case 'gift_fullreset': return this.scriptGift('fullreset', 'MEDIC', 'fullreset', 1);
+      case 'gift_gym1_aid': return this.scriptGift('gym1aid', 'GYM AIDE', 'superpatch', 2);
+      case 'gift_gym2_aid': return this.scriptGift('gym2aid', 'GYM AIDE', 'deicer', 2);
+      case 'gift_gym3_aid': return this.scriptGift('gym3aid', 'GYM AIDE', 'hyperpatch', 2);
       default: {
         await this.say(...(npc?.def?.text ? localizeLines(npc.def.text) : [t('...')]));
       }
@@ -840,6 +883,18 @@ export class OverworldScene extends Scene {
     const trainer = trainerDef(key);
     if (flag(this.game.save, `beat:${key}`)) {
       await this.say(...localizeLines(trainer.after));
+      return;
+    }
+    // A gym is a gauntlet: the leader only accepts a challenger who has cleared
+    // the whole floor, so a player who slipped past a sight line has to go back.
+    const left = (trainer.requires ?? []).filter((k) => !flag(this.game.save, `beat:${k}`));
+    if (left.length > 0) {
+      await this.say(
+        t('{leader}: Not so fast. My floor staff vet every challenger.', { leader: trainer.name }),
+        t('{leader}: {count} of them are still waiting for you. Off you go.', {
+          leader: trainer.name, count: formatNumber(left.length),
+        }),
+      );
       return;
     }
     await this.runTrainerBattle(key);

@@ -523,6 +523,19 @@ export const GYM_VOLT: MapDef = {
       text: ['ENGINEER KAI: Amps up! Let us see your throughput.'],
     },
     {
+      id: 'gv_intern', x: 10, y: 12, facing: 'left', sprite: 'npc_kid', movement: 'static',
+      trainer: 'gym1_d', sight: 4, name: 'INTERN PIP',
+      text: ['INTERN PIP: I only started last week, but I have been studying!'],
+    },
+    {
+      id: 'gv_medic', x: 12, y: 16, facing: 'left', sprite: 'npc_medic', movement: 'look',
+      name: 'GYM MEDIC', script: 'gym_medic',
+    },
+    {
+      id: 'gv_aide', x: 4, y: 16, facing: 'right', sprite: 'npc_clerk', movement: 'look',
+      name: 'GYM AIDE', script: 'gift_gym1_aid',
+    },
+    {
       id: 'gv_leader', x: 8, y: 3, facing: 'down', sprite: 'leader_volt', movement: 'static',
       trainer: 'gym1_leader', name: 'LEADER NOVA', script: 'gym1_leader',
       text: ['LEADER NOVA: Welcome to my datacenter. Mind the voltage.'],
@@ -865,7 +878,7 @@ export const GYM_DATA: MapDef = {
       text: ['TECH BRIS: Mind the frost. It gets in the joints.'],
     },
     {
-      id: 'gd_2', x: 11, y: 10, facing: 'left', sprite: 'npc_guard', movement: 'static',
+      id: 'gd_2', x: 11, y: 10, facing: 'right', sprite: 'npc_guard', movement: 'static',
       trainer: 'gym2_b', sight: 4, name: 'SECURITY IKO',
       text: ['SECURITY IKO: Cold storage means nothing gets out.'],
     },
@@ -873,6 +886,19 @@ export const GYM_DATA: MapDef = {
       id: 'gd_3', x: 5, y: 6, facing: 'right', sprite: 'npc_engineer', movement: 'static',
       trainer: 'gym2_c', sight: 3, name: 'ENGINEER MAE',
       text: ['ENGINEER MAE: Freeze first, ask questions later.'],
+    },
+    {
+      id: 'gd_4', x: 11, y: 4, facing: 'left', sprite: 'npc_kid', movement: 'static',
+      trainer: 'gym2_d', sight: 3, name: 'ANALYST VELA',
+      text: ['ANALYST VELA: I log every challenger. Give me a good row of data.'],
+    },
+    {
+      id: 'gd_medic', x: 10, y: 17, facing: 'left', sprite: 'npc_medic', movement: 'look',
+      name: 'GYM MEDIC', script: 'gym_medic',
+    },
+    {
+      id: 'gd_aide', x: 6, y: 17, facing: 'right', sprite: 'npc_clerk', movement: 'look',
+      name: 'GYM AIDE', script: 'gift_gym2_aid',
     },
     {
       id: 'gd_leader', x: 8, y: 3, facing: 'down', sprite: 'leader_cryo', movement: 'static',
@@ -1133,6 +1159,19 @@ export const GYM_THERMAL: MapDef = {
       id: 'gt_3', x: 7, y: 7, facing: 'right', sprite: 'npc_engineer', movement: 'static',
       trainer: 'gym3_c', sight: 4, name: 'ENGINEER SIRA',
       text: ['ENGINEER SIRA: My units thrive at ninety degrees.'],
+    },
+    {
+      id: 'gt_4', x: 10, y: 5, facing: 'left', sprite: 'npc_technician', movement: 'static',
+      trainer: 'gym3_d', sight: 2, name: 'HANDLER TOR',
+      text: ['HANDLER TOR: My units carry racks all day. Yours carry what, exactly?'],
+    },
+    {
+      id: 'gt_medic', x: 11, y: 19, facing: 'left', sprite: 'npc_medic', movement: 'look',
+      name: 'GYM MEDIC', script: 'gym_medic',
+    },
+    {
+      id: 'gt_aide', x: 7, y: 19, facing: 'right', sprite: 'npc_clerk', movement: 'look',
+      name: 'GYM AIDE', script: 'gift_gym3_aid',
     },
     {
       id: 'gt_leader', x: 9, y: 3, facing: 'down', sprite: 'leader_thermal', movement: 'static',

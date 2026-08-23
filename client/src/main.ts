@@ -13,7 +13,9 @@ import * as agent from './game/data/agent.ts';
 import { battleStrings } from './game/battle/engine.ts';
 import { dexStrings } from './game/data/dex.ts';
 import { itemStrings } from './game/data/items.ts';
+import * as maps from './game/data/maps.ts';
 import { mapStrings } from './game/data/maps.ts';
+import * as trainers from './game/data/trainers.ts';
 import { trainerStrings } from './game/data/trainers.ts';
 import * as i18n from './game/i18n.ts';
 import { saves } from './game/save.ts';
@@ -159,7 +161,7 @@ function boot(): void {
   // Handy for debugging from the console; harmless in production. The i18n
   // surface is what the verification harness reads to prove no key is missing.
   (window as unknown as { agentmon?: unknown }).agentmon =
-    Object.assign(game, { saves, agent, audio, font, i18n, dataStrings });
+    Object.assign(game, { saves, agent, audio, font, i18n, maps, trainers, dataStrings });
 }
 
 // The active language's catalogue is code-split, so wait for it before the

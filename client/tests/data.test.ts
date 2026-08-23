@@ -55,11 +55,24 @@ const MUSIC = new Set([
   'center', 'mart', 'rival', 'battleWild', 'battleTrainer', 'victory', 'champion',
   'elite', 'evolution', 'intro', 'overworld', 'home', 'house', 'cave', 'wild', 'trainer',
 ]);
-const SCRIPTS = new Set([
-  'ada', 'champion', 'citadel_block', 'gift_fullreset', 'gift_rarechip', 'gift_toolkit',
-  'gym1_leader', 'gym2_leader', 'gym3_leader', 'mom', 'rival_final', 'rival_lab',
-  'rival_r3', 'route1_block', 'route2_block', 'route3_block', 'heal',
-]);
+/**
+ * Script ids and gift item keys read straight out of the overworld source.
+ *
+ * A hand-kept list drifts: three gift NPCs once shipped with item keys that
+ * `item()` throws on, which soft-locked the overworld because the rejection
+ * escaped before `busy` was cleared. Deriving both sets from `runScript`'s
+ * switch means a new script or a mistyped item key fails here instead.
+ */
+const OVERWORLD_SRC = readFileSync(
+  fileURLToPath(new URL('../src/game/scenes/overworld.ts', import.meta.url)),
+  'utf8',
+);
+const SCRIPTS = new Set(
+  [...OVERWORLD_SRC.matchAll(/case '([a-z0-9_]+)':/g)].map((m) => m[1]),
+);
+const GIFT_ITEM_KEYS = [...OVERWORLD_SRC.matchAll(
+  /scriptGift\(\s*'[^']*',\s*'[^']*',\s*'([^']*)'/g,
+)].map((m) => m[1]);
 
 const START = { map: 'home_bedroom', x: 3, y: 4 };
 
@@ -177,6 +190,14 @@ describe('items', () => {
     }
     expect(problems).toEqual([]);
   });
+
+  it('every gift script hands out an item that exists', () => {
+    // `item()` throws on an unknown key, and that rejection used to escape
+    // `talkTo()` before `busy` was cleared - a one-character typo bricked the
+    // overworld until the tab was reloaded.
+    expect(GIFT_ITEM_KEYS.length).toBeGreaterThan(0);
+    expect(GIFT_ITEM_KEYS.filter((k) => !ITEMS[k])).toEqual([]);
+  });
 });
 
 describe('trainers', () => {
@@ -194,6 +215,23 @@ describe('trainers', () => {
         if (!DEX().species[m.species]) { problems.push(`${key}: unknown species ${m.species}`); continue; }
         if (m.level < 2 || m.level > 100) problems.push(`${key}: level ${m.level} out of range`);
         for (const mv of m.moves ?? []) if (!DEX().moves[mv]) problems.push(`${key}: unknown move ${mv}`);
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+
+  it('every leader gate lists trainers that exist and are reachable', () => {
+    const problems: string[] = [];
+    // Which trainers can actually be fought, i.e. some NPC points at them.
+    const placed = new Set<string>();
+    for (const def of ALL_MAPS) {
+      for (const n of def.npcs ?? []) if (n.trainer) placed.add(n.trainer);
+    }
+    for (const [key, t] of Object.entries(TRAINERS)) {
+      for (const req of t.requires ?? []) {
+        if (!TRAINERS[req]) { problems.push(`${key}: requires unknown trainer '${req}'`); continue; }
+        if (req === key) problems.push(`${key}: requires itself`);
+        if (!placed.has(req)) problems.push(`${key}: requires '${req}' which no NPC fields`);
       }
     }
     expect(problems).toEqual([]);
@@ -477,6 +515,79 @@ describe('turn order', () => {
     const opening = b.openTurn();
     expect(opening.playerActs).toBe(false);
     expect(b.outcome).toBe('lose');
+  });
+});
+
+describe('battlefield view', () => {
+  /**
+   * `checkFaints()` calls `doSwitch()` synchronously while it is still building
+   * the event array, so the engine's `foeC` points at the REPLACEMENT before
+   * the scene has drawn a single frame of the knockout. Anything the scene
+   * renders during narration must therefore come from the event log, exactly
+   * like the HP bars: the battlefield only changes hands on `sendOut`.
+   */
+  function trainerDuel(): Battle {
+    const mine = createAgent('stackbit', { level: 60, moves: ['tackle'] });
+    const a = createAgent('boltkin', { level: 3, moves: ['tackle'] });
+    const b = createAgent('stackbit', { level: 3, moves: ['tackle'] });
+    return new Battle([mine], [a, b], {
+      kind: 'trainer', playerName: 'AAA', canRun: false, seed: 11,
+      trainerName: 'RIVAL', payout: 10,
+    });
+  }
+
+  /** Replay the log the way the scene does and report the agent on screen. */
+  function replay(startIndex: number, events: readonly { t: string }[]): {
+    atFaint: number; atEnd: number; sendOuts: number;
+  } {
+    let shown = startIndex;
+    let atFaint = -1;
+    let sendOuts = 0;
+    for (const ev of events) {
+      const e = ev as { t: string; side?: string; index?: number };
+      if (e.t === 'faint' && e.side === 'foe') atFaint = shown;
+      if (e.t === 'sendOut' && e.side === 'foe') { shown = e.index!; sendOuts++; }
+    }
+    return { atFaint, atEnd: shown, sendOuts };
+  }
+
+  it('the engine has already swapped the foe before the log is narrated', () => {
+    const b = trainerDuel();
+    const opening = b.openTurn();
+    const events = opening.playerActs
+      ? [...opening.events, ...b.closeTurn({ kind: 'move', index: 0 })]
+      : [...opening.events];
+    expect(events.some((e) => e.t === 'faint' && e.side === 'foe'), 'nothing was KOd').toBe(true);
+    // The model is useless as a render source: it is already showing member 1.
+    expect(b.foe.activeIndex, 'the engine did not swap in the replacement').toBe(1);
+  });
+
+  it('a knockout narrates on the fainted agent, not on its replacement', () => {
+    const b = trainerDuel();
+    // Snapshot the view BEFORE the turn resolves, as the scene does.
+    const shownBefore = b.foe.activeIndex;
+    const opening = b.openTurn();
+    const events = opening.playerActs
+      ? [...opening.events, ...b.closeTurn({ kind: 'move', index: 0 })]
+      : [...opening.events];
+    const seen = replay(shownBefore, events);
+    expect(seen.atFaint, 'the replacement took the killing blow').toBe(0);
+    expect(seen.sendOuts, 'the replacement never walked on').toBe(1);
+    expect(seen.atEnd, 'the wrong agent is left on the field').toBe(1);
+  });
+
+  it('every foe damage event before the sendOut belongs to the fainted agent', () => {
+    const b = trainerDuel();
+    const opening = b.openTurn();
+    const events = opening.playerActs
+      ? [...opening.events, ...b.closeTurn({ kind: 'move', index: 0 })]
+      : [...opening.events];
+    const cut = events.findIndex((e) => e.t === 'sendOut' && e.side === 'foe');
+    expect(cut, 'no replacement was sent out').toBeGreaterThan(0);
+    const hits = events.slice(0, cut).filter((e) => e.t === 'damage' && e.side === 'foe');
+    expect(hits.length, 'the foe was never hit').toBeGreaterThan(0);
+    // The last one must land on zero: that is the agent the faint refers to.
+    expect((hits.at(-1) as { to: number }).to, 'the KO blow did not empty the bar').toBe(0);
   });
 });
 

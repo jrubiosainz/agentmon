@@ -117,33 +117,75 @@ check(live.scene === 'BattleScene' && live.foe === 'optimus' && live.mine === 'r
   'a battle against OPTIMUS starts', `foe=${live.foe} player=${live.mine}`);
 await p.locator('canvas').screenshot({ path: `${OUT}/optimus-vs-reachy-hf.png` });
 
+// The pose has to follow the NARRATION, not the model: `checkFaints()` swaps
+// the engine's combatant several events before the scene has drawn the KO, so
+// anything read live is already the wrong unit. Drive the real menu and sample
+// what the scene actually asks for, frame by frame.
+await p.evaluate(() => {
+  const g = window.agentmon;
+  const sc = g.scenes.top;
+  const orig = sc.sheetFor.bind(sc);
+  window.__poses = [];
+  sc.sheetFor = (side) => {
+    const sheet = orig(side);
+    if (side === 'player') {
+      window.__poses.push(sheet === g.creatureSheet('reachymini_hf:cover'));
+    }
+    return sheet;
+  };
+});
+// Wait for the command menu, then commit COVER through the scene's own path -
+// exactly what the move menu does on confirm, minus the key timing.
+await p.waitForFunction(() => window.agentmon.scenes.top?.mode === 'command',
+  null, { timeout: 20000 });
+await p.evaluate(() => {
+  window.agentmon.scenes.top.runSequence({ kind: 'move', index: 0 });
+});
+await p.waitForTimeout(3600);
+const drawn = await p.evaluate(() => ({
+  frames: window.__poses.length,
+  shut: window.__poses.filter(Boolean).length,
+}));
+check(drawn.shut > 0, 'the shut pose is what gets drawn',
+  `${drawn.shut}/${drawn.frames} frames`);
+await p.locator('canvas').screenshot({ path: `${OUT}/cover-pose.png` });
+
+// ...and the model alone must never move it. This is the same rule that stops
+// a KO from landing on the replacement instead of the unit that fainted.
+const poked = await p.evaluate(() => {
+  const g = window.agentmon;
+  const sc = g.scenes.top;
+  sc.view('player').covered = false;
+  sc.battle.playerC.covered = true;
+  const shut = sc.sheetFor('player') === g.creatureSheet('reachymini_hf:cover');
+  sc.battle.playerC.covered = false;
+  return { shut };
+});
+check(!poked.shut, 'the model alone cannot change the drawn pose');
+
+await p.waitForTimeout(600);
 const cover = await p.evaluate(async () => {
   const g = window.agentmon;
   const b = g.scenes.top.battle;
+  // COVER is Protect-style: the odds halve on every consecutive use. The point
+  // here is that a CLOSED shell eats the hit, not the ladder, so clear it.
+  b.playerC.coverStreak = 0;
+  const before = b.playerC.agent.hp;
   b.openTurn();
   const evs = b.closeTurn({ kind: 'move', index: 0 });
   return {
     events: evs.map((e) => e.t).join(','),
     raised: evs.some((e) => e.t === 'cover' && e.up),
+    swung: evs.some((e) => e.t === 'useMove' && e.side === 'foe'),
+    before,
     hp: b.playerC.agent.hp,
     max: g.agent.maxHp(b.playerC.agent),
   };
 });
 check(cover.raised, 'COVER raises the shell', cover.events.slice(0, 90));
-check(cover.hp === cover.max, 'nothing got through the shell', `hp=${cover.hp}/${cover.max}`);
-
-// `covered` is cleared in finishTurn, so hold it up for one frame to prove the
-// scene really swaps to the shut pose rather than just narrating it.
-const pose = await p.evaluate(() => {
-  const g = window.agentmon;
-  const sc = g.scenes.top;
-  sc.battle.playerC.covered = true;
-  const shut = sc.sheetFor('player');
-  return { shut: shut === g.creatureSheet('reachymini_hf:cover') };
-});
-await p.waitForTimeout(400);
-check(pose.shut, 'the shut pose is what gets drawn');
-await p.locator('canvas').screenshot({ path: `${OUT}/cover-pose.png` });
+check(cover.swung, 'the foe actually swung at the shell', cover.events.slice(0, 90));
+check(cover.hp === cover.before, 'nothing got through the shell',
+  `hp=${cover.hp}/${cover.max} (was ${cover.before})`);
 
 await browser.close();
 console.log(`\nerrors: ${errs.length ? errs.slice(0, 6).join('\n') : '(none)'}`);

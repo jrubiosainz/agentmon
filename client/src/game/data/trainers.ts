@@ -22,6 +22,8 @@ export interface TrainerDef {
   /** Leaders hand out a badge flag. */
   badge?: { flag: string; name: string; item?: string };
   music?: string;
+  /** Leaders refuse the challenge until every key here has a `beat:` flag. */
+  requires?: string[];
   /** AI quality: 0 random, 1 prefers damage, 2 full type-aware planning. */
   ai?: 0 | 1 | 2;
 }
@@ -69,9 +71,16 @@ export const TRAINERS: Record<string, TrainerDef> = {
     'ENGINEER KAI: Right, you earned that.',
     'ENGINEER KAI: VOLT moves can SHORT your units. Watch out.'),
 
+  gym1_d: T('gym1_d', 'INTERN PIP', 'trainer_kid', 44,
+    [{ species: 'stackchan', level: 11 }, { species: 'voltling', level: 12 }],
+    'INTERN PIP: I only started last week, but I have been studying!',
+    'INTERN PIP: Logged it. Loss number fourteen.',
+    'INTERN PIP: One day I will run a floor like this one.'),
+
   gym1_leader: {
     key: 'gym1_leader', name: 'LEADER NOVA', sprite: 'trainer_gym1', payout: 120, ai: 2,
     music: 'gymleader',
+    requires: ['gym1_a', 'gym1_b', 'gym1_c', 'gym1_d'],
     team: [
       { species: 'roombit', level: 12 },
       { species: 'voltling', level: 13 },
@@ -148,9 +157,16 @@ export const TRAINERS: Record<string, TrainerDef> = {
     'ENGINEER MAE: You thawed right through that.',
     'ENGINEER MAE: THERMAL moves melt CRYO units. Obvious, but effective.'),
 
+  gym2_d: T('gym2_d', 'ANALYST VELA', 'trainer_kid', 108,
+    [{ species: 'reachymini', level: 21 }, { species: 'spot', level: 22 }],
+    'ANALYST VELA: I log every challenger. Give me a good row of data.',
+    'ANALYST VELA: Recorded. You are faster than the average.',
+    'ANALYST VELA: FROST reads your team before you finish sending it out.'),
+
   gym2_leader: {
     key: 'gym2_leader', name: 'LEADER FROST', sprite: 'trainer_gym2', payout: 220, ai: 2,
     music: 'gymleader',
+    requires: ['gym2_a', 'gym2_b', 'gym2_c', 'gym2_d'],
     team: [
       { species: 'cryobit', level: 22 },
       { species: 'roombit', level: 22 },
@@ -225,9 +241,16 @@ export const TRAINERS: Record<string, TrainerDef> = {
     'ENGINEER SIRA: And yours thrive under pressure. Noted.',
     'ENGINEER SIRA: Go on. She is expecting you.'),
 
+  gym3_d: T('gym3_d', 'HANDLER TOR', 'trainer_technician', 156,
+    [{ species: 'figure03', level: 30 }, { species: 'optimus', level: 31 }],
+    'HANDLER TOR: My units carry racks all day. Yours carry what, exactly?',
+    'HANDLER TOR: Fair. Fair. You put the work in.',
+    'HANDLER TOR: PYRA is straight ahead. Bring COOLANT.'),
+
   gym3_leader: {
     key: 'gym3_leader', name: 'LEADER PYRA', sprite: 'trainer_gym3', payout: 340, ai: 2,
     music: 'gymleader',
+    requires: ['gym3_a', 'gym3_b', 'gym3_c', 'gym3_d'],
     team: [
       { species: 'fanlet', level: 30 },
       { species: 'forgeron', level: 31 },
