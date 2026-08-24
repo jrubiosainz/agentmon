@@ -29,6 +29,7 @@ import { StartMenuScene, StorageScene } from './menu.ts';
 import { markVisited } from './regionmap.ts';
 import { ShopScene } from './shop.ts';
 import { StarterScene, type StarterResult } from './starter.ts';
+import { runVsIntro, VsIntro } from './vsintro.ts';
 
 const WALK_FRAMES = 15;
 const RUN_FRAMES = 8;
@@ -95,6 +96,8 @@ export class OverworldScene extends Scene {
    * handed to the battle scene so an encounter in a storm still looks stormy.
    */
   private weather = new Weather(null);
+  /** Trainer VS card. Non-null only while the card is on screen. */
+  private vs: VsIntro | null = null;
   /** Blocks player input while a script/dialogue/battle is running. */
   private busy = false;
   private dialogue: Dialogue | null = null;
@@ -667,6 +670,14 @@ export class OverworldScene extends Scene {
     const foes = trainer.team.map((m) => createAgent(m.species, { level: m.level, moves: m.moves }));
     for (const f of foes) seeSpecies(this.game.save, f.speciesKey);
     audio.sfx('encounter');
+    // The VS card plays over the live map, before the curtain drops. It must
+    // clear even if the sequence throws, or the overlay outlives the battle.
+    try {
+      this.vs = new VsIntro(trainer.name, trainer.sprite);
+      await runVsIntro(this.vs);
+    } finally {
+      this.vs = null;
+    }
     await this.game.transitions.out('battleSplit', 46);
     const payload: BattlePayload = {
       foes,
@@ -923,6 +934,12 @@ export class OverworldScene extends Scene {
     const foes = [createAgent(key, { level: 5 })];
     for (const f of foes) seeSpecies(save, f.speciesKey);
     audio.sfx('encounter');
+    try {
+      this.vs = new VsIntro(save.rivalName, 'trainer_rival');
+      await runVsIntro(this.vs);
+    } finally {
+      this.vs = null;
+    }
     await this.game.transitions.out('battleSplit', 46);
     const result = await this.pushAndWait<BattleResult>(new BattleScene(), {
       foes,
@@ -1197,6 +1214,8 @@ export class OverworldScene extends Scene {
     if (this.exclaim) this.drawExclaim(g);
     if (this.banner.timer > 0) this.drawBanner(g);
     if (this.dialogue) this.drawDialogue(g);
+    // Above everything, including the dialogue box it replaces.
+    if (this.vs) this.vs.draw(g);
   }
 
   private drawObject(

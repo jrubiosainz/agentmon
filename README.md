@@ -24,6 +24,7 @@ tilemap, sprite, bitmap-font, transition and chiptune-audio layers are all in
 | Trainer classes | 12 |
 | Languages | 5 — English, Español, Français, Italiano, 日本語 |
 | Ambience | 4 weathers (rain, storm, fog, ash) + a 4-phase day/night cycle on the real clock |
+| Battle intro | Animated VS card on every trainer encounter |
 
 ## Repository layout
 
@@ -495,6 +496,54 @@ distinct, that a weather set on an interior is still dropped, that `dayTint`
 returns null at midday, that night is darker and dusk warmer than day, that
 interiors never drift, and that a battle started from stormy Route 3 at night
 inherits both. Screenshots land in `tools/shots/ambience/`.
+
+## Trainer VS card (do not regress)
+
+`client/src/game/scenes/vsintro.ts` is the Emerald/HGSS beat that plays between
+"a trainer spotted you" and the battle transition: two diagonal panels slam
+across, the opponent's portrait slides in and settles, a chunky **VS** badge
+punches in with a white impact flash, and a gold-ruled name plate rises.
+
+Three decisions that must survive any refactor:
+
+- **It is an overlay owned by `OverworldScene`, not a pushed scene.** A scene
+  would have to interleave with `transitions.out/cover/in`, and this project has
+  already paid for that mistake once — the black-screen-on-battle bug came from
+  a curtain nobody lifted. The card never touches the curtain; `OverworldScene`
+  holds it in `this.vs` and draws it as the last line of `render()`.
+- **It drives itself off `requestAnimationFrame`, not `update()`.** `Loop` keeps
+  rendering when `update()` throws (by design), so a counter ticked from
+  `update()` would freeze and the awaiting caller would hang forever behind a
+  permanent VS screen. `runVsIntro()` also carries a 4000 ms wall-clock deadline
+  so a throttled or backgrounded tab can never strand the battle.
+- **Opponent only, exactly like the real games.** There is no player battle
+  portrait — only a 16 px overworld walk sheet — and pairing a 2×-upscaled sprite
+  against a native-resolution portrait is the classic amateur tell.
+
+Both trainer-battle entry points are wired: `runTrainerBattle()` and the lab
+rival fight, which builds its payload inline and so is easy to forget.
+
+Two pixel-level rules the harness enforces:
+
+- **The base panel overshoots the screen by the skew on both sides.** A diagonal
+  the exact width of the screen leaves a triangle of live overworld alive in the
+  top-right corner. The lighter accent band deliberately does *not* overshoot —
+  push it out too and both of its cuts leave the frame, turning the wedge into a
+  flat horizontal bar.
+- **The badge scale is quantised to whole pixels** (`Math.max(2, Math.round(4 -
+  easeOut(t) * 2))`) so every intermediate frame is still a legal pixel-art frame
+  rather than a resampled blur, and it settles at 2× — 1× reads as a caption.
+
+No new i18n keys: trainer names are never translated, and **VS** is a
+hand-authored bitmap glyph, not text.
+
+Verify with `npm run verify:vs`. Part A steps `frame` by hand so every
+screenshot lands on a known beat, and asserts the card covers ≥95% of the map,
+is darker than it, changes between beats, and gains gold pixels as the badge and
+plate light up — **counting warm pixels, not mean red**, because the mean red
+*falls* as the dark panels swallow the sunlit map. Part B walks into a real gym
+trainer and proves the card both plays and **tears down**; a stuck overlay would
+be the curtain bug wearing a new hat. Screenshots land in `tools/shots/vs/`.
 
 ## Verification harness
 
