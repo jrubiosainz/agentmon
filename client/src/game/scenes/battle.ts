@@ -15,6 +15,8 @@ import {
   types as agentTypes, STATUS_COLOR, STATUS_SHORT,
   type AgentInstance,
 } from '../data/agent.ts';
+import { drawTint } from '../../engine/fx.ts';
+import { MoveFxPlayer, resolveMoveFx, type FxAnchor } from '../battle/movefx.ts';
 import { move as moveDef, moveName, species, typeDef, typeName, type Stats } from '../data/dex.ts';
 import { item as itemDef, ITEMS } from '../data/items.ts';
 import { trainer as trainerDef } from '../data/trainers.ts';
@@ -113,6 +115,14 @@ export class BattleScene extends Scene {
   private expTarget = 0;
   private ballAnim: { t: number; shakes: number; caught: boolean; total: number } | null = null;
   private trainerSlide = 0;
+  /**
+   * Per-move visuals. Driven entirely from the event log like the HP bars: the
+   * effect that plays belongs to the `useMove` being narrated, never to whatever
+   * the engine has already resolved.
+   */
+  private fx = new MoveFxPlayer();
+  /** Which side is currently swinging, so the lunge is applied to the right sprite. */
+  private fxAttacker: Side | null = null;
   private result: BattleResult | null = null;
   /** LIFO resolvers for child scenes (bag, party); see OverworldScene. */
   private childStack: ((r: unknown) => void)[] = [];
@@ -207,8 +217,20 @@ export class BattleScene extends Scene {
     s.loop = loop;
   }
 
-  private sheetFor(side: Side): SpriteSheet | null {
-    const v = this.view(side);
+  /**
+   * Where a move effect starts or lands for one side. `r` is the creature's
+   * on-screen half-width, so an impact is sized to the sprite it hits rather
+   * than to a constant that would swamp a small unit and vanish on a big one.
+   */
+  private anchor(side: Side): FxAnchor {
+    const s = this.sprite(side);
+    const sheet = this.sheetFor(side);
+    const base = side === 'player' ? { x: PLAYER_X, y: PLAYER_Y } : { x: FOE_X, y: FOE_Y };
+    const w = sheet ? sheet.frameW * s.scale : side === 'player' ? 56 : 46;
+    return { x: base.x + s.offX, y: base.y + s.offY, r: Math.max(12, w / 2) };
+  }
+
+  private sheetFor(side: Side): SpriteSheet | null {    const v = this.view(side);
     const key = agentSpriteKey(v.agent);
     // While COVER is up the unit is drawn shut, front-facing on both sides -
     // there is no separate back pose for a closed shell.
@@ -302,6 +324,7 @@ export class BattleScene extends Scene {
     if (!this.battle) return;
     this.tick++;
     this.updateSprites();
+    this.updateFx();
     this.tweenBars();
     if (this.levelPanel && --this.levelPanel.timer <= 0) this.levelPanel = null;
 
@@ -444,7 +467,13 @@ export class BattleScene extends Scene {
           break;
         case 'useMove': {
           this.play(ev.side, 'attack');
-          yield 6;
+          // The visual belongs to the move being narrated. Wait only until the
+          // effect connects - its debris keeps playing over the damage event, so
+          // the target's flinch lands on the impact rather than after it.
+          const spec = resolveMoveFx(ev.move);
+          this.fxAttacker = ev.side;
+          this.fx.play(spec, this.anchor(ev.side), this.anchor(ev.side === 'player' ? 'foe' : 'player'));
+          yield () => this.fx.contacted || this.fx.done;
           break;
         }
         case 'damage': {
@@ -464,6 +493,7 @@ export class BattleScene extends Scene {
           break;
         }
         case 'faint': {
+          this.releaseFx(ev.side);
           audio.sfx('faint');
           this.play(ev.side, 'faint');
           const s = this.sprite(ev.side);
@@ -476,6 +506,7 @@ export class BattleScene extends Scene {
           break;
         }
         case 'withdraw': {
+          this.releaseFx(ev.side);
           const s = this.sprite(ev.side);
           yield () => {
             s.scale = Math.max(0.05, s.scale - 0.08);
@@ -486,6 +517,7 @@ export class BattleScene extends Scene {
           break;
         }
         case 'sendOut': {
+          this.releaseFx(ev.side);
           const s = this.sprite(ev.side);
           // The event log is the only place the battlefield is allowed to
           // change hands: everything drawn now belongs to the new agent.
@@ -707,17 +739,65 @@ export class BattleScene extends Scene {
     }
   }
 
+  /**
+   * Advances the move effect and converts its lunge output into a sprite offset.
+   * Ownership of the attacker's offset is released the moment the effect ends,
+   * so a lunge can never leave a creature stranded off its platform - and the
+   * faint/withdraw/sendOut handlers release it early, since those own the offset
+   * themselves.
+   */
+  private updateFx(): void {
+    const attacker = this.fxAttacker;
+    this.fx.update();
+    if (!attacker) return;
+    const s = this.sprite(attacker);
+    if (this.fx.done) {
+      s.offX = 0;
+      s.offY = 0;
+      this.fxAttacker = null;
+      return;
+    }
+    const dir = attacker === 'player' ? 1 : -1;
+    s.offX = Math.round(this.fx.lunge * 20 * dir);
+    s.offY = Math.round(this.fx.lunge * -8 * dir);
+    if (this.fx.impact) this.sprite(attacker === 'player' ? 'foe' : 'player').flash = 8;
+  }
+
+  /** Hands the attacker's offset back before another handler takes it over. */
+  private releaseFx(side: Side): void {
+    if (this.fxAttacker !== side) return;
+    const s = this.sprite(side);
+    s.offX = 0;
+    s.offY = 0;
+    this.fxAttacker = null;
+  }
+
   // ----------------------------------------------------------------- render
   render(g: CanvasRenderingContext2D): void {
     if (!this.battle) return;
     this.drawBackdrop(g);
+
+    // Impact shake moves the battlefield, never the backdrop or the HUD: shaking
+    // the backdrop would expose the screen edges, and shaking the textbox makes
+    // the narration unreadable at exactly the moment it matters.
+    const sh = this.fx.shake;
+    const sx = sh > 0 ? Math.round(Math.sin(this.tick * 1.9) * sh * 0.7) : 0;
+    const sy = sh > 0 ? Math.round(Math.cos(this.tick * 2.7) * sh * 0.45) : 0;
+    g.save();
+    if (sx || sy) g.translate(sx, sy);
     this.drawPlatforms(g);
 
     if (this.trainerSlide > 0) this.drawTrainerIntro(g);
 
     this.drawCreature(g, 'foe');
     this.drawCreature(g, 'player');
+    this.fx.draw(g);
+    g.restore();
+
     if (this.ballAnim) this.drawBall(g);
+    if (this.fx.flash > 0) {
+      drawTint(g, SCREEN_W, SCREEN_H - TEXTBOX_H - 2, '#ffffff', this.fx.flash, true);
+    }
 
     // While the challenger portrait is on screen their agent has not been sent
     // out yet, so its status panel must not be showing.

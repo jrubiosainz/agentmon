@@ -304,6 +304,61 @@ intact; `npm run verify:i18n` boots the game in all five languages and asserts
 glyph coverage, label widths and an empty `missingKeys`. Both need
 `npm run preview`.
 
+## Move effects (do not regress)
+
+Before this layer existed, all 76 moves rendered identically: attack pose, screen
+shake, hit pose — only the SFX differed. Every move now resolves to a
+`MoveFxSpec` and plays a signature effect.
+
+- `client/src/engine/fx.ts` — reusable `ParticleField` plus the drawing
+  primitives (`drawBeam`, `boltPath`/`strokePath`, `drawShockRing`, `drawSlash`,
+  `drawTint`). No game knowledge, so the overworld can share it.
+- `client/src/game/battle/movefx.ts` — the 17 `FX_KINDS`, the
+  `MOVE_FX_OVERRIDE` table, `resolveMoveFx()` and the `MoveFxPlayer` timeline.
+
+Four rules hold:
+
+**Colours come from the MOVE's type, not the user's**, so a VOLT move always
+reads as VOLT no matter who fires it.
+
+**`resolveMoveFx` is total.** A move can never end up without an effect. It also
+self-corrects a damaging move that was mis-tagged as a self-kind — `solar_charge`
+(power 70, effect `spa_up`) was mapped to `buff`, which forced `target: 'self'`
+and left the enemy with no visual at all. The guard is structural, not a
+one-entry fix, because "damages *and* buffs" is a whole class of move.
+
+**Particles are opaque and rimmed, never additive.** This is the most
+GBA-authentic decision in the file and it was learned the hard way: additive
+1 px highlights over a bright sky blow out to invisible white, which is what
+`shards` and `spiral` originally did. Real hardware sprites were opaque and
+outlined, so every particle carries `outline: darken(spec.dark)` drawn one pixel
+fatter behind the body. Additive is reserved for the beam/bolt/flash primitives,
+which are wide enough to read on their own. All coordinates are `Math.round`ed
+and alpha is quantised to eighths — a subpixel particle or a smooth fade betrays
+the GBA look instantly.
+
+**The scene waits on `contacted`, not `done`**, so the target's damage reaction
+lands on the impact frame rather than after the debris settles. Debris keeps
+drawing over the following `damage` event because the field updates
+unconditionally.
+
+Offset ownership is the subtle risk: `updateFx()` writes `offX`/`offY` on the
+attacker every frame, and `faint`/`withdraw`/`sendOut` own those same fields.
+All three call `releaseFx(side)` first, and `updateFx` zeroes them the moment the
+effect finishes.
+
+```powershell
+cd client
+npm run preview                 # in another shell
+npm run verify:fx               # -> "FX OK"
+npm run shot:fx                 # filmstrips into tools/shots/fx/
+```
+
+`verify:fx` drives ten real battles and measures the pixels: every move must
+spawn a kind, particles and an impact; the effect must change the battlefield
+against the calm baseline; and **no two moves may produce the same frame** — the
+original "everything looks the same" bug, stated as a measurement.
+
 ## Verification harness
 
 `client/tools/smoke.mjs` drives the real game in headless Chromium and screenshots

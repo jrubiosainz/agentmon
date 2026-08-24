@@ -13,12 +13,15 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { buildTileset, type TileSetResult } from '../src/engine/tilegen.ts';
 import { Battle, type PlayerAction } from '../src/game/battle/engine.ts';
 import {
+  FX_KINDS, MOVE_FX_OVERRIDE, MoveFxPlayer, resolveMoveFx,
+} from '../src/game/battle/movefx.ts';
+import {
   BACKDROP_KEYS, BUILDING_KEYS, CHARACTER_KEYS, TRAINER_KEYS,
 } from '../src/game/data/artkeys.ts';
 import { createAgent, evolveTo, maxHp, types as agentTypes } from '../src/game/data/agent.ts';
 import {
   DEX, allSpecies, hasCoverPose, learnsetOf, setDex, move as moveDef, species as speciesDef,
-  spriteKey, typeEffect, typesOf,
+  spriteKey, typeEffect, typesOf, type MoveDef,
 } from '../src/game/data/dex.ts';
 import { ITEMS } from '../src/game/data/items.ts';
 import { ALL_MAPS, mapExists } from '../src/game/data/maps.ts';
@@ -1064,5 +1067,85 @@ describe('COVER', () => {
     const b = stage(9, 'static_field');
     b.takeTurn({ kind: 'move', index: 0 }, { kind: 'move', index: 0 });
     expect(b.playerC.agent.status).not.toBe('none');
+  });
+});
+
+// --------------------------------------------------------------------------- //
+// Move effects
+// --------------------------------------------------------------------------- //
+describe('move fx', () => {
+  const moves = (): MoveDef[] => Object.values(DEX().moves);
+
+  it('every move in the dex resolves to an effect', () => {
+    const kinds = new Set<string>(FX_KINDS);
+    for (const m of moves()) {
+      const fx = resolveMoveFx(m);
+      expect(kinds.has(fx.kind), `${m.key} -> unknown kind ${fx.kind}`).toBe(true);
+      expect(fx.color, `${m.key} has no colour`).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(fx.core, `${m.key} has no beam core colour`).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(fx.intensity, `${m.key} intensity out of range`).toBeGreaterThan(0);
+      expect(fx.intensity).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('every override names a move that actually exists', () => {
+    // A typo here would silently fall back to the generic look, which is
+    // exactly the regression this whole table exists to prevent.
+    for (const key of Object.keys(MOVE_FX_OVERRIDE)) {
+      expect(DEX().moves[key], `override for unknown move '${key}'`).toBeTruthy();
+    }
+  });
+
+  it('damaging moves resolve on the target, self-buffs on the user', () => {
+    for (const m of moves()) {
+      const fx = resolveMoveFx(m);
+      if (m.power > 0) {
+        expect(fx.target, `${m.key} is a damaging move but plays on the user`).toBe('foe');
+        expect(fx.shake, `${m.key} deals damage but never shakes`).toBeGreaterThan(0);
+      }
+      if (fx.kind === 'heal' || fx.kind === 'buff' || fx.kind === 'guard') {
+        expect(fx.target, `${m.key} buffs but plays on the foe`).toBe('self');
+        expect(fx.lunge, `${m.key} is a self effect but lunges`).toBe(0);
+      }
+    }
+  });
+
+  it('multi-hit moves play one impact per hit', () => {
+    const multi = moves().filter((m) => m.effect === 'multi_hit');
+    expect(multi.length, 'no multi-hit moves in the dex').toBeGreaterThan(0);
+    for (const m of multi) expect(resolveMoveFx(m).hits).toBeGreaterThan(1);
+  });
+
+  it('uses a broad spread of effect kinds', () => {
+    // Guards against the mapping collapsing so that everything looks the same
+    // again, which is the bug this feature was built to fix.
+    const used = new Set(moves().map((m) => resolveMoveFx(m).kind));
+    expect(used.size, `only ${used.size} distinct effects across the dex`).toBeGreaterThanOrEqual(12);
+  });
+
+  it('players out a full effect without stalling', () => {
+    const fx = new MoveFxPlayer();
+    for (const m of moves()) {
+      fx.play(resolveMoveFx(m), { x: 62, y: 114, r: 28 }, { x: 174, y: 68, r: 23 });
+      let guard = 0;
+      while (!fx.done && guard++ < 600) fx.update();
+      expect(fx.done, `${m.key} never finished`).toBe(true);
+      expect(fx.contacted, `${m.key} never connected`).toBe(true);
+      fx.cancel();
+    }
+  });
+
+  it('draws without throwing for every move', () => {
+    const g = stubContext() as unknown as CanvasRenderingContext2D;
+    const fx = new MoveFxPlayer();
+    for (const m of moves()) {
+      fx.play(resolveMoveFx(m), { x: 62, y: 114, r: 28 }, { x: 174, y: 68, r: 23 });
+      let guard = 0;
+      while (!fx.done && guard++ < 600) {
+        fx.update();
+        fx.draw(g);
+      }
+      fx.cancel();
+    }
   });
 });
