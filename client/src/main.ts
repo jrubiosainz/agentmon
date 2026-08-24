@@ -22,6 +22,7 @@ import * as i18n from './game/i18n.ts';
 import { saves } from './game/save.ts';
 import { BootScene } from './game/scenes/boot.ts';
 import { introStrings } from './game/scenes/intro.ts';
+import { regionStrings } from './game/scenes/regionmap.ts';
 import { DEFAULT_OPTIONS } from './game/state.ts';
 import { installAuthStyles } from './game/ui/authoverlay.ts';
 
@@ -80,7 +81,7 @@ function installHint(): void {
  */
 function dataStrings(): string[] {
   return [...mapStrings(), ...itemStrings(), ...trainerStrings(), ...dexStrings(), ...agent.statusStrings(),
-    ...battleStrings(), ...introStrings()];
+    ...battleStrings(), ...introStrings(), ...regionStrings()];
 }
 
 function fatal(err: unknown): void {

@@ -20,6 +20,7 @@ import { CATEGORY_NAME, CATEGORY_ORDER, item as itemDef, type ItemCategory } fro
 import { badgeInfoName, BADGE_ORDER } from '../data/trainers.ts';
 import { LANGS, getLang, t, tUpper, upper, type Lang } from '../i18n.ts';
 import { saves, summarise } from '../save.ts';
+import { RegionMapScene } from './regionmap.ts';
 import {
   bagAdd, bagRemove, BOX_COUNT, BOX_SIZE, formatMoney, formatPlaytime, type SaveData,
 } from '../state.ts';
@@ -53,8 +54,10 @@ export class StartMenuScene extends Scene {
       items.push({ label: tUpper('AGÉNTDEX'), value: 'dex' });
     }
     if (save.party.length > 0) items.push({ label: tUpper('AGÉNTMON'), value: 'party' });
+    items.push({ label: tUpper('BAG'), value: 'bag' });
+    // The map is handed over with the first badge, exactly as the town map is.
+    if (save.badges.length > 0) items.push({ label: tUpper('MAP'), value: 'map' });
     items.push(
-      { label: tUpper('BAG'), value: 'bag' },
       { label: save.playerName.slice(0, 8), value: 'card' },
       { label: tUpper('SAVE'), value: 'save' },
       { label: tUpper('OPTION'), value: 'options' },
@@ -80,6 +83,7 @@ export class StartMenuScene extends Scene {
       case 'dex': this.busy = true; void this.game.scenes.push(new DexScene()); break;
       case 'party': this.busy = true; void this.game.scenes.push(new PartyScene(), { mode: 'overworld' }); break;
       case 'bag': this.busy = true; void this.game.scenes.push(new BagScene(), { mode: 'overworld' }); break;
+      case 'map': this.busy = true; void this.game.scenes.push(new RegionMapScene()); break;
       case 'card': this.busy = true; void this.game.scenes.push(new TrainerCardScene()); break;
       case 'save': this.busy = true; void this.game.scenes.push(new SaveScene()); break;
       case 'options': this.busy = true; void this.game.scenes.push(new OptionsScene()); break;

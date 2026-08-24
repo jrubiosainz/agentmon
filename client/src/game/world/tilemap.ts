@@ -216,6 +216,14 @@ export class TileMap {
     return this.overAt(x, y) === id || this.groundAt(x, y) === id;
   }
 
+  /** Loose ground that kicks up dust. Grass and stone deliberately do not. */
+  isDusty(x: number, y: number): boolean {
+    if (this.overAt(x, y) >= 0) return false;
+    const g = this.groundAt(x, y);
+    if (g < 0) return false;
+    return g === this.tiles.index['path'] || g === this.tiles.index['sand'];
+  }
+
   ledgeAt(x: number, y: number): 'down' | 'left' | 'right' | undefined {
     const g = this.groundAt(x, y);
     return g >= 0 ? this.tiles.ledge.get(g) : undefined;

@@ -3,6 +3,7 @@
 import { assets } from '../../engine/assets.ts';
 import { audio } from '../../engine/audio.ts';
 import { font } from '../../engine/font.ts';
+import { ParticleField } from '../../engine/fx.ts';
 import { Scene } from '../../engine/scene.ts';
 import { SCREEN_H, SCREEN_W } from '../../engine/screen.ts';
 import { TILE } from '../../engine/tilegen.ts';
@@ -23,6 +24,7 @@ import type { BattlePayload, BattleResult } from './battle.ts';
 import { BattleScene } from './battle.ts';
 import { EvolutionScene } from './evolution.ts';
 import { StartMenuScene, StorageScene } from './menu.ts';
+import { markVisited } from './regionmap.ts';
 import { ShopScene } from './shop.ts';
 import { StarterScene, type StarterResult } from './starter.ts';
 
@@ -81,6 +83,11 @@ export class OverworldScene extends Scene {
   private camY = 0;
   private tick = 0;
   private animTick = 0;
+  /**
+   * Footstep particles, in WORLD pixels - the camera offset is applied at draw
+   * time so a puff stays where it was kicked up instead of riding the screen.
+   */
+  private fx = new ParticleField(90);
   /** Blocks player input while a script/dialogue/battle is running. */
   private busy = false;
   private dialogue: Dialogue | null = null;
@@ -116,6 +123,8 @@ export class OverworldScene extends Scene {
     this.player = makeActor('player', x, y, facing,
       this.game.save.gender === 'm' ? 'player_m' : 'player_f');
     this.rebuildNpcs();
+    this.fx.clear();
+    markVisited(this.game.save, id);
     this.game.save.pos = { map: id, x, y, facing };
     this.updateCamera(true);
     this.playMapMusic();
@@ -155,6 +164,7 @@ export class OverworldScene extends Scene {
   update(): void {
     this.tick++;
     if (this.tick % 12 === 0) this.animTick++;
+    this.fx.update();
     if (this.banner.timer > 0) this.banner.timer--;
     if (this.encounterCooldown > 0) this.encounterCooldown--;
 
@@ -190,6 +200,7 @@ export class OverworldScene extends Scene {
       if (a.jumping) a.oy -= Math.sin(t * Math.PI) * 12;
       a.stepPhase += 1;
       if (a.moveTimer >= a.moveDur) {
+        const wasJump = a.jumping;
         a.moving = false;
         a.jumping = false;
         a.moveTimer = 0;
@@ -197,6 +208,7 @@ export class OverworldScene extends Scene {
         a.oy = 0;
         a.x += dx * dist;
         a.y += dy * dist;
+        this.footFx(a, wasJump);
         if (a === this.player) this.onPlayerArrive();
       }
     }
@@ -228,6 +240,63 @@ export class OverworldScene extends Scene {
         const dirs: Facing[] = ['up', 'down', 'left', 'right'];
         a.facing = dirs[Math.floor(Math.random() * 4)]!;
       }
+    }
+  }
+
+  /**
+   * Kicks up whatever the actor just landed in. Grass rustles in two greens,
+   * bare outdoor ground puffs dust, indoors stays clean - a tiled floor that
+   * throws dirt reads as a bug, not as polish.
+   */
+  private footFx(a: Actor, landed: boolean): void {
+    const x = a.x * TILE + TILE / 2;
+    const y = a.y * TILE + TILE - 1;
+    if (this.map.isEncounter(a.x, a.y)) {
+      // Blades flick outward and fall back: two symmetric fans, not a burst,
+      // so it reads as grass parting rather than an explosion at your feet.
+      // They are deliberately PALER than the grass - a mid-green fleck on a
+      // mid-green tile is invisible, exactly the mistake the battle FX made.
+      for (const dir of [-1, 1]) {
+        const n = landed ? 4 : 3;
+        for (let i = 0; i < n; i++) {
+          this.fx.spawn({
+            x: x + dir * (4 + Math.random() * 4),
+            y: y - 1 - Math.random() * 3,
+            vx: dir * (0.7 + Math.random() * 0.7),
+            vy: -0.8 - Math.random() * 0.5,
+            ay: 0.09,
+            color: i % 2 ? '#e8ffc0' : '#a8e860',
+            outline: '#1c4418',
+            size: 2,
+            endSize: 1,
+            maxLife: 13 + Math.floor(Math.random() * 4),
+            shape: 'square',
+          });
+        }
+      }
+      if (a === this.player) audio.sfx('step');
+      return;
+    }
+    if (!this.def.outdoor) return;
+    // Dust only comes off loose ground - a puff on a lawn or a tiled plaza is
+    // the detail that reads as "generic engine" rather than GBA. A ledge
+    // landing always throws one, wherever it lands.
+    if (!landed && !this.map.isDusty(a.x, a.y)) return;
+    const n = landed ? 8 : 3;
+    for (let i = 0; i < n; i++) {
+      this.fx.spawn({
+        x: x + (Math.random() - 0.5) * (landed ? 14 : 8),
+        y: y - 1 - Math.random() * 2,
+        vx: (Math.random() - 0.5) * (landed ? 1.3 : 0.5),
+        vy: -0.3 - Math.random() * (landed ? 0.7 : 0.3),
+        ay: 0.05,
+        color: '#fff8e8',
+        outline: '#6a5028',
+        size: landed ? 3 : 2,
+        endSize: 1,
+        maxLife: landed ? 18 : 12,
+        shape: 'circle',
+      });
     }
   }
 
@@ -1080,6 +1149,14 @@ export class OverworldScene extends Scene {
     });
 
     list.sort((a, b) => a.y - b.y);
+
+    // Footstep debris sits UNDER the actors. Drawing it over them buries the
+    // sprite's legs under a slab of blades and the character stops reading.
+    g.save();
+    g.translate(-Math.round(this.camX), -Math.round(this.camY));
+    this.fx.draw(g);
+    g.restore();
+
     for (const d of list) d.draw();
 
     for (const obj of this.def.objects ?? []) {

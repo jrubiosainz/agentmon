@@ -359,6 +359,63 @@ spawn a kind, particles and an impact; the effect must change the battlefield
 against the calm baseline; and **no two moves may produce the same frame** — the
 original "everything looks the same" bug, stated as a measurement.
 
+## Overworld particles (do not regress)
+
+`OverworldScene` owns a small `ParticleField` (limit 90) reusing the battle FX
+engine. `footFx()` runs on every step, from the *step-landed* branch of
+`updateActors()` — which must capture `a.jumping` **before** it is cleared, or a
+ledge landing is indistinguishable from a walk.
+
+- **Tall grass** flicks two symmetric fans of pale blades. They are deliberately
+  *paler* than the tile: a mid-green fleck on mid-green grass is invisible, the
+  exact mistake the battle FX made with additive highlights. Same rimmed-opaque
+  rule as `fx.ts`.
+- **Dust** only comes off loose ground (`TileMap.isDusty` → `path`/`sand` with
+  nothing drawn over it) or off a ledge landing anywhere. Puffing dust on a lawn
+  or a tiled plaza is what makes an engine look generic.
+- **Interiors spawn nothing.** That is a feature, not an omission.
+
+The field is drawn **under** the depth-sorted actors, inside a
+`translate(-camX, -camY)` so it lives in world space. Drawing it over the actors
+buries the sprite's legs under a slab of blades and the character stops reading.
+`loadMap()` calls `fx.clear()` so debris never survives a map change.
+
+## Region map
+
+`scenes/regionmap.ts`, reachable from the pause menu once you hold a badge.
+
+**It is hand-authored, not projected from `maps.ts`.** Tile grids are the wrong
+shape and scale to auto-layout; the result looks like a debug view. What *is*
+derived is the state: a node is charted once you have stood in it.
+
+**Visits ride the existing flag bag** (`flag:visit:<nodeId>`, set by
+`markVisited()` from `loadMap`) rather than a new `SaveData` field, so old saves
+stay loadable and cloud sync needs no migration.
+
+**The coastline is a boolean cell mask, never overlapping rectangles** — rects
+leak their own lit top edge into the middle of the continent. `SHAPE` paints the
+lobes, then `stamp()` widens the mask around every node and along every road, and
+only then is it rendered as shallow-water halo → land → lit/dark edges. The thin
+isthmuses that give the region a waist come from the road corridors, which is why
+`SHAPE` is deliberately sparse.
+
+**`legPath()` is shared** between the drawn road and the land corridor beneath
+it. Two separate implementations of the same elbow is how you end up with a road
+running through the sea.
+
+`regionStrings()` must stay folded into `dataStrings()` in `main.ts` or the node
+descriptions silently ship in English.
+
+```powershell
+cd client
+npm run preview                 # in another shell
+npm run verify:overworld        # -> "OVERWORLD FX OK"
+```
+
+The harness asserts grass spawns, path dust spawns, **lawn and interior spawn
+zero**, that the map opens on the town you are standing in, that the cursor
+walks, and that B closes it. Screenshots land in `tools/shots/overworld/`.
+
 ## Verification harness
 
 `client/tools/smoke.mjs` drives the real game in headless Chromium and screenshots
