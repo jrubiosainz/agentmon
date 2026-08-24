@@ -25,6 +25,8 @@ import {
   Battle, type BattleConfig, type BattleEvent, type BattleOutcome, type PlayerAction, type Side,
 } from '../battle/engine.ts';
 import { addAgent, bagRemove, catchSpecies, formatMoney, seeSpecies } from '../state.ts';
+import { drawDayTint, type DayPhase } from '../world/daynight.ts';
+import { Weather, type WeatherKind } from '../world/weather.ts';
 import { BagScene, PartyScene } from './menu.ts';
 
 export interface BattlePayload {
@@ -33,6 +35,10 @@ export interface BattlePayload {
   trainerKey?: string;
   backdrop?: string;
   music?: string;
+  /** Weather inherited from the map the encounter started on. Cosmetic only. */
+  weather?: WeatherKind | null;
+  /** Time-of-day wash. Omitted for indoor fights, which have their own light. */
+  phase?: DayPhase;
 }
 
 export interface BattleResult {
@@ -85,6 +91,8 @@ interface CombatView {
 export class BattleScene extends Scene {
   private battle!: Battle;
   private payload!: BattlePayload;
+  /** Inherited route weather, redrawn in screen space over the battlefield. */
+  private weather = new Weather(null);
   private tick = 0;
   private mode: Mode = 'script';
   private tw = new Typewriter();
@@ -154,6 +162,7 @@ export class BattleScene extends Scene {
     // inside makeCombatant, leaving the scene half-built.
     if (!save.party.length) throw new Error('BattleScene: the player has no agents');
     this.payload = p;
+    this.weather = new Weather(p.weather ?? null);
     this.battle = new Battle(save.party, p.foes, p.config);
     this.pView = { agent: this.battle.playerC.agent, covered: false };
     this.fView = { agent: this.battle.foeC.agent, covered: false };
@@ -323,6 +332,7 @@ export class BattleScene extends Scene {
     // must not touch the half-built state or every frame would throw.
     if (!this.battle) return;
     this.tick++;
+    this.weather.update();
     this.updateSprites();
     this.updateFx();
     this.tweenBars();
@@ -793,6 +803,20 @@ export class BattleScene extends Scene {
     this.drawCreature(g, 'player');
     this.fx.draw(g);
     g.restore();
+
+    // Time of day and weather ride over the whole battlefield but are clipped
+    // above the textbox: the strip below it is opaque UI, not sky. They also
+    // sit outside the shake, exactly like the backdrop - a rain sheet that
+    // jolts on every hit reads as a broken layer, not as weather.
+    if (this.payload.phase || this.weather.active) {
+      g.save();
+      g.beginPath();
+      g.rect(0, 0, SCREEN_W, SCREEN_H - TEXTBOX_H - 2);
+      g.clip();
+      if (this.payload.phase) drawDayTint(g, this.payload.phase);
+      this.weather.draw(g);
+      g.restore();
+    }
 
     if (this.ballAnim) this.drawBall(g);
     if (this.fx.flash > 0) {

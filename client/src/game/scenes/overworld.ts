@@ -20,6 +20,8 @@ import {
 } from '../state.ts';
 import { formatNumber, t, tUpper } from '../i18n.ts';
 import { TileMap, type EncounterEntry, type MapDef, type NpcDef, type WarpDef } from '../world/tilemap.ts';
+import { dayPhase, drawDayTint, type DayPhase } from '../world/daynight.ts';
+import { Weather, type WeatherKind } from '../world/weather.ts';
 import type { BattlePayload, BattleResult } from './battle.ts';
 import { BattleScene } from './battle.ts';
 import { EvolutionScene } from './evolution.ts';
@@ -88,6 +90,11 @@ export class OverworldScene extends Scene {
    * time so a puff stays where it was kicked up instead of riding the screen.
    */
   private fx = new ParticleField(90);
+  /**
+   * Route weather. Screen space, rebuilt per map, and purely cosmetic - it is
+   * handed to the battle scene so an encounter in a storm still looks stormy.
+   */
+  private weather = new Weather(null);
   /** Blocks player input while a script/dialogue/battle is running. */
   private busy = false;
   private dialogue: Dialogue | null = null;
@@ -124,6 +131,7 @@ export class OverworldScene extends Scene {
       this.game.save.gender === 'm' ? 'player_m' : 'player_f');
     this.rebuildNpcs();
     this.fx.clear();
+    this.weather = new Weather(this.def.outdoor ? this.def.weather ?? null : null);
     markVisited(this.game.save, id);
     this.game.save.pos = { map: id, x, y, facing };
     this.updateCamera(true);
@@ -165,6 +173,7 @@ export class OverworldScene extends Scene {
     this.tick++;
     if (this.tick % 12 === 0) this.animTick++;
     this.fx.update();
+    this.weather.update();
     if (this.banner.timer > 0) this.banner.timer--;
     if (this.encounterCooldown > 0) this.encounterCooldown--;
 
@@ -425,6 +434,15 @@ export class OverworldScene extends Scene {
     return table[table.length - 1];
   }
 
+  /**
+   * Ambience the battle inherits from the map. Indoor fights get neither: a
+   * datacenter has no sky, so no rain and no time-of-day wash.
+   */
+  private ambience(): { weather: WeatherKind | null; phase?: DayPhase } {
+    if (!this.def.outdoor) return { weather: null };
+    return { weather: this.def.weather ?? null, phase: dayPhase() };
+  }
+
   private async startWildBattle(foe: AgentInstance): Promise<void> {
     if (!this.canFight()) return;
     this.busy = true;
@@ -434,6 +452,7 @@ export class OverworldScene extends Scene {
       foes: [foe],
       backdrop: this.def.battleBackdrop ?? 'bg_grass',
       music: 'battleWild',
+      ...this.ambience(),
       config: {
         kind: 'wild',
         playerName: this.game.save.playerName,
@@ -654,6 +673,7 @@ export class OverworldScene extends Scene {
       trainerKey: key,
       backdrop: this.def.battleBackdrop ?? 'bg_city',
       music: trainer.music ?? 'battleTrainer',
+      ...this.ambience(),
       config: {
         kind: 'trainer',
         playerName: this.game.save.playerName,
@@ -1167,6 +1187,12 @@ export class OverworldScene extends Scene {
     this.map.renderTop(g, this.camX, this.camY, this.animTick);
 
     if (this.def.tint) fillScreen(g, this.def.tint, 0.22);
+
+    // Time of day washes the outdoors only; interiors carry their own mood and
+    // a datacenter does not care what hour it is. Weather sits on top of the
+    // wash so rain still glints at night and a lightning flash punches through.
+    if (this.def.outdoor) drawDayTint(g);
+    this.weather.draw(g);
 
     if (this.exclaim) this.drawExclaim(g);
     if (this.banner.timer > 0) this.drawBanner(g);

@@ -24,6 +24,7 @@ import { BootScene } from './game/scenes/boot.ts';
 import { introStrings } from './game/scenes/intro.ts';
 import { regionStrings } from './game/scenes/regionmap.ts';
 import { DEFAULT_OPTIONS } from './game/state.ts';
+import * as daynight from './game/world/daynight.ts';
 import { installAuthStyles } from './game/ui/authoverlay.ts';
 
 /**
@@ -163,7 +164,7 @@ function boot(): void {
   // Handy for debugging from the console; harmless in production. The i18n
   // surface is what the verification harness reads to prove no key is missing.
   (window as unknown as { agentmon?: unknown }).agentmon =
-    Object.assign(game, { saves, agent, assets, audio, font, i18n, maps, trainers, dataStrings });
+    Object.assign(game, { saves, agent, assets, audio, font, i18n, maps, trainers, dataStrings, daynight });
 }
 
 // The active language's catalogue is code-split, so wait for it before the

@@ -592,6 +592,7 @@ export const ROUTE2: MapDef = {
   legend: LEGEND,
   music: 'route',
   outdoor: true,
+  weather: 'rain',
   battleBackdrop: 'bg_road',
   warps: [
     { x: 0, y: 11, to: 'voltspire_city', tx: 29, ty: 12, facing: 'left' },
@@ -680,6 +681,7 @@ export const CACHEWOOD: MapDef = {
   music: 'forest',
   outdoor: true,
   tint: '#0c2410',
+  weather: 'fog',
   battleBackdrop: 'bg_grass',
   warps: [
     { x: 13, y: 31, to: 'route2', tx: 38, ty: 10, facing: 'down' },
@@ -956,6 +958,7 @@ export const ROUTE3: MapDef = {
   legend: LEGEND,
   music: 'route',
   outdoor: true,
+  weather: 'storm',
   battleBackdrop: 'bg_road',
   warps: [
     { x: 11, y: 33, to: 'silica_town', tx: 14, ty: 1, facing: 'down' },
@@ -1050,6 +1053,7 @@ export const TERRAFLUX_CITY: MapDef = {
   legend: LEGEND,
   music: 'city',
   outdoor: true,
+  weather: 'ash',
   battleBackdrop: 'bg_city',
   objects: [tfClinic.obj, tfShop.obj, tfGym.obj, tfHouse.obj],
   warps: [

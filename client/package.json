@@ -16,7 +16,8 @@
     "verify:gyms": "node tools/verify-gyms.mjs",
     "verify:fx": "node tools/verify-fx.mjs",
     "shot:fx": "node tools/shot-fx.mjs",
-    "verify:overworld": "node tools/verify-overworld-fx.mjs"
+    "verify:overworld": "node tools/verify-overworld-fx.mjs",
+    "verify:ambience": "node tools/verify-ambience.mjs"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

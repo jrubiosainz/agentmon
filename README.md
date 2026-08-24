@@ -23,6 +23,7 @@ tilemap, sprite, bitmap-font, transition and chiptune-audio layers are all in
 | Maps | 26 — 4 towns/cities, 3 routes, a forest, interiors, and 3 datacenter gyms + the Citadel |
 | Trainer classes | 12 |
 | Languages | 5 — English, Español, Français, Italiano, 日本語 |
+| Ambience | 4 weathers (rain, storm, fog, ash) + a 4-phase day/night cycle on the real clock |
 
 ## Repository layout
 
@@ -415,6 +416,85 @@ npm run verify:overworld        # -> "OVERWORLD FX OK"
 The harness asserts grass spawns, path dust spawns, **lawn and interior spawn
 zero**, that the map opens on the town you are standing in, that the cursor
 walks, and that B closes it. Screenshots land in `tools/shots/overworld/`.
+
+## Weather and time of day (do not regress)
+
+`world/weather.ts` and `world/daynight.ts`. Both are **purely cosmetic**: they
+never touch damage, accuracy or encounter tables. Those are balanced and covered
+by 79 tests, and a visual pass has no business moving them.
+
+Four weathers, assigned per map in `maps.ts` (`MapDef.weather`) and escalating
+toward the volcanic endgame: `route2` rain, `cachewood` fog, `route3` storm,
+`terraflux_city` ash. The first four maps stay clear on purpose so the opening
+hours read clean.
+
+**Weather is screen space, never world space.** Rain anchored to the world and
+drifting with the camera pan is the fastest way to make a top-down game look
+like a modern engine wearing a GBA costume. (Contrast the footstep particles
+above, which *are* world space.)
+
+**It does not reuse `ParticleField`.** Weather particles wrap forever;
+`ParticleField.update()` splices on `life <= 0`, so reusing it would mean
+constant alloc/free. Fixed-size arrays with wrap is both faster and what the
+hardware did.
+
+**Rain streaks are stair-stepped `fillRect`s, not stroked lines.** A smooth
+antialiased canvas diagonal reads as foreign — a real streak sprite was aliased.
+Stepping by 2 halves the draw calls. Drops spawn wide of the screen because a
+slanted sheet leaves a bare wedge on the upwind edge otherwise, and `hitY` is
+randomised over the screen height so splashes happen at varying depths.
+
+**Lightning is a double flash, not a fade** (`boltAlpha()`): a single fade reads
+as a rendering glitch.
+
+**Fog is one baked seamless 128×64 tile drawn twice** at different speeds and
+offsets. Drawing blobs live every frame re-randomises them and shimmers
+("boiling") instead of drifting. Built lazily and guarded on `typeof document`
+so vitest never touches `document.createElement`.
+
+**Embers glow, they do not get a dark rim.** The dark-rim trick the battle
+particles use is wrong at 1–2 px: the rim swallows the core and the ember lands
+on screen as a speck of dirt. A dim halo of its own hue plus a full-bright core
+reads as heat.
+
+**Dusk and night MULTIPLY; morning is a normal wash.** An alpha wash toward dark
+blue lifts the blacks and desaturates, so night came out as a murky teal
+afternoon. Multiplying scales each channel, which is what a hardware palette
+swap did — hue and contrast survive. Morning is the exception because it has to
+*brighten* the scene warm, and multiply can only darken. **Day is `null`** —
+noon must be the untouched palette the art was drawn for.
+
+The phase follows the player's real clock (GSC/DPP style). `?time=night` (or
+`morning`/`day`/`dusk`) pins it, which is also how the harness screenshots every
+phase deterministically.
+
+**Interiors get neither.** They carry their own `tint` mood and a datacenter does
+not care what hour it is.
+
+**Draw order in `OverworldScene.render()` is load-bearing:** map → actors →
+overhead → `renderTop` → `def.tint` → `drawDayTint` (outdoor only) → `weather` →
+HUD. Weather *after* the wash means rain still glints at night and the lightning
+punches through.
+
+**In battle, both are clipped to `SCREEN_H - TEXTBOX_H - 2` and sit outside the
+shake transform.** `drawBackdrop` paints an opaque white strip for the textbox,
+which unclipped weather would tint; and a rain sheet that jolts on every hit
+reads as a broken layer. Battles inherit the overworld's weather and phase
+through `BattlePayload`, fed by `OverworldScene.ambience()`.
+
+```powershell
+cd client
+npm run preview                 # in another shell
+npm run verify:ambience         # -> "AMBIENCE OK"
+```
+
+The harness asserts each route builds the right weather, that it **moves** (in
+game pixels, not percent — 40 embers and a full-screen fog bank have wildly
+different coverage), that it is visible when toggled off, that all four are
+distinct, that a weather set on an interior is still dropped, that `dayTint`
+returns null at midday, that night is darker and dusk warmer than day, that
+interiors never drift, and that a battle started from stormy Route 3 at night
+inherits both. Screenshots land in `tools/shots/ambience/`.
 
 ## Verification harness
 

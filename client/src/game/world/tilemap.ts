@@ -2,6 +2,7 @@
 
 import { SCREEN_H, SCREEN_W } from '../../engine/screen.ts';
 import { TILE, type TileSetResult } from '../../engine/tilegen.ts';
+import type { WeatherKind } from './weather.ts';
 
 export type Facing = 'down' | 'up' | 'left' | 'right';
 
@@ -96,6 +97,8 @@ export interface MapDef {
   outdoor: boolean;
   /** Tint applied to the whole map (indoor mood, night, cave). */
   tint?: string;
+  /** Persistent route weather. Cosmetic only - it never touches battle maths. */
+  weather?: WeatherKind;
   warps?: WarpDef[];
   signs?: SignDef[];
   npcs?: NpcDef[];
