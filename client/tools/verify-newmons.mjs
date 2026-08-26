@@ -13,7 +13,7 @@ const OUT = 'tools/shots/newmons';
 mkdirSync(OUT, { recursive: true });
 
 const SPECIES = ['stackchan', 'reachymini', 'optimus', 'spot', 'spotarm', 'figure03', 'unitree', 'neo',
-  'beni', 'loona', 'emo'];
+  'beni', 'loona', 'emo', 'emilio'];
 const FORMS = ['snow', 'sky', 'lime', 'sun', 'ember', 'hallow', 'zebra', 'hf'];
 
 const browser = await chromium.launch();

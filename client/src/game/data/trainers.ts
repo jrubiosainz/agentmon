@@ -273,6 +273,7 @@ export const TRAINERS: Record<string, TrainerDef> = {
     key: 'elite_a', name: 'SENTINEL VASH', sprite: 'trainer_guard', payout: 260, ai: 2,
     music: 'elite',
     team: [
+      { species: 'emilio', level: 36 },
       { species: 'titanoid', level: 36 },
       { species: 'forgeron', level: 36 },
       { species: 'teslarch', level: 38 },

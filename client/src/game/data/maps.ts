@@ -1017,6 +1017,7 @@ export const ROUTE3: MapDef = {
     { species: 'beni', min: 19, max: 23, weight: 6 },
     { species: 'loona', min: 20, max: 24, weight: 5 },
     { species: 'emo', min: 21, max: 25, weight: 4 },
+    { species: 'emilio', min: 22, max: 26, weight: 4 },
   ],
 };
 
@@ -1287,6 +1288,7 @@ export const CITADEL: MapDef = {
     { species: 'spotarm', min: 30, max: 34, weight: 5 },
     { species: 'emo', min: 28, max: 32, weight: 7 },
     { species: 'loona', min: 29, max: 33, weight: 5 },
+    { species: 'emilio', min: 30, max: 34, weight: 6 },
   ],
 };
 

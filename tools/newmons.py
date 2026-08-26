@@ -44,6 +44,8 @@ NEW_MOVES = [
      "Bats at the foe with both front paws. May lower SPEED."),
     ("beat_drop", "BEAT DROP", "neural", "special", 85, 100, 15, "spd_down", 40, "foe", 0,
      "Pushes a bass line through its headphones. May lower SP.DEF."),
+    ("tray_serve", "TRAY SERVE", "alloy", "status", 0, 100, 10, "heal_half", 100, "self", 0,
+     "Serves itself a tray of chilled coolant. Restores half of its own HP."),
 ]
 
 # --------------------------------------------------------------------------- #
@@ -457,6 +459,63 @@ SPECIES = [
         learn=[(1, "data_spike"), (1, "mind_link"), (5, "pixel_grin"), (10, "strobe"),
                (15, "beat_drop"), (21, "logic_bomb"), (27, "firewall"), (33, "hypnotize"),
                (39, "stack_trace"), (46, "neural_storm"), (54, "kernel_panic")],
+    ),
+
+    # ------------------------------------------------------------------ EMILIO
+    dict(
+        key="emilio", name="EMILIO", inspired="EMILIO",
+        types=["alloy", "optic"], genus="Service Unit",
+        stats=(90, 78, 108, 74, 104, 52), catch=45, base_exp=197,
+        growth="medium_fast", height=0.52, weight=3.4, cell=(64, 60),
+        # White shell, so every accent has to stay far from white (the warm-white
+        # beacon lesson). Four saturated stops: the hot orange eyes are kept a
+        # long way from the lemon dome wedge, which is the pair most at risk of
+        # merging - lemon rather than golden yellow buys the margin.
+        accents=((0xF8, 0x70, 0x10), (0xF8, 0xE0, 0x28), (0xC8, 0x20, 0x30),
+                 (0x38, 0x48, 0xC0)),
+        dex="A retired service unit. It will not stop offering you a drink, and it has never once "
+            "dropped its tray.",
+        art="A charming retro toy service robot creature with no legs, rolling on a base, CARRYING A "
+            "TRAY: the head is a large smooth glossy WHITE dome like a rounded helmet, and the top "
+            "of that dome is split into three equally large bold coloured wedge panels - a deep "
+            "VIOLET BLUE wedge clearly visible on the left, a bright LEMON YELLOW wedge across the "
+            "top centre, and a deep RED wedge on the right, all three the same size and all three "
+            "plainly visible from the front - with a few fine white vent slats moulded across the "
+            "middle of them; the entire front of the head below those wedges is one wide glossy JET "
+            "BLACK visor band that wraps right around the face; floating on that black visor are "
+            "TWO large round glowing HOT ORANGE eyes set wide apart, lit from within like two "
+            "little lamps, the single brightest feature of the creature, and below them a thin "
+            "curved bright smile line, giving it a warm friendly grin; one small bright yellow tab "
+            "sticks out at the right side of the head; below the head a chunky glossy white barrel "
+            "torso with a round dark speaker grille at its centre and a few small red, blue and "
+            "yellow decal stripes on the chest; its right arm is RAISED and holds a flat white "
+            "rectangular SERVING TRAY aloft beside its head at shoulder height, balanced on the "
+            "flat of its white gripper claw exactly like a waiter, so the tray is completely clear "
+            "of the body with empty background visible all around it and underneath it - the tray "
+            "is a wide flat horizontal slab, as wide as the robot's head, drawn with a dark grey "
+            "rim and a dark grey underside so its edge reads as one crisp dark horizontal line "
+            "against the background, and a single small deep RED cup stands upright on top of it; "
+            "the other arm hangs down at its side and ends in a simple white gripper CLAW of two "
+            "flat parallel fingers; it has no legs at all - the body sits on a wide flat glossy "
+            "BLACK wedge-shaped base that it rolls on; crisp glossy white with the black visor, the "
+            "black base and the coloured dome wedges as the only accents; chunky friendly toy "
+            "proportions with the head deliberately oversized at roughly two fifths of the total "
+            "height",
+        art_back="A retro toy service robot creature seen from directly behind, its face completely "
+                 "hidden: the smooth blank glossy WHITE back of a large rounded dome head with no "
+                 "eyes and no face anywhere, showing one small round dark port at its centre, and "
+                 "the top of that dome still split into three bold coloured wedge panels seen from "
+                 "behind - a deep VIOLET BLUE wedge on one side, a bright LEMON YELLOW wedge across "
+                 "the top centre, and a deep RED wedge on the other side; below the head a chunky "
+                 "glossy white barrel torso seen from the rear with a small dark hatch panel; two "
+                 "short white arms at its sides, each ending in a white gripper claw of two flat "
+                 "parallel fingers, and the edge of a flat white rectangular TRAY just visible "
+                 "sticking out past one shoulder; it has no legs at all - the body sits on a wide "
+                 "flat glossy BLACK wedge-shaped rolling base; crisp glossy white with the black "
+                 "base and the coloured dome wedges as the only accents",
+        learn=[(1, "tackle"), (1, "laser_ping"), (5, "quick_jab"), (10, "tray_serve"),
+               (15, "strobe"), (21, "soft_grip"), (27, "dazzle_stripe"), (33, "grapple_arm"),
+               (39, "photon_beam"), (46, "visor_beam"), (54, "pile_drive")],
     ),
 ]
 

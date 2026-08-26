@@ -17,7 +17,7 @@ tilemap, sprite, bitmap-font, transition and chiptune-audio layers are all in
 
 | | |
 |---|---|
-| Species | 48 across 10 types (VOLT, METAL, DATA, THERMAL, CRYO, KINETIC, OPTIC, NEURAL, VIRAL, QUANTUM) — including 11 homages to real robots, one of them with 8 forms |
+| Species | 49 across 10 types (VOLT, METAL, DATA, THERMAL, CRYO, KINETIC, OPTIC, NEURAL, VIRAL, QUANTUM) — including 12 homages to real robots, one of them with 8 forms |
 | Moves | 76 |
 | Items | 33 |
 | Maps | 26 — 4 towns/cities, 3 routes, a forest, interiors, and 3 datacenter gyms + the Citadel |
@@ -249,17 +249,27 @@ that way and the resulting sheets average a luminance of ~105–160.
 
 ## The homage roster (forms and COVER)
 
-Dex numbers **38–48** are portraits of real robots, named after the machines they
+Dex numbers **38–49** are portraits of real robots, named after the machines they
 honour: `stackchan`, `reachymini`, `optimus`, `spot` → `spotarm` (level 36),
-`figure03`, `unitree`, `neo`, `beni`, `loona`, `emo`. Their design lives in
-`tools/newmons.py` (`NEW_MOVES`, `REACHY_BODY`, `SPECIES`); run
+`figure03`, `unitree`, `neo`, `beni`, `loona`, `emo`, `emilio`. Their design lives
+in `tools/newmons.py` (`NEW_MOVES`, `REACHY_BODY`, `SPECIES`); run
 `python tools\build_dex.py` from the repo root after any edit, then
 `python tools\ship_newmons.py` to stage the sheets.
 
-The last three are the desktop/companion end of the roster and each ships one
+The last four are the desktop/companion end of the roster and each ships one
 signature move: **BENI** (SERVO/OPTIC, hopper, 118 SPE) with `SPRING LEAP`,
-**LOONA** (SERVO/NEURAL, petbot) with `PAW WAVE`, and **EMO** (DATA/NEURAL,
-desktop unit, 120 SPA) with `BEAT DROP`.
+**LOONA** (SERVO/NEURAL, petbot) with `PAW WAVE`, **EMO** (DATA/NEURAL,
+desktop unit, 120 SPA) with `BEAT DROP`, and **EMILIO** (ALLOY/OPTIC, tracked
+butler, 108 DEF / 104 SPD / 52 SPE) with `TRAY SERVE` — the roster's only
+recovery signature (`heal_half`, self-target).
+
+**A white prop on a white body is invisible at 68 px.** EMILIO's serving tray is
+its whole identity and the first two renders lost it: held level in front of the
+belly it dissolved into the torso, and held out sideways it read as a wing. It
+only survived once the prompt raised it *aloft beside the head on one claw*, gave
+it a *dark rim and dark underside*, put a *red cup* on it as a landmark, and
+demanded *empty background all around and underneath it*. Silhouette separation
+beats descriptive detail — say where the background must show through.
 
 Two rules governed the integration and must hold for any future addition:
 

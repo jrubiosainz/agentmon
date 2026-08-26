@@ -157,6 +157,7 @@ MOVES = [
     mv("spring_leap", "SPRING LEAP", "servo", "physical", 90, 95, 10, effect="flinch", chance=30, desc="Coils its wheel legs and drops on the foe from above. May make it FLINCH."),
     mv("paw_wave", "PAW WAVE", "servo", "physical", 65, 100, 20, effect="spe_down", chance=40, desc="Bats at the foe with both front paws. May lower SPEED."),
     mv("beat_drop", "BEAT DROP", "neural", "special", 85, 100, 15, effect="spd_down", chance=40, desc="Pushes a bass line through its headphones. May lower SP.DEF."),
+    mv("tray_serve", "TRAY SERVE", "alloy", "status", 0, 100, 10, effect="heal_half", chance=100, target="self", desc="Serves itself a tray of chilled coolant. Restores half of its own HP."),
 ]
 
 # --------------------------------------------------------------------------- #
