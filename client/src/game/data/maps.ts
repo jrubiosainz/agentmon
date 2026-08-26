@@ -731,6 +731,8 @@ export const CACHEWOOD: MapDef = {
     { species: 'malwarm', min: 16, max: 18, weight: 6 },
     { species: 'reachymini', min: 13, max: 17, weight: 12 },
     { species: 'stackchan', min: 14, max: 18, weight: 8 },
+    { species: 'beni', min: 13, max: 17, weight: 7 },
+    { species: 'loona', min: 14, max: 18, weight: 6 },
   ],
 };
 
@@ -1012,6 +1014,9 @@ export const ROUTE3: MapDef = {
     { species: 'optimus', min: 21, max: 24, weight: 7 },
     { species: 'figure03', min: 21, max: 24, weight: 6 },
     { species: 'unitree', min: 22, max: 25, weight: 4 },
+    { species: 'beni', min: 19, max: 23, weight: 6 },
+    { species: 'loona', min: 20, max: 24, weight: 5 },
+    { species: 'emo', min: 21, max: 25, weight: 4 },
   ],
 };
 
@@ -1280,6 +1285,8 @@ export const CITADEL: MapDef = {
     { species: 'optimus', min: 29, max: 33, weight: 6 },
     { species: 'figure03', min: 29, max: 33, weight: 5 },
     { species: 'spotarm', min: 30, max: 34, weight: 5 },
+    { species: 'emo', min: 28, max: 32, weight: 7 },
+    { species: 'loona', min: 29, max: 33, weight: 5 },
   ],
 };
 

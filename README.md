@@ -17,7 +17,7 @@ tilemap, sprite, bitmap-font, transition and chiptune-audio layers are all in
 
 | | |
 |---|---|
-| Species | 45 across 10 types (VOLT, METAL, DATA, THERMAL, CRYO, KINETIC, OPTIC, NEURAL, VIRAL, QUANTUM) — including 8 homages to real robots, one of them with 8 forms |
+| Species | 48 across 10 types (VOLT, METAL, DATA, THERMAL, CRYO, KINETIC, OPTIC, NEURAL, VIRAL, QUANTUM) — including 11 homages to real robots, one of them with 8 forms |
 | Moves | 76 |
 | Items | 33 |
 | Maps | 26 — 4 towns/cities, 3 routes, a forest, interiors, and 3 datacenter gyms + the Citadel |
@@ -161,6 +161,27 @@ in `tools/newmons.py`. Three rules, all learned the hard way:
   blends it toward the background, so give glows **two stops** (bright +
   falloff), e.g. Unitree `(0x48,0xC8,0xF8)` + `(0x18,0x88,0xC0)`.
 
+**A reserved colour that is close to the shell colour eats the shell.** This is
+the same sum-of-channels rule read from the other end, and it cost three
+re-renders on BENI, LOONA and EMO:
+
+- Pure white `(255,255,255)` against a warm-white beacon `(255,244,200)` is
+  `0+11+55 = 66 < 102`, so **every** white pixel snapped to the beacon and both
+  white robots came out cream, with hollow rings for headlamps and red speckles
+  across the tyres.
+- Charcoal `(50,48,56)` against a dark-violet falloff `(56,40,128)` is `86 < 102`
+  and speckled EMO's whole body purple.
+
+So accents must be **saturated and chromatically distant from the shell**, and a
+falloff stop is only worth its slot on a genuinely thin glowing feature. Freeing
+a slot also improves everything else, because accents are subtracted from the
+15-colour budget — dropping LOONA's ear beacon is what gave EMO's rear head its
+dark tone back.
+
+The practical corollary: **editing `art`/`art_back` invalidates the render cache
+and costs an API call; editing `accents` is free** and re-pixelizes from cache.
+Always try the accent fix first.
+
 `connect_antennae()` has the same problem for 1 px stalks and must run on
 **every** view, not just the COVER pose — hence the per-species `antennae=True`.
 
@@ -177,7 +198,13 @@ from directly behind" view string applied to a smooth barrel — Reachy Mini —
 produces a blob indistinguishable from its shut COVER pose. That looked like a
 sprite-lookup bug and was not one: `sheetFor()` only swaps to `:cover` when
 `c.covered` is true. `REACHY_BACK` describes the head held upright above an open
-neck gap so the two poses read differently.
+neck gap so the two poses read differently. LOONA hit the same wall — a smooth
+white dog shell read as a plain ball from behind. The formula that worked: state
+the head is *held above the shoulders on a visible neck*, give the body a
+*rounded rump and a tail nub*, and describe the legs as **open rings with a hole
+punched right through so the background shows through**, plus a bold black
+outline around every ring so the holes survive the downscale.
+
 
 ### Why the overworld cast is drawn in code, not generated
 
@@ -222,11 +249,17 @@ that way and the resulting sheets average a luminance of ~105–160.
 
 ## The homage roster (forms and COVER)
 
-Dex numbers **38–45** are portraits of real robots, named after the machines they
+Dex numbers **38–48** are portraits of real robots, named after the machines they
 honour: `stackchan`, `reachymini`, `optimus`, `spot` → `spotarm` (level 36),
-`figure03`, `unitree`, `neo`. Their design lives in `tools/newmons.py`
-(`NEW_MOVES`, `REACHY_BODY`, `SPECIES`); run `python tools\build_dex.py` from the
-repo root after any edit, then `python tools\ship_newmons.py` to stage the sheets.
+`figure03`, `unitree`, `neo`, `beni`, `loona`, `emo`. Their design lives in
+`tools/newmons.py` (`NEW_MOVES`, `REACHY_BODY`, `SPECIES`); run
+`python tools\build_dex.py` from the repo root after any edit, then
+`python tools\ship_newmons.py` to stage the sheets.
+
+The last three are the desktop/companion end of the roster and each ships one
+signature move: **BENI** (SERVO/OPTIC, hopper, 118 SPE) with `SPRING LEAP`,
+**LOONA** (SERVO/NEURAL, petbot) with `PAW WAVE`, and **EMO** (DATA/NEURAL,
+desktop unit, 120 SPA) with `BEAT DROP`.
 
 Two rules governed the integration and must hold for any future addition:
 
@@ -237,6 +270,12 @@ Two rules governed the integration and must hold for any future addition:
   slices to 5 lines (≈100 chars) on the summary page and at 216 px / 4 lines
   (≈144) in the dex page; `starter.ts` allows 3 lines at 220 px. A longer entry is
   not an error, it just silently loses its last sentence.
+
+And one trap: **`build_dex.py` imports `SPECIES` from `newmons.py` but keeps its
+`MOVES` table hardcoded.** A new signature move must be added in *both* files, or
+`check_newmons.py` passes happily while the emitted dex carries a dangling move
+key. A new move name also needs a translation short enough for the battle move
+menu — the cap is **69 px (11 Latin chars)**, and `verify:i18n` is the gate.
 
 ### Forms
 

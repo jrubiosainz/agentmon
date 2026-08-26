@@ -1206,6 +1206,48 @@
    "effectChance": 20,
    "target": "foe",
    "desc": "A focused beam from its visor. May lower SP.DEF."
+  },
+  {
+   "key": "spring_leap",
+   "name": "SPRING LEAP",
+   "type": "servo",
+   "category": "physical",
+   "power": 90,
+   "accuracy": 95,
+   "pp": 10,
+   "priority": 0,
+   "effect": "flinch",
+   "effectChance": 30,
+   "target": "foe",
+   "desc": "Coils its wheel legs and drops on the foe from above. May make it FLINCH."
+  },
+  {
+   "key": "paw_wave",
+   "name": "PAW WAVE",
+   "type": "servo",
+   "category": "physical",
+   "power": 65,
+   "accuracy": 100,
+   "pp": 20,
+   "priority": 0,
+   "effect": "spe_down",
+   "effectChance": 40,
+   "target": "foe",
+   "desc": "Bats at the foe with both front paws. May lower SPEED."
+  },
+  {
+   "key": "beat_drop",
+   "name": "BEAT DROP",
+   "type": "neural",
+   "category": "special",
+   "power": 85,
+   "accuracy": 100,
+   "pp": 15,
+   "priority": 0,
+   "effect": "spd_down",
+   "effectChance": 40,
+   "target": "foe",
+   "desc": "Pushes a bass line through its headphones. May lower SP.DEF."
   }
  ],
  "species": [
@@ -4780,7 +4822,7 @@
    "height": 1.65,
    "weight": 30.0,
    "dexEntry": "Wrapped head to toe in soft knit so it can never hurt anyone. It tidies your workshop while you sleep.",
-   "art": "A gentle human-proportioned bipedal humanoid robot creature standing calmly with its arms relaxed at its sides, its entire body sheathed head to toe in one continuous soft pale oatmeal-beige knitted fabric suit like a full knitted bodysuit, the colour a very desaturated light greige sand tone close to raw undyed wool or unbleached linen, definitely NOT orange and NOT bright tan, kept muted and washed-out: the head is a smooth featureless rounded egg shape covered in the same beige knit with no eyes, no mouth and no visor at all, and on the side of the head exactly where a human ear would sit there is one large bright glowing white circular ring, a bold luminous white halo outline taking up a third of the visible side of the head, which is the single brightest and most distinctive feature of the creature; a soft knitted collar at the neck; the shoulders, chest, arms, hips and legs all show a clearly visible ribbed knit stitch texture with gentle fabric creases and soft seams running down the outside of the arms and legs; the hands are the only hard parts, smooth cream-white moulded five-fingered robotic hands with visible finger segments emerging from knitted cuffs; one small round darker port low on the outer hip; softly rounded knit feet; broad relaxed shoulders and a calm friendly stance, warm and domestic, everything else fabric with no exposed metal or machinery anywhere; drawn with stylised creature proportions, the head deliberately oversized at roughly one quarter of the total body height and the limbs correspondingly shorter, so the head reads clearly at small size",
+   "art": "A gentle human-proportioned bipedal humanoid robot creature standing calmly with its arms relaxed at its sides, its entire body sheathed head to toe in one continuous soft pale oatmeal-beige knitted fabric suit like a full knitted bodysuit, the colour a very desaturated light greige sand tone close to raw undyed wool or unbleached linen, definitely NOT orange and NOT bright tan, kept muted and washed-out: the head is a smooth rounded egg shape covered in the same beige knit, and set into the front of that head is one large smooth glossy very dark charcoal-black oval face panel with no eyes and no mouth, a plain unbroken dark visor plate covering most of the front of the head and contrasting strongly against the pale knit around it; on the side of the head exactly where a human ear would sit there is one large bright glowing white circular ring, a bold luminous white halo outline taking up a third of the visible side of the head, which together with the dark face is the most distinctive feature of the creature; a soft knitted collar at the neck; the shoulders, chest, arms, hips and legs all show a clearly visible ribbed knit stitch texture with gentle fabric creases and soft seams running down the outside of the arms and legs; the hands are the only hard parts, large bright cream-white moulded five-fingered robotic hands, clearly much paler and glossier than the knit sleeves, with visible finger segments emerging from darker knitted cuffs; one small round darker port low on the outer hip; softly rounded knit feet; broad relaxed shoulders and a calm friendly stance, warm and domestic, everything else fabric with no exposed metal or machinery anywhere; drawn with stylised creature proportions, the head deliberately oversized at roughly one quarter of the total body height and the limbs correspondingly shorter, so the head reads clearly at small size",
    "learnset": [
     [
      1,
@@ -4836,6 +4878,246 @@
    "legendary": false,
    "forms": [],
    "inspired": "1X NEO"
+  },
+  {
+   "id": 46,
+   "key": "beni",
+   "name": "BENI",
+   "types": [
+    "servo",
+    "optic"
+   ],
+   "genus": "Hopper Unit",
+   "baseStats": {
+    "hp": 70,
+    "atk": 96,
+    "def": 72,
+    "spa": 78,
+    "spd": 70,
+    "spe": 118
+   },
+   "catchRate": 45,
+   "baseExp": 196,
+   "growthRate": "fast",
+   "height": 0.42,
+   "weight": 4.8,
+   "dexEntry": "It coils its wheel legs and clears a fence from a standstill. Its lamps find the ball long before you do.",
+   "art": "A small cheerful wheeled robot creature leaning eagerly forward as if about to spring: the head is a wide low horizontal box of clean bright white plastic, and set into its front are TWO very large round glossy headlamp eyes side by side, each a big circular lens ringed in white and filled with a warm glowing pale yellow-white light like a pair of car headlights switched on at night, the single brightest feature of the creature; exactly between the two lamps sits one small dark grey square sensor window; rising from the top rear of the head are TWO short thick angled fin ears of bright brick-red orange plastic, flat blade shapes swept up and backwards like rabbit ears, the only strong colour anywhere on the robot; a short white neck block joins the head to a chunky angular white body shell built from clean faceted panels with softly chamfered edges and two small dark round port lenses low on its front; a thick grey cylindrical hip barrel at the rear; the legs are short grey struts that end in TWO large knobbly rubber tyre wheels with a coarse dark brown-grey tread pattern, one wheel forward and one back, tilted so the creature looks poised to leap; no mouth and no visible face other than the two lamps; crisp white and grey two-tone colouring with the red fins and the glowing lamps as the only accents; compact, chunky, springy proportions with the head deliberately oversized",
+   "learnset": [
+    [
+     1,
+     "tackle"
+    ],
+    [
+     1,
+     "laser_ping"
+    ],
+    [
+     5,
+     "quick_jab"
+    ],
+    [
+     10,
+     "strobe"
+    ],
+    [
+     15,
+     "overclock"
+    ],
+    [
+     21,
+     "spring_leap"
+    ],
+    [
+     27,
+     "photon_beam"
+    ],
+    [
+     33,
+     "spin_kick"
+    ],
+    [
+     39,
+     "lidar_scan"
+    ],
+    [
+     46,
+     "prism_lance"
+    ],
+    [
+     54,
+     "pile_drive"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 60,
+    "h": 58
+   },
+   "legendary": false,
+   "forms": [],
+   "inspired": "Beni"
+  },
+  {
+   "id": 47,
+   "key": "loona",
+   "name": "LOONA",
+   "types": [
+    "servo",
+    "neural"
+   ],
+   "genus": "Petbot Unit",
+   "baseStats": {
+    "hp": 72,
+    "atk": 86,
+    "def": 74,
+    "spa": 92,
+    "spd": 92,
+    "spe": 100
+   },
+   "catchRate": 45,
+   "baseExp": 198,
+   "growthRate": "medium_fast",
+   "height": 0.28,
+   "weight": 1.6,
+   "dexEntry": "It waves a front paw at anyone it likes. Its amber eyes take a different shape for every mood it can name.",
+   "art": "A small charming robot puppy creature standing on four legs with one front leg lifted high in a friendly wave: the head is a large rounded egg shape of glossy pearl-white plastic, and almost the whole front of that head is one big smooth glossy jet-black oval screen face filling it edge to edge; floating on that black screen are TWO large rounded-square glowing eyes of warm amber orange light, soft and bright like two little lit windows, the single brightest feature of the creature, with no mouth and no nose; two slim white ears shaped like tapered petals rise from the sides of the head and each ear tip glows bright warm white; below the head a small glossy white chest and a compact glossy white body; the legs are the most unusual part, each leg is a thick mid-grey rounded HOOP, a wide open ring of grey plastic like a wheel with an open centre, and the creature stands on the bottom edge of those rings; the lifted front hoop is raised up beside the head; crisp glossy white and mid-grey two-tone colouring with the black face and the amber eyes as the only accents; cute chunky puppy proportions with the head deliberately oversized at roughly two fifths of the total height",
+   "learnset": [
+    [
+     1,
+     "scratch"
+    ],
+    [
+     1,
+     "mind_link"
+    ],
+    [
+     5,
+     "paw_wave"
+    ],
+    [
+     10,
+     "empathy"
+    ],
+    [
+     15,
+     "pounce"
+    ],
+    [
+     21,
+     "prediction"
+    ],
+    [
+     27,
+     "logic_bomb"
+    ],
+    [
+     33,
+     "hypnotize"
+    ],
+    [
+     39,
+     "spin_kick"
+    ],
+    [
+     46,
+     "neural_storm"
+    ],
+    [
+     54,
+     "pile_drive"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 58,
+    "h": 56
+   },
+   "legendary": false,
+   "forms": [],
+   "inspired": "Loona"
+  },
+  {
+   "id": 48,
+   "key": "emo",
+   "name": "EMO",
+   "types": [
+    "data",
+    "neural"
+   ],
+   "genus": "Desktop Unit",
+   "baseStats": {
+    "hp": 64,
+    "atk": 60,
+    "def": 72,
+    "spa": 120,
+    "spd": 106,
+    "spe": 88
+   },
+   "catchRate": 45,
+   "baseExp": 194,
+   "growthRate": "medium_fast",
+   "height": 0.22,
+   "weight": 0.6,
+   "dexEntry": "It answers in beeps and little songs. Turn its headphones up and the whole desk starts to rattle.",
+   "art": "A tiny charming desktop robot creature standing on two chunky boots: the head is a large rounded cube of dark charcoal-grey plastic with softly chamfered corners, and its whole front face is one glossy jet-black screen panel on which float TWO bright glowing mint-green cyan rounded-square eyes, set wide apart, soft-cornered and lit from within like two little green windows, the single brightest feature of the creature, with no mouth and no nose; clamped over that head is a pair of large over-ear HEADPHONES in deep glossy indigo violet purple, with one big round purple ear cup covering each side of the head and a thick curved purple headband arcing right over the top, the only colour anywhere on the robot; a very short dark grey neck; a small compact dark grey torso block far smaller than the head, with a slim silver trim line across the chest; two very short stubby dark arms held at its sides; two thick chunky black boot legs with wide flat black feet planted apart; crisp dark charcoal and black colouring with the green eyes and the purple headphones as the only accents; adorable chunky proportions with the head deliberately oversized at roughly half the total height",
+   "learnset": [
+    [
+     1,
+     "data_spike"
+    ],
+    [
+     1,
+     "mind_link"
+    ],
+    [
+     5,
+     "pixel_grin"
+    ],
+    [
+     10,
+     "strobe"
+    ],
+    [
+     15,
+     "beat_drop"
+    ],
+    [
+     21,
+     "logic_bomb"
+    ],
+    [
+     27,
+     "firewall"
+    ],
+    [
+     33,
+     "hypnotize"
+    ],
+    [
+     39,
+     "stack_trace"
+    ],
+    [
+     46,
+     "neural_storm"
+    ],
+    [
+     54,
+     "kernel_panic"
+    ]
+   ],
+   "evolution": null,
+   "airborne": false,
+   "cell": {
+    "w": 54,
+    "h": 56
+   },
+   "legendary": false,
+   "forms": [],
+   "inspired": "EMO"
   }
  ]
 }

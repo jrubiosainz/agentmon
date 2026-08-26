@@ -154,6 +154,9 @@ MOVES = [
     mv("spin_kick", "SPIN KICK", "servo", "physical", 85, 100, 15, effect="high_crit", chance=100, desc="A whirling roundhouse. High critical-hit ratio."),
     mv("soft_grip", "SOFT GRIP", "neural", "physical", 75, 100, 15, effect="atk_down", chance=30, desc="A gentle but irresistible hold. May lower ATTACK."),
     mv("visor_beam", "VISOR BEAM", "optic", "special", 95, 100, 10, effect="spd_down", chance=20, desc="A focused beam from its visor. May lower SP.DEF."),
+    mv("spring_leap", "SPRING LEAP", "servo", "physical", 90, 95, 10, effect="flinch", chance=30, desc="Coils its wheel legs and drops on the foe from above. May make it FLINCH."),
+    mv("paw_wave", "PAW WAVE", "servo", "physical", 65, 100, 20, effect="spe_down", chance=40, desc="Bats at the foe with both front paws. May lower SPEED."),
+    mv("beat_drop", "BEAT DROP", "neural", "special", 85, 100, 15, effect="spd_down", chance=40, desc="Pushes a bass line through its headphones. May lower SP.DEF."),
 ]
 
 # --------------------------------------------------------------------------- #

@@ -38,6 +38,12 @@ NEW_MOVES = [
      "A gentle but irresistible hold. May lower ATTACK."),
     ("visor_beam", "VISOR BEAM", "optic", "special", 95, 100, 10, "spd_down", 20, "foe", 0,
      "A focused beam from its visor. May lower SP.DEF."),
+    ("spring_leap", "SPRING LEAP", "servo", "physical", 90, 95, 10, "flinch", 30, "foe", 0,
+     "Coils its wheel legs and drops on the foe from above. May make it FLINCH."),
+    ("paw_wave", "PAW WAVE", "servo", "physical", 65, 100, 20, "spe_down", 40, "foe", 0,
+     "Bats at the foe with both front paws. May lower SPEED."),
+    ("beat_drop", "BEAT DROP", "neural", "special", 85, 100, 15, "spd_down", 40, "foe", 0,
+     "Pushes a bass line through its headphones. May lower SP.DEF."),
 ]
 
 # --------------------------------------------------------------------------- #
@@ -321,6 +327,136 @@ SPECIES = [
         learn=[(1, "tackle"), (1, "mind_link"), (6, "empathy"), (11, "brace"), (16, "soft_grip"),
                (21, "prediction"), (27, "hull_plating"), (33, "logic_bomb"), (40, "plate_press"),
                (47, "neural_storm"), (55, "girder_smash")],
+    ),
+
+    # -------------------------------------------------------------------- BENI
+    dict(
+        key="beni", name="BENI", inspired="Beni",
+        types=["servo", "optic"], genus="Hopper Unit",
+        stats=(70, 96, 72, 78, 70, 118), catch=45, base_exp=196,
+        growth="fast", height=0.42, weight=4.8, cell=(60, 58),
+        antennae=True,
+        # A near-white beacon steals the ENTIRE white shell (it sits well inside
+        # keep_tolerance of pure white) and turns the robot cream, and a dark-red
+        # falloff speckles the brown tyre tread. Two saturated stops only: the
+        # red fins and the amber lamp glow. The lamp cores stay white on their own.
+        accents=((0xE8, 0x38, 0x20), (0xF8, 0xC8, 0x48)),
+        dex="It coils its wheel legs and clears a fence from a standstill. Its lamps find the ball "
+            "long before you do.",
+        art="A small cheerful wheeled robot creature leaning eagerly forward as if about to spring: "
+            "the head is a wide low horizontal box of clean bright white plastic, and set into its "
+            "front are TWO very large round glossy headlamp eyes side by side, each a big circular "
+            "lens ringed in white and filled with a warm glowing pale yellow-white light like a pair "
+            "of car headlights switched on at night, the single brightest feature of the creature; "
+            "exactly between the two lamps sits one small dark grey square sensor window; rising from "
+            "the top rear of the head are TWO short thick angled fin ears of bright brick-red orange "
+            "plastic, flat blade shapes swept up and backwards like rabbit ears, the only strong "
+            "colour anywhere on the robot; a short white neck block joins the head to a chunky "
+            "angular white body shell built from clean faceted panels with softly chamfered edges "
+            "and two small dark round port lenses low on its front; a thick grey cylindrical hip "
+            "barrel at the rear; the legs are short grey struts that end in TWO large knobbly rubber "
+            "tyre wheels with a coarse dark brown-grey tread pattern, one wheel forward and one "
+            "back, tilted so the creature looks poised to leap; no mouth and no visible face other "
+            "than the two lamps; crisp white and grey two-tone colouring with the red fins and the "
+            "glowing lamps as the only accents; compact, chunky, springy proportions with the head "
+            "deliberately oversized",
+        art_back="A small wheeled robot creature seen from directly behind: the flat blank white rear "
+                 "of a wide low horizontal head box with no eyes and no face anywhere, showing one "
+                 "small round dark vent port at its centre, and TWO short thick angled bright "
+                 "brick-red orange fin ears rising from the top of the head and swept up and "
+                 "backwards towards the viewer; below the head a chunky angular white body shell "
+                 "seen from the rear with one horizontal seam and a small dark grey hatch panel; a "
+                 "thick grey cylindrical hip barrel; short grey leg struts ending in two large "
+                 "knobbly dark rubber tyre wheels with coarse tread; crisp white and grey colouring "
+                 "with the red fins as the only accent",
+        learn=[(1, "tackle"), (1, "laser_ping"), (5, "quick_jab"), (10, "strobe"),
+               (15, "overclock"), (21, "spring_leap"), (27, "photon_beam"), (33, "spin_kick"),
+               (39, "lidar_scan"), (46, "prism_lance"), (54, "pile_drive")],
+    ),
+
+    # ------------------------------------------------------------------- LOONA
+    dict(
+        key="loona", name="LOONA", inspired="Loona",
+        types=["servo", "neural"], genus="Petbot Unit",
+        stats=(72, 86, 74, 92, 92, 100), catch=45, base_exp=198,
+        growth="medium_fast", height=0.28, weight=1.6, cell=(58, 56),
+        antennae=True,
+        # amber eyes on a black face need two stops or LANCZOS blends the glow
+        # away - but NOT a white ear-tip beacon, which would swallow the shell.
+        accents=((0xF8, 0xB8, 0x48), (0xC8, 0x78, 0x20), (0x18, 0x18, 0x20)),
+        dex="It waves a front paw at anyone it likes. Its amber eyes take a different shape for every "
+            "mood it can name.",
+        art="A small charming robot puppy creature standing on four legs with one front leg lifted "
+            "high in a friendly wave: the head is a large rounded egg shape of glossy pearl-white "
+            "plastic, and almost the whole front of that head is one big smooth glossy jet-black "
+            "oval screen face filling it edge to edge; floating on that black screen are TWO large "
+            "rounded-square glowing eyes of warm amber orange light, soft and bright like two little "
+            "lit windows, the single brightest feature of the creature, with no mouth and no nose; "
+            "two slim white ears shaped like tapered petals rise from the sides of the head and each "
+            "ear tip glows bright warm white; below the head a small glossy white chest and a "
+            "compact glossy white body; the legs are the most unusual part, each leg is a thick "
+            "mid-grey rounded HOOP, a wide open ring of grey plastic like a wheel with an open "
+            "centre, and the creature stands on the bottom edge of those rings; the lifted front "
+            "hoop is raised up beside the head; crisp glossy white and mid-grey two-tone colouring "
+            "with the black face and the amber eyes as the only accents; cute chunky puppy "
+            "proportions with the head deliberately oversized at roughly two fifths of the total "
+            "height",
+        art_back="A small robot puppy creature seen from directly behind, its face completely hidden: "
+                 "the smooth blank glossy pearl-white back of a rounded egg-shaped head with no eyes "
+                 "and no face anywhere, showing one small round dark port at its centre, held clearly "
+                 "above the shoulders on a short visible white neck, and two slim white tapered petal "
+                 "ears rising from the sides of the head with their tips glowing bright warm white; "
+                 "below the head a compact glossy white body with a rounded rump and a small white "
+                 "tail nub; the legs are four thick mid-grey open RINGS, each one a wide hoop with a "
+                 "big clearly visible hole punched right through its centre so the background shows "
+                 "straight through the middle of every leg, two rings forward and two rings back, "
+                 "well separated from each other and from the body with clear gaps between them; "
+                 "crisp glossy white and mid-grey two-tone colouring, bold black outline around every "
+                 "ring so the holes read clearly at small size",
+        learn=[(1, "scratch"), (1, "mind_link"), (5, "paw_wave"), (10, "empathy"),
+               (15, "pounce"), (21, "prediction"), (27, "logic_bomb"), (33, "hypnotize"),
+               (39, "spin_kick"), (46, "neural_storm"), (54, "pile_drive")],
+    ),
+
+    # --------------------------------------------------------------------- EMO
+    dict(
+        key="emo", name="EMO", inspired="EMO",
+        types=["data", "neural"], genus="Desktop Unit",
+        stats=(64, 60, 72, 120, 106, 88), catch=45, base_exp=194,
+        growth="medium_fast", height=0.22, weight=0.6, cell=(54, 56),
+        # green eyes need a bright stop plus a falloff, but the DARK purple stop
+        # was within tolerance of the charcoal shell and speckled the whole body
+        # purple - one bright violet stop is enough for the ear cups.
+        accents=((0x48, 0xF8, 0xC8), (0x18, 0xB0, 0x90), (0x60, 0x48, 0xC0)),
+        dex="It answers in beeps and little songs. Turn its headphones up and the whole desk starts "
+            "to rattle.",
+        art="A tiny charming desktop robot creature standing on two chunky boots: the head is a "
+            "large rounded cube of dark charcoal-grey plastic with softly chamfered corners, and its "
+            "whole front face is one glossy jet-black screen panel on which float TWO bright glowing "
+            "mint-green cyan rounded-square eyes, set wide apart, soft-cornered and lit from within "
+            "like two little green windows, the single brightest feature of the creature, with no "
+            "mouth and no nose; clamped over that head is a pair of large over-ear HEADPHONES in "
+            "deep glossy indigo violet purple, with one big round purple ear cup covering each side "
+            "of the head and a thick curved purple headband arcing right over the top, the only "
+            "colour anywhere on the robot; a very short dark grey neck; a small compact dark grey "
+            "torso block far smaller than the head, with a slim silver trim line across the chest; "
+            "two very short stubby dark arms held at its sides; two thick chunky black boot legs "
+            "with wide flat black feet planted apart; crisp dark charcoal and black colouring with "
+            "the green eyes and the purple headphones as the only accents; adorable chunky "
+            "proportions with the head deliberately oversized at roughly half the total height",
+        art_back="A tiny desktop robot creature seen from directly behind, its face completely "
+                 "hidden: the smooth blank dark charcoal-grey back of a large rounded cube head with "
+                 "no eyes and no face anywhere, showing one small round dark speaker grille at its "
+                 "centre, and clamped over it a pair of large over-ear headphones in deep glossy "
+                 "indigo violet purple, one big round purple ear cup visible on each side of the "
+                 "head and a thick curved purple headband arcing over the top; a very short dark "
+                 "neck; a small compact dark grey torso block seen from the rear, far smaller than "
+                 "the head; two very short stubby dark arms at its sides; two thick chunky black "
+                 "boot legs with wide flat black feet; crisp dark charcoal and black colouring with "
+                 "the purple headphones as the only accent",
+        learn=[(1, "data_spike"), (1, "mind_link"), (5, "pixel_grin"), (10, "strobe"),
+               (15, "beat_drop"), (21, "logic_bomb"), (27, "firewall"), (33, "hypnotize"),
+               (39, "stack_trace"), (46, "neural_storm"), (54, "kernel_panic")],
     ),
 ]
 

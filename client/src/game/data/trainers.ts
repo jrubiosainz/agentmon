@@ -121,7 +121,7 @@ export const TRAINERS: Record<string, TrainerDef> = {
 
   // --- Cachewood ------------------------------------------------------------
   cw_kid1: T('cw_kid1', 'SCOUT NIM', 'trainer_kid', 76,
-    [{ species: 'bugbyte', level: 16 }, { species: 'reachlet', level: 16 }],
+    [{ species: 'bugbyte', level: 16 }, { species: 'beni', level: 16 }],
     'SCOUT NIM: Lost? Everyone gets lost in CACHEWOOD.',
     'SCOUT NIM: You found your way through me at least.',
     'SCOUT NIM: Follow the paved track. It always leads north.'),
@@ -158,7 +158,7 @@ export const TRAINERS: Record<string, TrainerDef> = {
     'ENGINEER MAE: THERMAL moves melt CRYO units. Obvious, but effective.'),
 
   gym2_d: T('gym2_d', 'ANALYST VELA', 'trainer_kid', 108,
-    [{ species: 'reachymini', level: 21 }, { species: 'spot', level: 22 }],
+    [{ species: 'reachymini', level: 21 }, { species: 'loona', level: 21 }, { species: 'spot', level: 22 }],
     'ANALYST VELA: I log every challenger. Give me a good row of data.',
     'ANALYST VELA: Recorded. You are faster than the average.',
     'ANALYST VELA: FROST reads your team before you finish sending it out.'),
@@ -186,7 +186,7 @@ export const TRAINERS: Record<string, TrainerDef> = {
 
   // --- Route 3 --------------------------------------------------------------
   r3_eng: T('r3_eng', 'ENGINEER RUE', 'trainer_engineer', 120,
-    [{ species: 'quadrotor', level: 24 }, { species: 'ampereon', level: 24 }],
+    [{ species: 'quadrotor', level: 24 }, { species: 'emo', level: 25 }, { species: 'ampereon', level: 24 }],
     'ENGINEER RUE: The air up here is thin. My units run cooler.',
     'ENGINEER RUE: Not cool enough, clearly.',
     'ENGINEER RUE: Evolution comes fast around level thirty-eight. Stay ready.'),
